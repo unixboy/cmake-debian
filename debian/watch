@@ -1,0 +1,5 @@
+version=3
+
+# Track CMake 2.6.x releases including RCs
+opts="uversionmangle=s/-RC-(\d+)/~rc$1/i" \
+    http://www.cmake.org/files/v2.6/cmake-([\d.]+(?:-RC-\d+)?).tar.gz

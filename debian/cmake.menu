@@ -1,3 +1,4 @@
-?package(cmake):needs="text" section="Apps/Programming"\
+?package(cmake):needs="text" \
+  section="Applications/Programming"\
   title="ccmake" command="/usr/bin/ccmake"\
   icon="/usr/share/pixmaps/cmake.xpm"

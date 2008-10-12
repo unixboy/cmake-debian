@@ -1,0 +1,3 @@
+This package uses quilt for upstream source code patch management. Please read
+/usr/share/doc/quilt/README.source for more information how to apply, unapply,
+add, modify or remove patches.

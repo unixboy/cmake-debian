@@ -64,7 +64,7 @@ install: build
 	# Add here commands to install the package into debian/cmake.
 	cd Build && $(MAKE) DESTDIR=$(CURDIR)/debian/cmake install
 	install -D -m 644 debian/cmake.xpm      debian/cmake/usr/share/pixmaps/cmake.xpm
-	install -D -m 644 debian/cmake.lintian  debian/cmake/usr/share/lintian/overrides/cmake
+	dh_lintian
 	#cp Docs/cmake-indent.vim debian/cmake/usr/share/vim/addons/indent/cmake.vim
 	#cp Docs/cmake-syntax.vim debian/cmake/usr/share/vim/addons/syntax/cmake.vim
 	cp Docs/cmake-mode.el debian/cmake/usr/share/emacs/site-lisp/

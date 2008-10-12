@@ -1,0 +1,510 @@
+date: 2008-10-10 18:23:35 +0300;  author: king;  state: Exp;  lines: +115 -12;  commitid: pFogEk9NmHzoT5mt;
+ENH: Improve generated documentation formatting
+
+Applying patch provided in issue #7797.
+
+Fixes to man-pages:
+* Character '-' must be espaced as '\-'
+* Surround preformatted text with '.nf' and '.fi' to adjust filling
+* Give every page a NAME section for indexing by mandb
+* Pass the man page filename without extension to .TH in its header
+
+Also added a title to the HTML header.
+
+The patch can be retrieved from upstream CVS with:
+$ cvs diff -u -D "2008-10-10 18:23 +0300" -D "2008-10-10 18:24 +0300"
+
+"File version" hunks were removed for the patch to apply.
+--- a/Source/cmDocumentation.cxx
++++ b/Source/cmDocumentation.cxx
+@@ -202,6 +202,26 @@
+ };
+ 
+ //----------------------------------------------------------------------------
++#define DOCUMENT_INTRO(type, default_name, desc) \
++  static char const *cmDocumentation##type##Intro[2] = { default_name, desc };
++#define GET_DOCUMENT_INTRO(type) cmDocumentation##type##Intro
++
++DOCUMENT_INTRO(Modules, "cmakemodules",
++  "Reference of available CMake modules.");
++DOCUMENT_INTRO(CustomModules, "cmakecustommodules",
++  "Reference of available CMake custom modules.");
++DOCUMENT_INTRO(Policies, "cmakepolicies",
++  "Reference of CMake policies.");
++DOCUMENT_INTRO(Properties, "cmakeprops",
++  "Reference of CMake properties.");
++DOCUMENT_INTRO(Variables, "cmakevars",
++  "Reference of CMake variables.");
++DOCUMENT_INTRO(Commands, "cmakecommands",
++  "Reference of available CMake commands.");
++DOCUMENT_INTRO(CompatCommands, "cmakecompat",
++  "Reference of CMake compatibility commands.");
++
++//----------------------------------------------------------------------------
+ cmDocumentation::cmDocumentation()
+ :CurrentFormatter(0)
+ {
+@@ -321,7 +341,27 @@
+ }
+ 
+ //----------------------------------------------------------------------------
+-bool cmDocumentation::PrintDocumentation(Type ht, std::ostream& os)
++void cmDocumentation::AddDocumentIntroToPrint(const char* intro[2])
++{
++  const char* docname;
++  if (intro && (docname = this->GetDocName(false)))
++    {
++    cmDocumentationSection* section;
++    std::string desc("");
++
++    desc += docname;
++    desc += " - ";
++    desc += intro[1];
++
++    section = new cmDocumentationSection("Introduction", "NAME");
++    section->Append(0, desc.c_str(), 0);
++    this->PrintSections.push_back(section);
++    }
++}
++
++//----------------------------------------------------------------------------
++bool cmDocumentation::PrintDocumentation(Type ht, std::ostream& os,
++                                         const char* docname)
+ {
+   if ((this->CurrentFormatter->GetForm() != HTMLForm) 
+        && (this->CurrentFormatter->GetForm() != DocbookForm)
+@@ -330,6 +370,16 @@
+     this->PrintVersion(os);
+     }
+ 
++  // Handle Document Name. docname==0 disables intro.
++  this->SetDocName("");
++  if (docname)
++    {
++    if (*docname)
++      this->SetDocName(docname);
++    else // empty string was given. select default if possible
++      this->SetDocName(this->GetDefaultDocName(ht));
++    }
++
+   switch (ht)
+     {
+     case cmDocumentation::Usage:
+@@ -595,6 +645,7 @@
+     // given stream.
+     std::ofstream* fout = 0;
+     std::ostream* s = &os;
++    std::string docname("");
+     if(i->Filename.length() > 0)
+       {
+       fout = new std::ofstream(i->Filename.c_str(), std::ios::out);
+@@ -606,10 +657,14 @@
+         {
+         result = false;
+         }
++      if(i->Filename != "-")
++        {
++        docname = cmSystemTools::GetFilenameWithoutLastExtension(i->Filename);
++        }
+       }
+     
+     // Print this documentation type to the stream.
+-    if(!this->PrintDocumentation(i->HelpType, *s) || !*s)
++    if(!this->PrintDocumentation(i->HelpType, *s, docname.c_str()) || !*s)
+       {
+       result = false;
+       }
+@@ -634,7 +689,7 @@
+ cmDocumentation::Form cmDocumentation::GetFormFromFilename(
+                                                    const std::string& filename)
+ {
+-  std::string ext = cmSystemTools::GetFilenameExtension(filename);
++  std::string ext = cmSystemTools::GetFilenameLastExtension(filename);
+   ext = cmSystemTools::UpperCase(ext);
+   if ((ext == ".HTM") || (ext == ".HTML"))
+     {
+@@ -870,6 +925,12 @@
+ }
+ 
+ //----------------------------------------------------------------------------
++void cmDocumentation::SetDocName(const char *docname)
++{
++  this->DocName = docname?docname:"";
++}
++
++//----------------------------------------------------------------------------
+ void cmDocumentation::SetSection(const char *name, 
+                                  cmDocumentationSection *section)
+ {
+@@ -1233,7 +1294,7 @@
+ bool cmDocumentation::PrintDocumentationFull(std::ostream& os)
+ {
+   this->CreateFullDocumentation();
+-  this->CurrentFormatter->PrintHeader(GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetNameString(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1244,11 +1305,12 @@
+ {
+   this->ClearSections();
+   this->CreateModulesSection();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(Modules));
+   this->AddSectionToPrint("Description");
+   this->AddSectionToPrint("Modules");
+   this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("See Also");
+-  this->CurrentFormatter->PrintHeader(this->GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1259,13 +1321,14 @@
+ {
+   this->ClearSections();
+   this->CreateCustomModulesSection();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(CustomModules));
+   this->AddSectionToPrint("Description");
+   this->AddSectionToPrint("Custom CMake Modules");
+ // the custom modules are most probably not under Kitware's copyright, Alex
+ //  this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("See Also");
+ 
+-  this->CurrentFormatter->PrintHeader(this->GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1275,12 +1338,13 @@
+ bool cmDocumentation::PrintDocumentationPolicies(std::ostream& os)
+ {
+   this->ClearSections();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(Policies));
+   this->AddSectionToPrint("Description");
+   this->AddSectionToPrint("Policies");
+   this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("See Also");
+ 
+-  this->CurrentFormatter->PrintHeader(this->GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1290,6 +1354,7 @@
+ bool cmDocumentation::PrintDocumentationProperties(std::ostream& os)
+ {
+   this->ClearSections();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(Properties));
+   this->AddSectionToPrint("Properties Description");
+   for (std::vector<std::string>::iterator i = 
+          this->PropertySections.begin();
+@@ -1299,7 +1364,7 @@
+     }
+   this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("Standard See Also");
+-  this->CurrentFormatter->PrintHeader(this->GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1309,6 +1374,7 @@
+ bool cmDocumentation::PrintDocumentationVariables(std::ostream& os)
+ {
+   this->ClearSections();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(Variables));
+   for (std::vector<std::string>::iterator i = 
+          this->VariableSections.begin();
+        i != this->VariableSections.end(); ++i)
+@@ -1317,7 +1383,7 @@
+     }
+   this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("Standard See Also");
+-  this->CurrentFormatter->PrintHeader(this->GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1327,10 +1393,11 @@
+ bool cmDocumentation::PrintDocumentationCurrentCommands(std::ostream& os)
+ {
+   this->ClearSections();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(Commands));
+   this->AddSectionToPrint("Commands");
+   this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("Standard See Also");
+-  this->CurrentFormatter->PrintHeader(this->GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1340,11 +1407,12 @@
+ bool cmDocumentation::PrintDocumentationCompatCommands(std::ostream& os)
+ {
+   this->ClearSections();
++  this->AddDocumentIntroToPrint(GET_DOCUMENT_INTRO(CompatCommands));
+   this->AddSectionToPrint("Compatibility Commands Description");
+   this->AddSectionToPrint("Compatibility Commands");
+   this->AddSectionToPrint("Copyright");
+   this->AddSectionToPrint("Standard See Also");
+-  this->CurrentFormatter->PrintHeader(GetNameString(), os);
++  this->CurrentFormatter->PrintHeader(GetDocName(), GetNameString(), os);
+   this->Print(os);
+   this->CurrentFormatter->PrintFooter(os);
+   return true;
+@@ -1466,6 +1534,41 @@
+ }
+ 
+ //----------------------------------------------------------------------------
++const char* cmDocumentation::GetDocName(bool fallbackToNameString) const
++{
++  if (this->DocName.length() > 0)
++    {
++    return this->DocName.c_str();
++    }
++  else if (fallbackToNameString)
++    {
++    return this->GetNameString();
++    }
++  else
++    return 0;
++}
++
++//----------------------------------------------------------------------------
++#define CASE_DEFAULT_DOCNAME(doctype) \
++  case cmDocumentation::doctype : \
++    return GET_DOCUMENT_INTRO(doctype)[0];
++const char* cmDocumentation::GetDefaultDocName(Type ht) const
++{
++  switch (ht)
++    {
++    CASE_DEFAULT_DOCNAME(Modules)
++    CASE_DEFAULT_DOCNAME(CustomModules)
++    CASE_DEFAULT_DOCNAME(Policies)
++    CASE_DEFAULT_DOCNAME(Properties)
++    CASE_DEFAULT_DOCNAME(Variables)
++    CASE_DEFAULT_DOCNAME(Commands)
++    CASE_DEFAULT_DOCNAME(CompatCommands)
++    default: break;
++    }
++  return 0;
++}
++
++//----------------------------------------------------------------------------
+ bool cmDocumentation::IsOption(const char* arg) const
+ {
+   return ((arg[0] == '-') || (strcmp(arg, "/V") == 0) || 
+--- a/Source/cmDocumentation.h
++++ b/Source/cmDocumentation.h
+@@ -61,7 +61,7 @@
+   bool PrintRequestedDocumentation(std::ostream& os);
+   
+   /** Print help of the given type.  */
+-  bool PrintDocumentation(Type ht, std::ostream& os);
++  bool PrintDocumentation(Type ht, std::ostream& os, const char* docname=0);
+   
+   /** Set the program name for standard document generation.  */
+   void SetName(const char* name);
+@@ -124,6 +124,7 @@
+ 
+ private:
+   void SetForm(Form f);
++  void SetDocName(const char* docname);
+ 
+   bool CreateSingleModule(const char* fname, 
+                           const char* moduleName,
+@@ -134,6 +135,8 @@
+   bool CreateCustomModulesSection();
+   void CreateFullDocumentation();
+ 
++  void AddDocumentIntroToPrint(const char* intro[2]);
++
+   bool PrintCopyright(std::ostream& os);
+   bool PrintVersion(std::ostream& os);
+   bool PrintDocumentationGeneric(std::ostream& os, const char *section);
+@@ -157,9 +160,12 @@
+ 
+ 
+   const char* GetNameString() const;
++  const char* GetDocName(bool fallbackToNameString = true) const;
++  const char* GetDefaultDocName(Type ht) const;
+   bool IsOption(const char* arg) const;
+ 
+   std::string NameString;
++  std::string DocName;
+   std::map<std::string,cmDocumentationSection*> AllSections;
+   
+   std::string SeeAlsoString;
+--- a/Source/cmDocumentationFormatter.cxx
++++ b/Source/cmDocumentationFormatter.cxx
+@@ -118,7 +118,8 @@
+     {
+     return "module";
+     }
+-  else if(name.find("Name") != name.npos)
++  else if(name.find("Name") != name.npos ||
++          name.find("Introduction") != name.npos)
+     {
+     return "name";
+     }
+--- a/Source/cmDocumentationFormatter.h
++++ b/Source/cmDocumentationFormatter.h
+@@ -52,7 +52,9 @@
+ 
+   virtual cmDocumentationEnums::Form GetForm() const = 0;
+   
+-  virtual void PrintHeader(const char* /*name*/, std::ostream& /*os*/) {}
++  virtual void PrintHeader(const char* /*docname*/,
++                           const char* /*appname*/,
++                           std::ostream& /*os*/) {}
+   virtual void PrintFooter(std::ostream& /*os*/) {}
+   virtual void PrintSection(std::ostream& os,
+                     const cmDocumentationSection& section,
+--- a/Source/cmDocumentationFormatterDocbook.cxx
++++ b/Source/cmDocumentationFormatterDocbook.cxx
+@@ -229,8 +229,9 @@
+ }
+ 
+ //----------------------------------------------------------------------------
+-void cmDocumentationFormatterDocbook::PrintHeader(const char* name, 
+-                                               std::ostream& os)
++void cmDocumentationFormatterDocbook::PrintHeader(const char* docname,
++                                                  const char* appname,
++                                                  std::ostream& os)
+ {
+   // this one is used to ensure that we don't create multiple link targets
+   // with the same name. We can clear it here since we are at the 
+@@ -244,7 +245,7 @@
+         "<!ENTITY % English \"INCLUDE\"> ]>\n"
+         "<article>\n"
+         "<articleinfo>\n"
+-        "<title>" << name << "</title>\n"
++        "<title>" << docname << " - " << appname << "</title>\n"
+         "</articleinfo>\n";
+ }
+ 
+--- a/Source/cmDocumentationFormatterDocbook.h
++++ b/Source/cmDocumentationFormatterDocbook.h
+@@ -31,7 +31,8 @@
+   virtual cmDocumentationEnums::Form GetForm() const
+                                   { return cmDocumentationEnums::DocbookForm;}
+ 
+-  virtual void PrintHeader(const char* name, std::ostream& os);
++  virtual void PrintHeader(const char* docname, const char* appname,
++                           std::ostream& os);
+   virtual void PrintFooter(std::ostream& os);
+   virtual void PrintSection(std::ostream& os,
+                             const cmDocumentationSection& section,
+--- a/Source/cmDocumentationFormatterHTML.cxx
++++ b/Source/cmDocumentationFormatterHTML.cxx
+@@ -202,10 +202,13 @@
+ }
+ 
+ //----------------------------------------------------------------------------
+-void cmDocumentationFormatterHTML::PrintHeader(const char* /*name*/, 
++void cmDocumentationFormatterHTML::PrintHeader(const char* docname,
++                                               const char* appname,
+                                                std::ostream& os)
+ {
+-  os << "<html><body>\n";
++  os << "<html><head><title>";
++  os << docname << " - " << appname;
++  os << "</title></head><body>\n";
+ }
+ 
+ //----------------------------------------------------------------------------
+--- a/Source/cmDocumentationFormatterHTML.h
++++ b/Source/cmDocumentationFormatterHTML.h
+@@ -30,7 +30,8 @@
+   virtual cmDocumentationEnums::Form GetForm() const
+                                       { return cmDocumentationEnums::HTMLForm;}
+ 
+-  virtual void PrintHeader(const char* name, std::ostream& os);
++  virtual void PrintHeader(const char* docname, const char* appname,
++                           std::ostream& os);
+   virtual void PrintFooter(std::ostream& os);
+   virtual void PrintSection(std::ostream& os,
+                     const cmDocumentationSection& section,
+--- a/Source/cmDocumentationFormatterMan.cxx
++++ b/Source/cmDocumentationFormatterMan.cxx
+@@ -57,30 +57,44 @@
+     }
+ }
+ 
++void cmDocumentationFormatterMan::EscapeText(std::string& man_text)
++{
++  cmSystemTools::ReplaceString(man_text, "\\", "\\\\");
++  cmSystemTools::ReplaceString(man_text, "-", "\\-");
++}
++
+ void cmDocumentationFormatterMan::PrintPreformatted(std::ostream& os, 
+                                                     const char* text)
+ {
+   std::string man_text = text;
+-  cmSystemTools::ReplaceString(man_text, "\\", "\\\\");
+-  os << man_text << "\n";
++  this->EscapeText(man_text);
++  os << ".nf\n" << man_text;
++  if (*text && man_text.at(man_text.length()-1) != '\n')
++      os << "\n";
++  os << ".fi\n";
+ }
+ 
+ void cmDocumentationFormatterMan::PrintParagraph(std::ostream& os, 
+                                                  const char* text)
+ {
+   std::string man_text = text;
+-  cmSystemTools::ReplaceString(man_text, "\\", "\\\\");
++  this->EscapeText(man_text);
+   os << man_text << "\n\n";
+ }
+ 
+ 
+ //----------------------------------------------------------------------------
+-void cmDocumentationFormatterMan::PrintHeader(const char* name, 
++void cmDocumentationFormatterMan::PrintHeader(const char* docname,
++                                              const char* appname,
+                                               std::ostream& os)
+ {
+-  os << ".TH " << name << " 1 \""
++  std::string s_docname(docname), s_appname(appname);
++
++  this->EscapeText(s_docname);
++  this->EscapeText(s_appname);
++  os << ".TH " << s_docname << " 1 \""
+     << cmSystemTools::GetCurrentDateTime("%B %d, %Y").c_str()
+-    << "\" \"" << name
++    << "\" \"" << s_appname
+     << " " << cmVersion::GetCMakeVersion()
+     << "\"\n";
+ }
+--- a/Source/cmDocumentationFormatterMan.h
++++ b/Source/cmDocumentationFormatterMan.h
+@@ -30,12 +30,16 @@
+   virtual cmDocumentationEnums::Form GetForm() const
+                                       { return cmDocumentationEnums::ManForm;}
+ 
+-  virtual void PrintHeader(const char* name, std::ostream& os);
++  virtual void PrintHeader(const char* docname, const char* appname,
++                           std::ostream& os);
+   virtual void PrintSection(std::ostream& os,
+                     const cmDocumentationSection& section,
+                     const char* name);
+   virtual void PrintPreformatted(std::ostream& os, const char* text);
+   virtual void PrintParagraph(std::ostream& os, const char* text);
++
++private:
++  void EscapeText(std::string& man_text);
+ };
+ 
+ #endif
+--- a/Source/kwsys/SystemTools.cxx
++++ b/Source/kwsys/SystemTools.cxx
+@@ -3382,7 +3382,7 @@
+ 
+ /**
+  * Return file extension of a full filename (dot included).
+- * Warning: this is the shortest extension (for example: .tar.gz)
++ * Warning: this is the shortest extension (for example: .gz of .tar.gz)
+  */
+ kwsys_stl::string SystemTools::GetFilenameLastExtension(const kwsys_stl::string& filename)
+ {

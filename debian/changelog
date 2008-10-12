@@ -1,3 +1,35 @@
+cmake (2.6.2-0r4) UNRELEASED; urgency=low
+
+  * New upstream release.
+  * New co-maintainer:
+    - add myself to Uploaders.
+    - add DM-Upload-Allowed: yes to debian/control.
+  * Refresh patches:
+    - FindQt4.cmake2.6.diff
+    - do-not-use-lib64.diff
+  * Add patches from upstream CVS:
+    - relative_path_fixes.diff - fixes a couple of major bugs in Makefile
+      generation when CMAKE_USE_RELATIVE_PATHS is ON. This brings
+      CMAKE_USE_RELATIVE_PATHS=ON to a very usable state.
+    - manpage-generation-fixes.diff - fixes a few manual page generation
+      issues. This resolves all lintian warnings and info tags related
+      to the cmake manual pages.
+  * Bump Standards-Version to 3.8.0:
+    - add README.source which directs the reader to quilt README.source.
+    - tighten quilt build depends to (>= 0.46-4.1) as it is the first version
+      README.source is in.
+  * Use dh_lintian:
+    - rename cmake.lintian to cmake.lintian-overrides;
+    - bump debhelper compat level to 6;
+    - build depend on debhelper (>= 6.0.7~).
+  * Fix path in the lintian override so it is effective again.
+  * Make cmake.menu conform to the current Debian Menu System stardard.
+  * Drop unused old manual pages from debian/. They are provided by upstream
+    now.
+  * Add debian/watch.
+
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 10 Oct 2008 20:43:56 +0300
+
 cmake (2.6.0-5) unstable; urgency=medium
 
   * Fix build-deps: libncursesw5-dev doesn't work, just use the non wide one.
