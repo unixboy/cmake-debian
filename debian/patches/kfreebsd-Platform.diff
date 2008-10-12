@@ -1,0 +1,22 @@
+--- cmake-2.6.0-RC-8.orig/Modules/CMakeDetermineSystem.cmake
++++ cmake-2.6.0-RC-8/Modules/CMakeDetermineSystem.cmake
+@@ -12,6 +12,7 @@
+ # HP-UX                         HP-UX  
+ # IRIX                          IRIX  
+ # Linux                         Linux  
++# GNU/kFreeBSD                  GNU/kFreeBSD
+ # NetBSD                        NetBSD  
+ # OpenBSD                       OpenBSD  
+ # OFS/1 (Digital Unix)          OSF1  
+@@ -108,6 +109,11 @@
+     SET(${_PREFIX}_NAME BSDOS)
+   ENDIF(${_PREFIX}_NAME MATCHES BSD.OS)
+ 
++  # fix for GNU/kFreeBSD , remove the GNU/
++  IF(CMAKE_SYSTEM_NAME MATCHES GNU.kFreeBSD)
++    SET(CMAKE_SYSTEM_NAME kFreeBSD)
++  ENDIF(CMAKE_SYSTEM_NAME MATCHES GNU.kFreeBSD)
++
+   # fix for CYGWIN which has windows version in it 
+   IF(${_PREFIX}_NAME MATCHES CYGWIN)
+     SET(${_PREFIX}_NAME CYGWIN)

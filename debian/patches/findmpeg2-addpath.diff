@@ -1,0 +1,12 @@
+--- cmake-2.6.0.orig/Modules/FindMPEG2.cmake
++++ cmake-2.6.0/Modules/FindMPEG2.cmake
+@@ -8,6 +8,9 @@
+ #  MPEG2_vo_LIBRARY, where to find the vo library.
+ 
+ FIND_PATH(MPEG2_INCLUDE_DIR mpeg2.h
++  /usr/include/mpeg2dec
++  /usr/local/include
++  /usr/include
+   /usr/local/livid
+ )
+ 

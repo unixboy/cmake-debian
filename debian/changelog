@@ -1,0 +1,491 @@
+cmake (2.6.0-5) unstable; urgency=medium
+
+  * Fix build-deps: libncursesw5-dev doesn't work, just use the non wide one.
+    This will build ccmake again (Closes: #481392).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Tue, 29 Jul 2008 11:05:17 +0200
+
+cmake (2.6.0-4) unstable; urgency=low
+
+  * Really remove dependency on emacsen-common (Closes: #471975).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Wed, 14 May 2008 21:01:42 +0200
+
+cmake (2.6.0-3) unstable; urgency=low
+
+  * Remove dependency on emacsen-common (Closes: #471975):
+    emacs guys, I was asked in a previous bug (#427763) to byte-compile the
+    cmake extension, the policy mandates a dependency upon emacs which is
+    silly, and depending upon emacsen-common breaks the whole thing. A
+    pre-depends would be insane, WHY ON EARTH is the emacs policy so horribly
+    broken ? Until someone answers that, cmake will stay in the previous state
+    with byte-compilation, and without any emacs dependency.
+
+  * Add patches/reinstate-arm.diff to fix FTBFS on arm platforms
+    (Closes: #481016)
+
+ -- Pierre Habouzit <madcoder@debian.org>  Tue, 13 May 2008 10:18:12 +0200
+
+cmake (2.6.0-2) unstable; urgency=low
+
+  * Upload to unstable this time.
+  * Depend upon emacsen-common (Closes: #471975).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Mon, 12 May 2008 18:13:33 +0200
+
+cmake (2.6.0-1) experimental; urgency=low
+
+  * Update patches/FindQt4.cmake2.6.diff (Closes: #479907).
+  * Add patches/executables-dont-need-fpic.diff (Closes: #478404).
+  * Bump Standards-Version to 3.7.3.
+
+ -- Pierre Habouzit <madcoder@debian.org>  Mon, 12 May 2008 17:11:04 +0200
+
+cmake (2.6.0~rc8-1.1) experimental; urgency=low
+
+  * Non-maintainer upload with permission from DadCoder. 
+    Happy Prague visit.
+  * Fix FindQt4.cmake (Closes: #477110)
+
+ -- Sune Vuorela <debian@pusling.com>  Sun, 20 Apr 2008 22:58:33 +0200
+
+cmake (2.6.0~rc8-1) experimental; urgency=low
+
+  * New upstream rc release.
+  * Update patches:
+     + drop findmpeg2-robustness.diff.
+     + drop hurd-SA_SIGINFO.diff.
+     + drop nsis-support.diff.
+
+ -- Pierre Habouzit <madcoder@debian.org>  Fri, 18 Apr 2008 20:49:30 +0200
+
+cmake (2.4.8-1) unstable; urgency=low
+
+  [ Pierre Habouzit ]
+  * New upstream release (Closes: 462335).
+  * remove patches/hurd-Platform.diff, merged upstream.
+
+  [ Rafael Laboissiere ]
+  * debian/rules, debian/cmake.emacsen-{startup,install,remove}: Allow
+    byte-compilation of cmake-mode.el at install time and put in the
+    emacsen startup directory just the necessary initialization code
+    of cmake-mode (Closes: 427763)
+
+ -- Pierre Habouzit <madcoder@debian.org>  Fri, 25 Jan 2008 10:19:47 +0100
+
+cmake (2.4.7-1) unstable; urgency=low
+
+  * New upstream release.
+  * Drop patches/findqt4-binaries-order.diff (Closes: #433105).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Thu, 19 Jul 2007 18:58:37 +0200
+
+cmake (2.4.6-1) unstable; urgency=low
+
+  * Upload to unstable.
+  * Make FindMPEG2.cmake more robust (Closes: 419134).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Mon, 18 Jun 2007 10:24:58 +0100
+
+cmake (2.4.6-0) experimental; urgency=low
+
+  * New upstream release (experimental upload, 2.4.5 must propagate):
+     + Ruby NAMES now includes ruby1.8 (Closes: 407481).
+
+  * Add patch to support NSIS on linux properly,
+    thanks to Michal Čihař (Closes: 408846).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Wed, 13 Jun 2007 12:39:42 +0200
+
+cmake (2.4.5-2) unstable; urgency=low
+
+  * Add myself to Uploaders.
+  * Ack my NMU (Closes: 419007, 407155, 407304).
+  * Move to quilt, split diff.gz into patches, to avoid losing them.
+
+  * debian/rules:
+     + add quilt snipplets.
+     + remove commented dh_ calls.
+     + remove old cruft, make it shorter.
+     + Avoid subshells, use makeism's rather than shell if/then/else.
+
+  * Lintian warnings:
+     + use debian/compat rather than DH_COMPAT.
+     + add an override for the extra-license-file that in fact is a template.
+
+ -- Pierre Habouzit <madcoder@debian.org>  Thu, 07 Jun 2007 11:09:46 +0200
+
+cmake (2.4.5-1.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Disable lib64 paths in FindLibrary, as it's not needed in debian and
+    yields incorrect results (Closes: #419007).
+  * Apply Hurd Porter patch to deal with undefined SA_SIGINFO
+    (Closes: #407304).
+  * Reintroduce lost GNU.cmake (Closes: #407155).
+
+ -- Pierre Habouzit <madcoder@debian.org>  Tue, 05 Jun 2007 13:28:35 +0200
+
+cmake (2.4.5-1) unstable; urgency=low
+
+  * New upstream bugfix release (Closes: #401071)
+    Fix for seg fault when a macro runs a bad command BUG# 3815
+    Fix fix for foo.dll.lib that does not break -L/usr/lib in link names
+    Fix problem with LIBRARY_OUTPUT_PATH and linking to a dll foo.dll.lib  instead of foo.lib
+    Do not depend on optimized libraries for a debug build and visa versa.
+    Fix target name matching custom command output conflict.
+    Fix FindQt3 so that it does not find qt4
+    Fix FindKDE4 so that it only looks for kde4-config 
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon,  4 Dec 2006 16:29:44 -0500
+
+cmake (2.4.4-1) unstable; urgency=low
+
+  * New upstream release
+  * Upstream fixes parsing bug (Closes: #392624)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat, 25 Nov 2006 19:49:38 -0500
+
+cmake (2.4.3-3) unstable; urgency=low
+
+  * Have FindMPEG2 look in paths used in Debian (Closes: #391831)
+  * Make FindQt4 more reliable (Closes: #392473)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 10 Nov 2006 11:27:35 -0500
+
+cmake (2.4.3-2) unstable; urgency=low
+
+  * Remove recommends line (Closes: #392013, #392044)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Tue, 10 Oct 2006 21:33:40 -0400
+
+cmake (2.4.3-1) unstable; urgency=low
+
+  * New upstream release
+  * recognize .F90 as a fortran source extension (Closes: #376587)
+  * don't install cmake .vim files (Closes: #366663)
+  * don't depend upon emacs, let dh_installemacsen handle it (Closes: #378998)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat,  5 Aug 2006 17:06:11 -0400
+
+cmake (2.4.2-1) unstable; urgency=low
+
+  * New upstream release (Closes: #338324)
+  * Put cmake .vim files into /usr/share/vim/addons/plugin/
+    where they can be used. (Closes: #366663)
+  * Install cmake-mode.el so it can be used. (Closes: #366664)
+  * Ensure cmake FindKDE locates KDE libraries on Debian
+    based distributions.
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun, 18 Jun 2006 16:34:11 -0400
+
+cmake (2.2.3-1) unstable; urgency=low
+
+  * New upstream release (Closes: #338324)
+  * support GNU/kFreeBSD in cmake (Closes: #340764)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun,  8 Jan 2006 10:48:14 -0500
+
+cmake (2.0.6-2) unstable; urgency=low
+
+  * Apply upstream patch to fix UseSWIG.cmake (Closes: #330581)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 28 Sep 2005 15:29:19 -0400
+
+cmake (2.0.6-1) unstable; urgency=low
+
+  * New upstream release
+  * g++ 4.0 Transition
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun, 11 Sep 2005 14:51:36 -0400
+
+cmake (2.0.5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed,  2 Mar 2005 09:22:44 -0500
+
+cmake (2.0.3-1) unstable; urgency=low
+
+  * New upstream release
+  * finds QT's moc, gets bug closing syntax right (Closes: #250000)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 12 Aug 2004 09:21:32 -0400
+
+cmake (2.0.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 23 Jun 2004 13:51:38 -0400
+
+cmake (2.0.1-1) unstable; urgency=low
+
+  * New upstream release with soname and soversion support
+  * find QT's moc (Closes: 250000)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon,  7 Jun 2004 22:08:50 -0400
+
+cmake (1.8.2.1-1) unstable; urgency=low
+
+  * From CVS to pick up soname and soversion support
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 26 Nov 2003 21:46:54 -0500
+
+cmake (1.8.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Add Gavin Baker's Take II on adding versioning support for shared libraries
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun,  9 Nov 2003 09:43:02 -0500
+
+cmake (1.6.7-2) unstable; urgency=low
+
+  * Add Gavin Baker's Take II on adding versioning support for shared libraries
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 23 Jun 2003 13:39:03 -0400
+
+cmake (1.6.7-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 23 Jun 2003 13:06:46 -0400
+
+cmake (1.6.5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 24 Feb 2003 11:25:58 -0500
+
+cmake (1.6.4-1) unstable; urgency=low
+
+  * New upstream release, move up to tcl8.4
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 14 Feb 2003 16:06:12 -0500
+
+cmake (1.4.7-1) unstable; urgency=low
+
+  * New upstream release
+  * Build without dart-client network submission (Closes: #175579)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 06 Jan 2003 19:02:36 -0500
+
+cmake (1.4.6-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 24 Oct 2002 21:19:47 -0400
+
+cmake (1.4.5-2) unstable; urgency=low
+
+  * Don't put man page in /usr/man (Closes: #163901)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 17 Oct 2002 17:43:22 -0400
+
+cmake (1.4.5-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 20 Sep 2002 23:33:49 -0400
+
+cmake (1.4.3-3) unstable; urgency=low
+
+  * Build with Dart, build in separate Build directory to make cleanup easier
+  * New upstream man page
+  * CMakeSetup no longer exists upstream, Debian menu now refers to ccmake
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Tue,  6 Aug 2002 19:05:05 -0400
+
+cmake (1.4.3-2) unstable; urgency=low
+
+  * Oh no, not again.
+  * Use -ffunction-sections on parisc64 (closes: #155366)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat,  3 Aug 2002 21:45:37 -0400
+
+cmake (1.4.3-1) unstable; urgency=low
+
+  * New upstream. (Closes: #155296)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat,  3 Aug 2002 00:02:18 -0400
+
+cmake (1.2-2) unstable; urgency=low
+
+  * Use -ffunction-sections on parisc64 (closes: #133696)
+
+ -- Maitland Bottoms <bottoms@sarti.debian.org>  Thu, 14 Feb 2002 18:36:25 +0000
+
+cmake (1.2-1) unstable; urgency=low
+
+  * New upstream.
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu,  9 Jan 2002 17:20:12 -0500
+
+cmake (1.0-1) unstable; urgency=low
+
+  * Newer upstream. (Need to keep up with VTK 4 build needs)
+  * Patched support for DESTDIR in install targets
+  * Patched option to disable use of -rpath using CMAKE_SKIP_RPATH
+  * include cmake-mode.el
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu,  9 Jan 2002 17:20:12 -0500
+
+cmake (0.98-1) unstable; urgency=low
+
+  * Newer upstream, includes curses interface: ccmake
+  * Patched to support make install DESTDIR=foo
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 17 Dec 2001 19:54:32 -0500
+
+cmake (0.96-1) unstable; urgency=low
+
+  * Initial Release.
+    (Closes: #121610)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 28 Nov 2001 08:45:22 -0500
+
+
+cmake (2.0.5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed,  2 Mar 2005 09:22:44 -0500
+
+cmake (2.0.3-1) unstable; urgency=low
+
+  * New upstream release
+  * finds QT's moc, gets bug closing syntax right (Closes: #250000)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 12 Aug 2004 09:21:32 -0400
+
+cmake (2.0.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 23 Jun 2004 13:51:38 -0400
+
+cmake (2.0.1-1) unstable; urgency=low
+
+  * New upstream release with soname and soversion support
+  * find QT's moc (Closes: 250000)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon,  7 Jun 2004 22:08:50 -0400
+
+cmake (1.8.2.1-1) unstable; urgency=low
+
+  * From CVS to pick up soname and soversion support
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 26 Nov 2003 21:46:54 -0500
+
+cmake (1.8.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Add Gavin Baker's Take II on adding versioning support for shared libraries
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sun,  9 Nov 2003 09:43:02 -0500
+
+cmake (1.6.7-2) unstable; urgency=low
+
+  * Add Gavin Baker's Take II on adding versioning support for shared libraries
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 23 Jun 2003 13:39:03 -0400
+
+cmake (1.6.7-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 23 Jun 2003 13:06:46 -0400
+
+cmake (1.6.5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 24 Feb 2003 11:25:58 -0500
+
+cmake (1.6.4-1) unstable; urgency=low
+
+  * New upstream release, move up to tcl8.4
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 14 Feb 2003 16:06:12 -0500
+
+cmake (1.4.7-1) unstable; urgency=low
+
+  * New upstream release
+  * Build without dart-client network submission (Closes: #175579)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 06 Jan 2003 19:02:36 -0500
+
+cmake (1.4.6-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 24 Oct 2002 21:19:47 -0400
+
+cmake (1.4.5-2) unstable; urgency=low
+
+  * Don't put man page in /usr/man (Closes: #163901)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu, 17 Oct 2002 17:43:22 -0400
+
+cmake (1.4.5-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Fri, 20 Sep 2002 23:33:49 -0400
+
+cmake (1.4.3-3) unstable; urgency=low
+
+  * Build with Dart, build in separate Build directory to make cleanup easier
+  * New upstream man page
+  * CMakeSetup no longer exists upstream, Debian menu now refers to ccmake
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Tue,  6 Aug 2002 19:05:05 -0400
+
+cmake (1.4.3-2) unstable; urgency=low
+
+  * Oh no, not again.
+  * Use -ffunction-sections on parisc64 (closes: #155366)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat,  3 Aug 2002 21:45:37 -0400
+
+cmake (1.4.3-1) unstable; urgency=low
+
+  * New upstream. (Closes: #155296)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Sat,  3 Aug 2002 00:02:18 -0400
+
+cmake (1.2-2) unstable; urgency=low
+
+  * Use -ffunction-sections on parisc64 (closes: #133696)
+
+ -- Maitland Bottoms <bottoms@sarti.debian.org>  Thu, 14 Feb 2002 18:36:25 +0000
+
+cmake (1.2-1) unstable; urgency=low
+
+  * New upstream.
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu,  9 Jan 2002 17:20:12 -0500
+
+cmake (1.0-1) unstable; urgency=low
+
+  * Newer upstream. (Need to keep up with VTK 4 build needs)
+  * Patched support for DESTDIR in install targets
+  * Patched option to disable use of -rpath using CMAKE_SKIP_RPATH
+  * include cmake-mode.el
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Thu,  9 Jan 2002 17:20:12 -0500
+
+cmake (0.98-1) unstable; urgency=low
+
+  * Newer upstream, includes curses interface: ccmake
+  * Patched to support make install DESTDIR=foo
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Mon, 17 Dec 2001 19:54:32 -0500
+
+cmake (0.96-1) unstable; urgency=low
+
+  * Initial Release.
+    (Closes: #121610)
+
+ -- A. Maitland Bottoms <bottoms@debian.org>  Wed, 28 Nov 2001 08:45:22 -0500
+
+

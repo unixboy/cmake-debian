@@ -1,0 +1,18 @@
+--- cmake-2.6.0-RC-8.orig/Source/cmFindLibraryCommand.cxx
++++ cmake-2.6.0-RC-8/Source/cmFindLibraryCommand.cxx
+@@ -162,6 +162,7 @@
+ 
+ void cmFindLibraryCommand::AddLib64Paths()
+ {  
++#if 0 /* should not be done on Debian, just make it do nothing */
+   if(!this->Makefile->GetLocalGenerator()->GetGlobalGenerator()->
+      GetLanguageEnabled("C"))
+     {
+@@ -209,6 +210,7 @@
+     {
+     this->SearchPaths = path64;
+     }
++#endif
+ }
+ 
+ std::string cmFindLibraryCommand::FindLibrary(const char* name)
