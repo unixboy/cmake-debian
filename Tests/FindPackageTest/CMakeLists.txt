@@ -27,6 +27,7 @@ LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 FIND_PACKAGE(VersionTestA 1)
 FIND_PACKAGE(VersionTestB 1.2)
 FIND_PACKAGE(VersionTestC 1.2.3)
+FIND_PACKAGE(VersionTestD 1.2.3.4)
 
 #-----------------------------------------------------------------------------
 
@@ -36,6 +37,7 @@ FIND_PACKAGE(VersionTestC 1.2.3)
 SET(PACKAGES
   foo Foo Bar TFramework Tframework TApp Tapp Special
   VersionedA VersionedB
+  wibbleA wibbleB
   )
 FOREACH(p ${PACKAGES})
   SET(${p}_DIR "" CACHE FILEPATH "Wipe out find results for testing." FORCE)
@@ -58,6 +60,11 @@ FIND_PACKAGE(Special NAMES Suffix SuffixTest PATH_SUFFIXES test)
 FIND_PACKAGE(VersionedA 2 NAMES zot)
 FIND_PACKAGE(VersionedB 3.1 EXACT NAMES zot)
 
+# HINTS should override the system but PATHS should not
+LIST(INSERT CMAKE_SYSTEM_PREFIX_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/A")
+FIND_PACKAGE(wibbleA NAMES wibble PATHS B)
+FIND_PACKAGE(wibbleB NAMES wibble HINTS B)
+
 # Expected locations at which packages should be found.
 SET(foo_EXPECTED "lib/foo-1.2/foo-config.cmake")
 SET(Foo_EXPECTED "lib/foo-1.2/CMake/FooConfig.cmake")
@@ -73,6 +80,8 @@ SET(Tapp_EXPECTED
   "TApp.app/Contents/Resources/cmake/tapp-config.cmake")
 SET(VersionedA_EXPECTED "lib/zot-2.0/zot-config.cmake")
 SET(VersionedB_EXPECTED "lib/zot-3.1/zot-config.cmake")
+SET(wibbleA_EXPECTED "A/wibble-config.cmake")
+SET(wibbleB_EXPECTED "B/wibble-config.cmake")
 
 # Check the results.
 FOREACH(p ${PACKAGES})
@@ -136,3 +145,20 @@ IF(NOT "${Special_VERSION_MINOR}" STREQUAL "2")
   MESSAGE(SEND_ERROR
     "Package Special is minor version [${Special_VERSION_MINOR}], not [2]")
 ENDIF(NOT "${Special_VERSION_MINOR}" STREQUAL "2")
+
+# Test version number comparison.
+IF(NOT "1.2.3.4" VERSION_LESS "1.2.3.5")
+  MESSAGE(SEND_ERROR "1.2.3.4 VERSION_LESS 1.2.3.5 is not true!")
+ENDIF()
+IF(NOT "1.2" VERSION_LESS "1.10")
+  MESSAGE(SEND_ERROR "1.2 VERSION_LESS 1.10 is not true!")
+ENDIF()
+IF(NOT "1.02" VERSION_GREATER "1.1")
+  MESSAGE(SEND_ERROR "1.02 VERSION_GREATER 1.1 is not true!")
+ENDIF()
+IF("1.2.3" VERSION_GREATER "1.2.3.4")
+  MESSAGE(SEND_ERROR "1.2.3 VERSION_GREATER 1.2.3.4 is not false!")
+ENDIF()
+IF(NOT "1.2" VERSION_EQUAL "1.2.0.0")
+  MESSAGE(SEND_ERROR "1.2 VERSION_EQUAL 1.2.0.0 is not true!")
+ENDIF()

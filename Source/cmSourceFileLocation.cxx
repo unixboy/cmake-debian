@@ -3,8 +3,8 @@
   Program:   CMake - Cross-Platform Makefile Generator
   Module:    $RCSfile: cmSourceFileLocation.cxx,v $
   Language:  C++
-  Date:      $Date: 2008-03-18 14:23:54 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2008-08-06 21:04:19 $
+  Version:   $Revision: 1.3.2.4 $
 
   Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
   See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -17,6 +17,8 @@
 #include "cmSourceFileLocation.h"
 
 #include "cmMakefile.h"
+#include "cmLocalGenerator.h"
+#include "cmGlobalGenerator.h"
 #include "cmSystemTools.h"
 
 //----------------------------------------------------------------------------
@@ -89,16 +91,52 @@ void cmSourceFileLocation::UpdateExtension(const char* name)
   std::string ext = cmSystemTools::GetFilenameLastExtension(name);
   if(!ext.empty()) { ext = ext.substr(1); }
 
-  // TODO: Let enable-language specify extensions for each language.
-  cmMakefile const* mf = this->Makefile;
+  // The global generator checks extensions of enabled languages.
+  cmGlobalGenerator* gg =
+    this->Makefile->GetLocalGenerator()->GetGlobalGenerator();
+  cmMakefile* mf = this->Makefile;
   const std::vector<std::string>& srcExts = mf->GetSourceExtensions();
   const std::vector<std::string>& hdrExts = mf->GetHeaderExtensions();
-  if(std::find(srcExts.begin(), srcExts.end(), ext) != srcExts.end() ||
+  if(gg->GetLanguageFromExtension(ext.c_str()) ||
+     std::find(srcExts.begin(), srcExts.end(), ext) != srcExts.end() ||
      std::find(hdrExts.begin(), hdrExts.end(), ext) != hdrExts.end())
     {
     // This is a known extension.  Use the given filename with extension.
     this->Name = cmSystemTools::GetFilenameName(name);
     this->AmbiguousExtension = false;
+    }
+  else
+    {
+    // This is not a known extension.  See if the file exists on disk as
+    // named.
+    std::string tryPath;
+    if(this->AmbiguousDirectory)
+      {
+      // Check the source tree only because a file in the build tree should
+      // be specified by full path at least once.  We do not want this
+      // detection to depend on whether the project has already been built.
+      tryPath = this->Makefile->GetCurrentDirectory();
+      tryPath += "/";
+      }
+    if(!this->Directory.empty())
+      {
+      tryPath += this->Directory;
+      tryPath += "/";
+      }
+    tryPath += this->Name;
+    if(cmSystemTools::FileExists(tryPath.c_str(), true))
+      {
+      // We found a source file named by the user on disk.  Trust it's
+      // extension.
+      this->Name = cmSystemTools::GetFilenameName(name);
+      this->AmbiguousExtension = false;
+
+      // If the directory was ambiguous, it isn't anymore.
+      if(this->AmbiguousDirectory)
+        {
+        this->DirectoryUseSource();
+        }
+      }
     }
 }
 
@@ -114,37 +152,75 @@ void cmSourceFileLocation::UpdateDirectory(const char* name)
 }
 
 //----------------------------------------------------------------------------
+bool
+cmSourceFileLocation
+::MatchesAmbiguousExtension(cmSourceFileLocation const& loc) const
+{
+  // This location's extension is not ambiguous but loc's extension
+  // is.  See if the names match as-is.
+  if(this->Name == loc.Name)
+    {
+    return true;
+    }
+
+  // Check if loc's name could possibly be extended to our name by
+  // adding an extension.
+  if(!(this->Name.size() > loc.Name.size() &&
+       this->Name.substr(0, loc.Name.size()) == loc.Name &&
+       this->Name[loc.Name.size()] == '.'))
+    {
+    return false;
+    }
+
+  // Only a fixed set of extensions will be tried to match a file on
+  // disk.  One of these must match if loc refers to this source file.
+  std::string ext = this->Name.substr(loc.Name.size()+1);
+  cmMakefile* mf = this->Makefile;
+  const std::vector<std::string>& srcExts = mf->GetSourceExtensions();
+  if(std::find(srcExts.begin(), srcExts.end(), ext) != srcExts.end())
+    {
+    return true;
+    }
+  const std::vector<std::string>& hdrExts = mf->GetHeaderExtensions();
+  if(std::find(hdrExts.begin(), hdrExts.end(), ext) != hdrExts.end())
+    {
+    return true;
+    }
+  return false;
+}
+
+//----------------------------------------------------------------------------
 bool cmSourceFileLocation::Matches(cmSourceFileLocation const& loc)
 {
-  if(this->AmbiguousExtension || loc.AmbiguousExtension)
+  if(this->AmbiguousExtension && loc.AmbiguousExtension)
     {
-    // Need to compare without the file extension.
-    std::string thisName;
-    if(this->AmbiguousExtension)
+    // Both extensions are ambiguous.  Since only the old fixed set of
+    // extensions will be tried, the names must match at this point to
+    // be the same file.
+    if(this->Name != loc.Name)
       {
-      thisName = this->Name;
+      return false;
       }
-    else
+    }
+  else if(this->AmbiguousExtension)
+    {
+    // Only "this" extension is ambiguous.
+    if(!loc.MatchesAmbiguousExtension(*this))
       {
-      thisName = cmSystemTools::GetFilenameWithoutLastExtension(this->Name);
+      return false;
       }
-    std::string locName;
-    if(loc.AmbiguousExtension)
-      {
-      locName = loc.Name;
-      }
-    else
-      {
-      locName = cmSystemTools::GetFilenameWithoutLastExtension(loc.Name);
-      }
-    if(thisName != locName)
+    }
+  else if(loc.AmbiguousExtension)
+    {
+    // Only "loc" extension is ambiguous.
+    if(!this->MatchesAmbiguousExtension(loc))
       {
       return false;
       }
     }
   else
     {
-    // Compare with extension.
+    // Neither extension is ambiguous.
     if(this->Name != loc.Name)
       {
       return false;

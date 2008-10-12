@@ -3,8 +3,8 @@
   Program:   CMake - Cross-Platform Makefile Generator
   Module:    $RCSfile: cmXCodeObject.cxx,v $
   Language:  C++
-  Date:      $Date: 2007-08-14 15:45:14 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2008-09-03 13:43:18 $
+  Version:   $Revision: 1.24.2.2 $
 
   Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
   See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -68,6 +68,10 @@ cmXCodeObject::cmXCodeObject(PBXType ptype, Type type)
       {
       this->Id += "0";
       }
+    }
+  if(this->Id.size() > 24)
+    {
+    this->Id = this->Id.substr(0,24);
     }
   this->TypeValue = type;
   if(this->TypeValue == OBJECT)
@@ -147,7 +151,9 @@ void cmXCodeObject::Print(std::ostream& out)
 
         if(j->second->TypeValue == STRING)
           {
-          out << j->first << " = " << j->second->String << ";";
+          out << j->first << " = ";
+          j->second->PrintString(out);
+          out << ";";
           }
         else if(j->second->TypeValue == OBJECT_LIST)
           {
@@ -156,7 +162,8 @@ void cmXCodeObject::Print(std::ostream& out)
             {
             if(j->second->List[k]->TypeValue == STRING)
               {
-              out << j->second->List[k]->String << ", ";
+              j->second->List[k]->PrintString(out);
+              out << ", ";
               }
             else
               {
@@ -188,7 +195,9 @@ void cmXCodeObject::Print(std::ostream& out)
       }
     else if(object->TypeValue == STRING)
       {
-      out << i->first << " = " << object->String << ";" << separator;
+      out << i->first << " = ";
+      object->PrintString(out);
+      out << ";" << separator;
       }
     else
       {
@@ -226,29 +235,32 @@ void cmXCodeObject::CopyAttributes(cmXCodeObject* copy)
 }
 
 //----------------------------------------------------------------------------
+void cmXCodeObject::PrintString(std::ostream& os) const
+{
+  // The string needs to be quoted if it contains any characters
+  // considered special by the Xcode project file parser.
+  bool needQuote =
+    (this->String.empty() ||
+     this->String.find_first_of(" <>.+-=@") != this->String.npos);
+  const char* quote = needQuote? "\"" : "";
+
+  // Print the string, quoted and escaped as necessary.
+  os << quote;
+  for(std::string::const_iterator i = this->String.begin();
+      i != this->String.end(); ++i)
+    {
+    if(*i == '"')
+      {
+      // Escape double-quotes.
+      os << '\\';
+      }
+    os << *i;
+    }
+  os << quote;
+}
+
+//----------------------------------------------------------------------------
 void cmXCodeObject::SetString(const char* s)
 {
-  std::string ss = s;
-  if(ss.size() == 0)
-    {
-    this->String = "\"\"";
-    return;
-    }
-  // escape quotes
-  cmSystemTools::ReplaceString(ss, "\"", "\\\"");
-  bool needQuote = false;
-  this->String = "";
-  if(ss.find_first_of(" <>.+-=@") != ss.npos)
-    {
-    needQuote = true;
-    }
-  if(needQuote)
-    {
-    this->String = "\"";
-    }
-  this->String += ss;
-  if(needQuote)
-    {
-    this->String += "\"";
-    }
+  this->String = s;
 }
