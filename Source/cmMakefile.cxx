@@ -3,8 +3,8 @@
   Program:   CMake - Cross-Platform Makefile Generator
   Module:    $RCSfile: cmMakefile.cxx,v $
   Language:  C++
-  Date:      $Date: 2008-05-01 16:35:39 $
-  Version:   $Revision: 1.463.2.3 $
+  Date:      $Date: 2008-09-03 13:43:17 $
+  Version:   $Revision: 1.463.2.8 $
 
   Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
   See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -395,6 +395,21 @@ bool cmMakefile::ExecuteCommand(const cmListFileFunction& lff,
     if(pcmd->GetEnabled() && !cmSystemTools::GetFatalErrorOccured()  &&
        (!this->GetCMakeInstance()->GetScriptMode() || pcmd->IsScriptable()))
       {
+      // if trace is one, print out invoke information
+      if(this->GetCMakeInstance()->GetTrace())
+        {
+        cmOStringStream msg;
+        msg << lff.FilePath << "(" << lff.Line << "):  ";
+        msg << lff.Name << "(";
+        for(std::vector<cmListFileArgument>::const_iterator i = 
+              lff.Arguments.begin(); i != lff.Arguments.end(); ++i)
+          {
+          msg << i->Value;
+          msg << " ";
+          }
+        msg << ")";
+        cmSystemTools::Message(msg.str().c_str());
+        }
       // Try invoking the command.
       if(!pcmd->InvokeInitialPass(lff.Arguments,status) ||
          status.GetNestedError())
@@ -487,13 +502,14 @@ bool cmMakefile::ReadListFile(const char* filename_in,
       {
       this->cmCurrentListFile = filename;
       }
-    // loop over current function blockers and record them
-    std::list<cmFunctionBlocker *>::iterator pos;
-    for (pos = this->FunctionBlockers.begin();
-         pos != this->FunctionBlockers.end(); ++pos)
-      {
-      originalBlockers.insert(*pos);
-      }
+    }
+
+  // loop over current function blockers and record them
+  for (std::list<cmFunctionBlocker *>::iterator pos 
+        = this->FunctionBlockers.begin();
+       pos != this->FunctionBlockers.end(); ++pos)
+    {
+    originalBlockers.insert(*pos);
     }
 
   // Now read the input file
@@ -542,7 +558,7 @@ bool cmMakefile::ReadListFile(const char* filename_in,
     }
   // add this list file to the list of dependencies
   this->ListFiles.push_back( filenametoread);
-  bool endScopeNicely = filename? true: false;
+  bool endScopeNicely = true;
   const size_t numberFunctions = cacheFile.Functions.size();
   for(size_t i =0; i < numberFunctions; ++i)
     {
@@ -561,8 +577,8 @@ bool cmMakefile::ReadListFile(const char* filename_in,
   if (endScopeNicely)
     {
     // loop over all function blockers to see if any block this command
-    std::list<cmFunctionBlocker *>::iterator pos;
-    for (pos = this->FunctionBlockers.begin();
+    for (std::list<cmFunctionBlocker *>::iterator pos 
+         = this->FunctionBlockers.begin();
          pos != this->FunctionBlockers.end(); ++pos)
       {
       // if this blocker was not in the original then send a
@@ -720,6 +736,7 @@ cmMakefile::AddCustomCommandToTarget(const char* target,
     std::vector<std::string> no_output;
     cmCustomCommand cc(no_output, depends, commandLines, comment, workingDir);
     cc.SetEscapeOldStyle(escapeOldStyle);
+    cc.SetEscapeAllowMakeVars(true);
     switch(type)
       {
       case cmTarget::PRE_BUILD:
@@ -833,6 +850,7 @@ cmMakefile::AddCustomCommandToOutput(const std::vector<std::string>& outputs,
       new cmCustomCommand(outputs, depends2, commandLines,
                           comment, workingDir);
     cc->SetEscapeOldStyle(escapeOldStyle);
+    cc->SetEscapeAllowMakeVars(true);
     file->SetCustomCommand(cc);
     }
 }
@@ -1015,12 +1033,21 @@ void cmMakefile::AddDefineFlag(const char* flag)
     return;
     }
 
+  // Update the string used for the old DEFINITIONS property.
+  this->AddDefineFlag(flag, this->DefineFlagsOrig);
+
   // If this is really a definition, update COMPILE_DEFINITIONS.
   if(this->ParseDefineFlag(flag, false))
     {
     return;
     }
 
+  // Add this flag that does not look like a definition.
+  this->AddDefineFlag(flag, this->DefineFlags);
+}
+
+void cmMakefile::AddDefineFlag(const char* flag, std::string& dflags)
+{
   // remove any \n\r
   std::string ret = flag;
   std::string::size_type pos = 0;
@@ -1036,8 +1063,8 @@ void cmMakefile::AddDefineFlag(const char* flag)
     pos++;
     }
 
-  this->DefineFlags += " ";
-  this->DefineFlags += ret;
+  dflags += " ";
+  dflags += ret;
 }
 
 
@@ -1050,22 +1077,33 @@ void cmMakefile::RemoveDefineFlag(const char* flag)
     return;
     }
 
+  // Update the string used for the old DEFINITIONS property.
+  this->RemoveDefineFlag(flag, len, this->DefineFlagsOrig);
+
   // If this is really a definition, update COMPILE_DEFINITIONS.
   if(this->ParseDefineFlag(flag, true))
     {
     return;
     }
 
+  // Remove this flag that does not look like a definition.
+  this->RemoveDefineFlag(flag, len, this->DefineFlags);
+}
+
+void cmMakefile::RemoveDefineFlag(const char* flag,
+                                  std::string::size_type len,
+                                  std::string& dflags)
+{
   // Remove all instances of the flag that are surrounded by
   // whitespace or the beginning/end of the string.
-  for(std::string::size_type lpos = this->DefineFlags.find(flag, 0);
-      lpos != std::string::npos; lpos = this->DefineFlags.find(flag, lpos))
+  for(std::string::size_type lpos = dflags.find(flag, 0);
+      lpos != std::string::npos; lpos = dflags.find(flag, lpos))
     {
     std::string::size_type rpos = lpos + len;
-    if((lpos <= 0 || isspace(this->DefineFlags[lpos-1])) &&
-       (rpos >= this->DefineFlags.size() || isspace(this->DefineFlags[rpos])))
+    if((lpos <= 0 || isspace(dflags[lpos-1])) &&
+       (rpos >= dflags.size() || isspace(dflags[rpos])))
       {
-      this->DefineFlags.erase(lpos, len);
+      dflags.erase(lpos, len);
       }
     else
       {
@@ -1184,24 +1222,27 @@ void cmMakefile::AddLinkLibraryForTarget(const char *target,
     if(tgt)
       {
       // CMake versions below 2.4 allowed linking to modules.
-      bool allowModules = this->NeedBackwardsCompatibility(2,3);
+      bool allowModules = this->NeedBackwardsCompatibility(2,2);
       // if it is not a static or shared library then you can not link to it
       if(!((tgt->GetType() == cmTarget::STATIC_LIBRARY) ||
            (tgt->GetType() == cmTarget::SHARED_LIBRARY) ||
            tgt->IsExecutableWithExports()))
         {
         cmOStringStream e;
-        e << "Attempt to add link target " << lib << " of type: "
+        e << "Target \"" << lib << "\" of type "
           << cmTarget::TargetTypeNames[static_cast<int>(tgt->GetType())]
-          << "\nto target " << target
-          << ". One can only link to STATIC or SHARED libraries, or "
+          << " may not be linked into another target.  "
+          << "One may link only to STATIC or SHARED libraries, or "
           << "to executables with the ENABLE_EXPORTS property set.";
         // in older versions of cmake linking to modules was allowed
         if( tgt->GetType() == cmTarget::MODULE_LIBRARY )
           {
-          e <<
-            "\nTo allow linking of modules set "
-            "CMAKE_BACKWARDS_COMPATIBILITY to 2.2 or lower\n";
+          e << "\n"
+            << "If you are developing a new project, re-organize it to avoid "
+            << "linking to modules.  "
+            << "If you are just trying to build an existing project, "
+            << "set CMAKE_BACKWARDS_COMPATIBILITY to 2.2 or lower to allow "
+            << "linking to modules.";
           }
         // if no modules are allowed then this is always an error
         if(!allowModules ||
@@ -1209,7 +1250,7 @@ void cmMakefile::AddLinkLibraryForTarget(const char *target,
            // still an error
            (allowModules && tgt->GetType() != cmTarget::MODULE_LIBRARY))
           {
-          cmSystemTools::Error(e.str().c_str());
+          this->IssueMessage(cmake::FATAL_ERROR, e.str().c_str());
           }
         }
       }
@@ -1293,6 +1334,12 @@ void cmMakefile::InitializeFromParent()
 
   // define flags
   this->DefineFlags = parent->DefineFlags;
+
+  // Include transform property.  There is no per-config version.
+  {
+  const char* prop = "IMPLICIT_DEPENDS_INCLUDE_TRANSFORM";
+  this->SetProperty(prop, parent->GetProperty(prop));
+  }
 
   // compile definitions property and per-config versions
   {
@@ -2899,8 +2946,10 @@ const char *cmMakefile::GetProperty(const char* prop,
   output = "";
   if (!strcmp("PARENT_DIRECTORY",prop))
     {
-    output = this->LocalGenerator->GetParent()
-      ->GetMakefile()->GetStartDirectory();
+    if(cmLocalGenerator* plg = this->LocalGenerator->GetParent())
+      {
+      output = plg->GetMakefile()->GetStartDirectory();
+      }
     return output.c_str();
     }
   else if (!strcmp("INCLUDE_REGULAR_EXPRESSION",prop) )
@@ -2945,8 +2994,8 @@ const char *cmMakefile::GetProperty(const char* prop,
     return output.c_str();
     }
   else if (!strcmp("DEFINITIONS",prop))
-    {
-    output = this->GetDefineFlags();
+    { 
+    output += this->DefineFlagsOrig;
     return output.c_str();
     }
   else if (!strcmp("INCLUDE_DIRECTORIES",prop) )
@@ -3167,7 +3216,7 @@ void cmMakefile::DefineProperties(cmake *cm)
      "in your CMake scripts. It returns a list of what list files "
      "are currently being processed, in order. So if one listfile "
      "does an INCLUDE command then that is effectively pushing "
-     "the included listfile onto the stack.");
+     "the included listfile onto the stack.", false);
 
   cm->DefineProperty
     ("TEST_INCLUDE_FILE", cmProperty::DIRECTORY,
@@ -3209,6 +3258,26 @@ void cmMakefile::DefineProperties(cmake *cm)
      "in the directory's parent.\n");
 
   cm->DefineProperty
+    ("IMPLICIT_DEPENDS_INCLUDE_TRANSFORM", cmProperty::DIRECTORY,
+     "Specify #include line transforms for dependencies in a directory.",
+     "This property specifies rules to transform macro-like #include lines "
+     "during implicit dependency scanning of C and C++ source files.  "
+     "The list of rules must be semicolon-separated with each entry of "
+     "the form \"A_MACRO(%)=value-with-%\" (the % must be literal).  "
+     "During dependency scanning occurrences of A_MACRO(...) on #include "
+     "lines will be replaced by the value given with the macro argument "
+     "substituted for '%'.  For example, the entry\n"
+     "  MYDIR(%)=<mydir/%>\n"
+     "will convert lines of the form\n"
+     "  #include MYDIR(myheader.h)\n"
+     "to\n"
+     "  #include <mydir/myheader.h>\n"
+     "allowing the dependency to be followed.\n"
+     "This property applies to sources in all targets within a directory.  "
+     "The property value is initialized in each directory by its value "
+     "in the directory's parent.");
+
+  cm->DefineProperty
     ("EXCLUDE_FROM_ALL", cmProperty::DIRECTORY,
      "Exclude the directory from the all target of its parent.",
      "A property on a directory that indicates if its targets are excluded "
@@ -3216,6 +3285,64 @@ void cmMakefile::DefineProperties(cmake *cm)
      "for example typing make will cause the targets to be built. "
      "The same concept applies to the default build of other generators.",
      false);
+
+  cm->DefineProperty
+    ("PARENT_DIRECTORY", cmProperty::DIRECTORY,
+     "Source directory that added current subdirectory.",
+     "This read-only property specifies the source directory that "
+     "added the current source directory as a subdirectory of the build.  "
+     "In the top-level directory the value is the empty-string.", false);
+
+  cm->DefineProperty
+    ("INCLUDE_REGULAR_EXPRESSION", cmProperty::DIRECTORY,
+     "Include file scanning regular expression.",
+     "This read-only property specifies the regular expression used "
+     "during dependency scanning to match include files that should "
+     "be followed.  See the include_regular_expression command.", false);
+
+  cm->DefineProperty
+    ("VARIABLES", cmProperty::DIRECTORY,
+     "List of variables defined in the current directory.",
+     "This read-only property specifies the list of CMake variables "
+     "currently defined.  "
+     "It is intended for debugging purposes.", false);
+
+  cm->DefineProperty
+    ("CACHE_VARIABLES", cmProperty::DIRECTORY,
+     "List of cache variables available in the current directory.",
+     "This read-only property specifies the list of CMake cache "
+     "variables currently defined.  "
+     "It is intended for debugging purposes.", false);
+
+  cm->DefineProperty
+    ("MACROS", cmProperty::DIRECTORY,
+     "List of macro commands available in the current directory.",
+     "This read-only property specifies the list of CMake macros "
+     "currently defined.  "
+     "It is intended for debugging purposes.  "
+     "See the macro command.", false);
+
+  cm->DefineProperty
+    ("DEFINITIONS", cmProperty::DIRECTORY,
+     "For CMake 2.4 compatibility only.  Use COMPILE_DEFINITIONS instead.",
+     "This read-only property specifies the list of flags given so far "
+     "to the add_definitions command.  "
+     "It is intended for debugging purposes.  "
+     "Use the COMPILE_DEFINITIONS instead.", false);
+
+  cm->DefineProperty
+    ("INCLUDE_DIRECTORIES", cmProperty::DIRECTORY,
+     "List of preprocessor include file search directories.",
+     "This read-only property specifies the list of directories given "
+     "so far to the include_directories command.  "
+     "It is intended for debugging purposes.", false);
+
+  cm->DefineProperty
+    ("LINK_DIRECTORIES", cmProperty::DIRECTORY,
+     "List of linker search directories.",
+     "This read-only property specifies the list of directories given "
+     "so far to the link_directories command.  "
+     "It is intended for debugging purposes.", false);
 }
 
 //----------------------------------------------------------------------------
@@ -3336,50 +3463,59 @@ bool cmMakefile::EnforceUniqueName(std::string const& name, std::string& msg,
   return true;
 }
 
-cmPolicies::PolicyStatus cmMakefile
-::GetPolicyStatus(cmPolicies::PolicyID id)
+//----------------------------------------------------------------------------
+cmPolicies::PolicyStatus
+cmMakefile::GetPolicyStatus(cmPolicies::PolicyID id)
 {
-  cmPolicies::PolicyStatus status = cmPolicies::REQUIRED_IF_USED;
-  PolicyMap::iterator mappos;
-  int vecpos;
-  bool done = false;
+  // Get the current setting of the policy.
+  cmPolicies::PolicyStatus cur = this->GetPolicyStatusInternal(id);
 
-  // check our policy stack first
-  for (vecpos = static_cast<int>(this->PolicyStack.size()) - 1; 
-       vecpos >= 0 && !done; vecpos--)
-  {
-    mappos = this->PolicyStack[vecpos].find(id);
-    if (mappos != this->PolicyStack[vecpos].end())
+  // If the policy is required to be set to NEW but is not, ignore the
+  // current setting and tell the caller.
+  if(cur != cmPolicies::NEW)
     {
-      status = mappos->second;
-      done = true;
+    if(cur == cmPolicies::REQUIRED_ALWAYS ||
+       cur == cmPolicies::REQUIRED_IF_USED)
+      {
+      return cur;
+      }
+    cmPolicies::PolicyStatus def = this->GetPolicies()->GetPolicyStatus(id);
+    if(def == cmPolicies::REQUIRED_ALWAYS ||
+       def == cmPolicies::REQUIRED_IF_USED)
+      {
+      return def;
+      }
     }
-  }
-  
-  // if not found then 
-  if (!done)
-  {
-    // pass the buck to our parent if we have one
-    if (this->LocalGenerator->GetParent())
+
+  // The current setting is okay.
+  return cur;
+}
+
+//----------------------------------------------------------------------------
+cmPolicies::PolicyStatus
+cmMakefile::GetPolicyStatusInternal(cmPolicies::PolicyID id)
+{
+  // Is the policy set in our stack?
+  for(std::vector<PolicyMap>::reverse_iterator
+        psi = this->PolicyStack.rbegin();
+      psi != this->PolicyStack.rend(); ++psi)
     {
-      cmMakefile *parent = 
-        this->LocalGenerator->GetParent()->GetMakefile();
-      return parent->GetPolicyStatus(id);
+    PolicyMap::const_iterator pse = psi->find(id);
+    if(pse != psi->end())
+      {
+      return pse->second;
+      }
     }
-    // otherwise use the default
-    else
+
+  // If we have a parent directory, recurse up to it.
+  if(this->LocalGenerator->GetParent())
     {
-      status = this->GetPolicies()->GetPolicyStatus(id);
+    cmMakefile* parent = this->LocalGenerator->GetParent()->GetMakefile();
+    return parent->GetPolicyStatusInternal(id);
     }
-  }
-  
-  // warn if we see a REQUIRED_IF_USED above a OLD or WARN
-  if (!this->GetPolicies()->IsValidUsedPolicyStatus(id,status))
-  {
-    return cmPolicies::REQUIRED_IF_USED;
-  }
-  
-  return status;
+
+  // The policy is not set.  Use the default for this CMake version.
+  return this->GetPolicies()->GetPolicyStatus(id);
 }
 
 bool cmMakefile::SetPolicy(const char *id, 
@@ -3396,37 +3532,44 @@ bool cmMakefile::SetPolicy(const char *id,
   return this->SetPolicy(pid,status);
 }
 
-bool cmMakefile::SetPolicy(cmPolicies::PolicyID id, 
+//----------------------------------------------------------------------------
+bool cmMakefile::SetPolicy(cmPolicies::PolicyID id,
                            cmPolicies::PolicyStatus status)
 {
-  // setting a REQUIRED_ALWAYS policy to WARN or OLD is an insta error
-  if (this->GetPolicies()->
-      IsValidPolicyStatus(id,status))
-  {
-    this->PolicyStack.back()[id] = status;
+  // A REQUIRED_ALWAYS policy may be set only to NEW.
+  if(status != cmPolicies::NEW &&
+     this->GetPolicies()->GetPolicyStatus(id) ==
+     cmPolicies::REQUIRED_ALWAYS)
+    {
+    std::string msg =
+      this->GetPolicies()->GetRequiredAlwaysPolicyError(id);
+    this->IssueMessage(cmake::FATAL_ERROR, msg.c_str());
+    return false;
+    }
 
-    // Special hook for presenting compatibility variable as soon as
-    // the user requests it.
-    if(id == cmPolicies::CMP0001 &&
-       (status == cmPolicies::WARN || status == cmPolicies::OLD))
+  // Store the setting.
+  this->PolicyStack.back()[id] = status;
+
+  // Special hook for presenting compatibility variable as soon as
+  // the user requests it.
+  if(id == cmPolicies::CMP0001 &&
+     (status == cmPolicies::WARN || status == cmPolicies::OLD))
+    {
+    if(!(this->GetCacheManager()
+         ->GetCacheValue("CMAKE_BACKWARDS_COMPATIBILITY")))
       {
-      if(!(this->GetCacheManager()
-           ->GetCacheValue("CMAKE_BACKWARDS_COMPATIBILITY")))
-        {
-        // Set it to 2.4 because that is the last version where the
-        // variable had meaning.
-        this->AddCacheDefinition
-          ("CMAKE_BACKWARDS_COMPATIBILITY", "2.4",
-           "For backwards compatibility, what version of CMake "
-           "commands and "
-           "syntax should this version of CMake try to support.",
-           cmCacheManager::STRING);
-        }
+      // Set it to 2.4 because that is the last version where the
+      // variable had meaning.
+      this->AddCacheDefinition
+        ("CMAKE_BACKWARDS_COMPATIBILITY", "2.4",
+         "For backwards compatibility, what version of CMake "
+         "commands and "
+         "syntax should this version of CMake try to support.",
+         cmCacheManager::STRING);
       }
+    }
 
-    return true;
-  }
-  return false;
+  return true;
 }
 
 bool cmMakefile::PushPolicy()

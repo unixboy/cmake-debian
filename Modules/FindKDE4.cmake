@@ -9,6 +9,18 @@
 #
 # Author: Alexander Neundorf <neundorf@kde.org>
 
+# If Qt3 has already been found, fail.
+IF(QT_QT_LIBRARY)
+  IF(KDE4_FIND_REQUIRED)
+    MESSAGE( FATAL_ERROR "KDE4/Qt4 and Qt3 cannot be used together in one project.")
+  ELSE(KDE4_FIND_REQUIRED)
+    IF(NOT KDE4_FIND_QUIETLY)
+      MESSAGE( STATUS    "KDE4/Qt4 and Qt3 cannot be used together in one project.")
+    ENDIF(NOT KDE_FIND_QUIETLY)
+    RETURN()
+  ENDIF(KDE4_FIND_REQUIRED)
+ENDIF(QT_QT_LIBRARY)
+
 FILE(TO_CMAKE_PATH "$ENV{KDEDIRS}" _KDEDIRS)
 
 # when cross compiling, searching kde4-config in order to run it later on
@@ -20,15 +32,12 @@ FILE(TO_CMAKE_PATH "$ENV{KDEDIRS}" _KDEDIRS)
 FIND_PROGRAM(KDE4_KDECONFIG_EXECUTABLE NAMES kde4-config
    # the suffix must be used since KDEDIRS can be a list of directories which don't have bin/ appended
    PATH_SUFFIXES bin               
-   PATHS
+   HINTS
    ${CMAKE_INSTALL_PREFIX}
    ${_KDEDIRS}
    /opt/kde4
-   NO_DEFAULT_PATH
    ONLY_CMAKE_FIND_ROOT_PATH
    )
-
-FIND_PROGRAM(KDE4_KDECONFIG_EXECUTABLE NAMES kde4-config ONLY_CMAKE_FIND_ROOT_PATH)
 
 IF (NOT KDE4_KDECONFIG_EXECUTABLE)
    IF (KDE4_FIND_REQUIRED)
@@ -45,10 +54,13 @@ IF(NOT KDE4_DATA_DIR)
       GET_FILENAME_COMPONENT(KDE4_DATA_DIR "${KDE4_DATA_DIR}" PATH)
    ELSE(CMAKE_CROSSCOMPILING)
       # then ask kde4-config for the kde data dirs
-      EXECUTE_PROCESS(COMMAND "${KDE4_KDECONFIG_EXECUTABLE}" --path data OUTPUT_VARIABLE _data_DIR ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-      FILE(TO_CMAKE_PATH "${_data_DIR}" _data_DIR)
-      # then check the data dirs for FindKDE4Internal.cmake
-      FIND_PATH(KDE4_DATA_DIR cmake/modules/FindKDE4Internal.cmake ${_data_DIR})
+
+      IF(KDE4_KDECONFIG_EXECUTABLE)
+        EXECUTE_PROCESS(COMMAND "${KDE4_KDECONFIG_EXECUTABLE}" --path data OUTPUT_VARIABLE _data_DIR ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+        FILE(TO_CMAKE_PATH "${_data_DIR}" _data_DIR)
+        # then check the data dirs for FindKDE4Internal.cmake
+        FIND_PATH(KDE4_DATA_DIR cmake/modules/FindKDE4Internal.cmake ${_data_DIR})
+      ENDIF(KDE4_KDECONFIG_EXECUTABLE)
    ENDIF(CMAKE_CROSSCOMPILING)
 ENDIF(NOT KDE4_DATA_DIR)
 

@@ -281,6 +281,48 @@ cmPolicies::cmPolicies()
     "The NEW behavior for this policy is to correctly count empty "
     "elements in a list. ",
     2,6,0, cmPolicies::WARN);
+
+  this->DefinePolicy(
+    CMP0008, "CMP0008",
+    "Libraries linked by full-path must have a valid library file name.",
+    "In CMake 2.4 and below it is possible to write code like\n"
+    "  target_link_libraries(myexe /full/path/to/somelib)\n"
+    "where \"somelib\" is supposed to be a valid library file name "
+    "such as \"libsomelib.a\" or \"somelib.lib\".  "
+    "For Makefile generators this produces an error at build time "
+    "because the dependency on the full path cannot be found.  "
+    "For VS IDE and Xcode generators this used to work by accident because "
+    "CMake would always split off the library directory and ask the "
+    "linker to search for the library by name (-lsomelib or somelib.lib).  "
+    "Despite the failure with Makefiles, some projects have code like this "
+    "and build only with VS and/or Xcode.  "
+    "This version of CMake prefers to pass the full path directly to the "
+    "native build tool, which will fail in this case because it does "
+    "not name a valid library file."
+    "\n"
+    "This policy determines what to do with full paths that do not appear "
+    "to name a valid library file.  "
+    "The OLD behavior for this policy is to split the library name from the "
+    "path and ask the linker to search for it.  "
+    "The NEW behavior for this policy is to trust the given path and "
+    "pass it directly to the native build tool unchanged.",
+    2,6,1, cmPolicies::WARN);
+
+  this->DefinePolicy(
+    CMP0009, "CMP0009",
+    "FILE GLOB_RECURSE calls should not follow symlinks by default.",
+    "In CMake 2.6.1 and below, FILE GLOB_RECURSE calls would follow "
+    "through symlinks, sometimes coming up with unexpectedly large "
+    "result sets because of symlinks to top level directories that "
+    "contain hundreds of thousands of files."
+    "\n"
+    "This policy determines whether or not to follow symlinks "
+    "encountered during a FILE GLOB_RECURSE call. "
+    "The OLD behavior for this policy is to follow the symlinks. "
+    "The NEW behavior for this policy is not to follow the symlinks "
+    "by default, but only if FOLLOW_SYMLINKS is given as an additional "
+    "argument to the FILE command.",
+    2,6,2, cmPolicies::WARN);
 }
 
 cmPolicies::~cmPolicies()
@@ -321,6 +363,7 @@ void cmPolicies::DefinePolicy(cmPolicies::PolicyID iD,
   this->PolicyStringMap[idString] = iD;
 }
 
+//----------------------------------------------------------------------------
 bool cmPolicies::ApplyPolicyVersion(cmMakefile *mf, 
                                     const char *version)
 {
@@ -357,7 +400,7 @@ bool cmPolicies::ApplyPolicyVersion(cmMakefile *mf,
       "In order to get compatibility features supporting versions earlier "
       "than 2.4 set policy CMP0001 to OLD to tell CMake to check the "
       "CMAKE_BACKWARDS_COMPATIBILITY variable.  "
-      "One way to so this is to set the policy version to 2.4 exactly."
+      "One way to do this is to set the policy version to 2.4 exactly."
       );
     return false;
     }
@@ -382,13 +425,18 @@ bool cmPolicies::ApplyPolicyVersion(cmMakefile *mf,
     }
 
   // now loop over all the policies and set them as appropriate
+  std::vector<cmPolicies::PolicyID> ancientPolicies;
   std::map<cmPolicies::PolicyID,cmPolicy *>::iterator i 
     = this->Policies.begin();
   for (;i != this->Policies.end(); ++i)
   {
     if (i->second->IsPolicyNewerThan(majorVer,minorVer,patchVer))
     {
-      if (!mf->SetPolicy(i->second->ID, cmPolicies::WARN))
+      if(i->second->Status == cmPolicies::REQUIRED_ALWAYS)
+      {
+        ancientPolicies.push_back(i->first);
+      }
+      else if (!mf->SetPolicy(i->second->ID, cmPolicies::WARN))
       {
         return false;
       }
@@ -401,105 +449,16 @@ bool cmPolicies::ApplyPolicyVersion(cmMakefile *mf,
       }
     }
   }
-  return true;
-}
 
-// is this a valid status the listfile can set this policy to?
-bool cmPolicies::IsValidPolicyStatus(cmPolicies::PolicyID id, 
-                                     cmPolicies::PolicyStatus status)
-{
-  // if they are setting a feature to anything other than OLD or WARN and the
-  // feature is not known about then that is an error
-  if (this->Policies.find(id) == this->Policies.end())
-  {
-    if (status == cmPolicies::WARN ||
-        status == cmPolicies::OLD)
+  // Make sure the project does not use any ancient policies.
+  if(!ancientPolicies.empty())
     {
-      return true;
-    }
-    cmOStringStream error;
-    error << 
-      "Error: an attempt was made to enable the new behavior for " <<
-      "a new feature that is in a later version of CMake than "
-      "what you are runing, please upgrade to a newer version "
-      "of CMake.";
-    cmSystemTools::Error(error.str().c_str());
-    return false;  
-  }
-
-  // now we know the feature is defined, so the only issue is if someone is
-  // setting it to WARN or OLD when the feature is REQUIRED_ALWAYS
-  if ((status == cmPolicies::WARN || 
-      status == cmPolicies::OLD) && 
-      this->Policies[id]->Status == cmPolicies::REQUIRED_ALWAYS)
-  {
-    cmOStringStream error;
-    error << 
-      "Error: an attempt was made to enable the old behavior for " <<
-      "a feature that is no longer supported. The feature in " <<
-      "question is feature " <<
-      id <<
-      " which had new behavior introduced in CMake version " <<
-      this->Policies[id]->GetVersionString() <<
-      " please either update your CMakeLists files to conform to " <<
-      "the new behavior " <<
-      "or use an older version of CMake that still supports " <<
-      "the old behavior. Run cmake --help-policies " <<
-      id << " for more information.";
-    cmSystemTools::Error(error.str().c_str());
+    this->DiagnoseAncientPolicies(ancientPolicies,
+                                  majorVer, minorVer, patchVer, mf);
+    cmSystemTools::SetFatalErrorOccured();
     return false;
-  }
-  
-  return true;
-}
-
-// is this a valid status the listfile can set this policy to?
-bool cmPolicies::IsValidUsedPolicyStatus(cmPolicies::PolicyID id, 
-                                         cmPolicies::PolicyStatus status)
-{
-  // if they are setting a feature to anything other than OLD or WARN and the
-  // feature is not known about then that is an error
-  if (this->Policies.find(id) == this->Policies.end())
-  {
-    if (status == cmPolicies::WARN ||
-        status == cmPolicies::OLD)
-    {
-      return true;
     }
-    cmOStringStream error;
-    error << 
-      "Error: an attempt was made to enable the new behavior for " <<
-      "a new feature that is in a later version of CMake than "
-      "what you are runing, please upgrade to a newer version "
-      "of CMake.";
-    cmSystemTools::Error(error.str().c_str());
-    return false;  
-  }
 
-  // now we know the feature is defined, so the only issue is if someone is
-  // setting it to WARN or OLD when the feature is REQUIRED_ALWAYS
-  if ((status == cmPolicies::WARN || 
-      status == cmPolicies::OLD) && 
-      (this->Policies[id]->Status == cmPolicies::REQUIRED_ALWAYS ||
-       this->Policies[id]->Status == cmPolicies::REQUIRED_IF_USED))
-  {
-    cmOStringStream error;
-    error << 
-      "Error: an attempt was made to enable the old behavior for " <<
-      "a feature that is no longer supported. The feature in " <<
-      "question is feature " <<
-      id <<
-      " which had new behavior introduced in CMake version " <<
-      this->Policies[id]->GetVersionString() <<
-      " please either update your CMakeLists files to conform to " <<
-      "the new behavior " <<
-      "or use an older version of CMake that still supports " <<
-      "the old behavior. Run cmake --help-policies " <<
-      id << " for more information.";
-    cmSystemTools::Error(error.str().c_str());
-    return false;
-  }
-  
   return true;
 }
 
@@ -644,4 +603,49 @@ void cmPolicies::GetDocumentation(std::vector<cmDocumentationEntry>& v)
                            full.str().c_str());
     v.push_back(e);
   }
+}
+
+//----------------------------------------------------------------------------
+std::string
+cmPolicies::GetRequiredAlwaysPolicyError(cmPolicies::PolicyID id)
+{
+  std::string pid = this->GetPolicyIDString(id);
+  cmOStringStream e;
+  e << "Policy " << pid << " may not be set to OLD behavior because this "
+    << "version of CMake no longer supports it.  "
+    << "The policy was introduced in "
+    << "CMake version " << this->Policies[id]->GetVersionString()
+    << ", and use of NEW behavior is now required."
+    << "\n"
+    << "Please either update your CMakeLists.txt files to conform to "
+    << "the new behavior or use an older version of CMake that still "
+    << "supports the old behavior.  "
+    << "Run cmake --help-policy " << pid << " for more information.";
+  return e.str();
+}
+
+//----------------------------------------------------------------------------
+void
+cmPolicies::DiagnoseAncientPolicies(std::vector<PolicyID> const& ancient,
+                                    unsigned int majorVer,
+                                    unsigned int minorVer,
+                                    unsigned int patchVer,
+                                    cmMakefile* mf)
+{
+  cmOStringStream e;
+  e << "The project requests behavior compatible with CMake version \""
+    << majorVer << "." << minorVer << "." << patchVer
+    << "\", which requires OLD the behavior for some policies:\n";
+  for(std::vector<PolicyID>::const_iterator
+        i = ancient.begin(); i != ancient.end(); ++i)
+    {
+    cmPolicy const* policy = this->Policies[*i];
+    e << "  " << policy->IDString << ": " << policy->ShortDescription << "\n";
+    }
+  e << "However, this version of CMake no longer supports the OLD "
+    << "behavior for these policies.  "
+    << "Please either update your CMakeLists.txt files to conform to "
+    << "the new behavior or use an older version of CMake that still "
+    << "supports the old behavior.";
+  mf->IssueMessage(cmake::FATAL_ERROR, e.str().c_str());
 }

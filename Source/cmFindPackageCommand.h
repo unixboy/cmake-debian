@@ -3,8 +3,8 @@
   Program:   CMake - Cross-Platform Makefile Generator
   Module:    $RCSfile: cmFindPackageCommand.h,v $
   Language:  C++
-  Date:      $Date: 2008-01-29 01:38:48 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2008-09-12 14:56:21 $
+  Version:   $Revision: 1.19.2.3 $
 
   Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
   See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -73,6 +73,7 @@ public:
 private:
   void AppendSuccessInformation();
   void AppendToProperty(const char* propertyName);
+  void SetModuleVariables(const std::string& components);
   bool FindModule(bool& found);
   bool HandlePackageMode();
   void FindConfig();
@@ -82,8 +83,15 @@ private:
   bool ReadListFile(const char* f);
   void StoreVersionFound();
 
-  void AddUserPath(std::string const& p);
   void ComputePrefixes();
+  void AddPrefixesCMakeEnvironment();
+  void AddPrefixesCMakeVariable();
+  void AddPrefixesSystemEnvironment();
+  void AddPrefixesBuilds();
+  void AddPrefixesCMakeSystemVariable();
+  void AddPrefixesUserGuess();
+  void AddPrefixesUserHints();
+  void ComputeFinalPrefixes();
   bool SearchDirectory(std::string const& dir);
   bool CheckDirectory(std::string const& dir);
   bool FindConfigFile(std::string const& dir, std::string& file);
@@ -103,6 +111,7 @@ private:
   unsigned int VersionMajor;
   unsigned int VersionMinor;
   unsigned int VersionPatch;
+  unsigned int VersionTweak;
   unsigned int VersionCount;
   bool VersionExact;
   cmStdString FileFound;
@@ -110,6 +119,7 @@ private:
   unsigned int VersionFoundMajor;
   unsigned int VersionFoundMinor;
   unsigned int VersionFoundPatch;
+  unsigned int VersionFoundTweak;
   unsigned int VersionFoundCount;
   bool Quiet;
   bool Required;
@@ -117,10 +127,9 @@ private:
   bool NoModule;
   bool NoBuilds;
   bool DebugMode;
+  bool UseLib64Paths;
   std::vector<std::string> Names;
   std::vector<std::string> Configs;
-  std::vector<std::string> Prefixes;
-  std::vector<std::string> UserPaths;
 };
 
 #endif
