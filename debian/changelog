@@ -16,19 +16,17 @@ cmake (2.6.2-1) experimental; urgency=low
       to the cmake manual pages.
   * Bump Standards-Version to 3.8.0:
     - add README.source which directs the reader to quilt README.source.
-    - tighten quilt build depends to (>= 0.46-4.1) as it is the first version
-      README.source is in.
   * Use dh_lintian:
     - rename cmake.lintian to cmake.lintian-overrides;
     - bump debhelper compat level to 6;
     - build depend on debhelper (>= 6.0.7~).
   * Fix path in the lintian override so it is effective again.
-  * Make cmake.menu conform to the current Debian Menu System stardard.
+  * Make cmake.menu conform to the current Debian Menu System standard.
   * Drop unused old manual pages from debian/. They are provided by upstream
     now.
   * Add debian/watch.
 
- -- Modestas Vainius <modestas@vainius.eu>  Mon, 13 Oct 2008 00:58:30 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Mon, 13 Oct 2008 19:24:49 +0300
 
 cmake (2.6.0-5) unstable; urgency=medium
 
