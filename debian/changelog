@@ -7,8 +7,14 @@ cmake (2.6.2-2~pre1) UNRELEASED; urgency=low
       Thanks to Ludovico Cavedon (Closes: #487528).
     - FindMPEG2_include_FindSDL_fix.diff - fix FindSQL include in the
       MPEG2 module. Thanks to Leopold Palomo Avellaneda (Closes: #500770).
+  * Try sorting out emacsen mess once again (Closes: #481391):
+    - depend on emacsen-common;
+    - old-prerm will most likely fail spewing emacsen-common error message
+      when upgrading from previous version but this is OK. Add a custom
+      prerm script which recovers from the problem and notifies the user to
+      ignore the error message.
 
- -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 11:03:18 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 11:17:00 +0300
 
 cmake (2.6.2-1) experimental; urgency=low
 
