@@ -1,0 +1,18 @@
+--- a/Modules/FindQt4.cmake
++++ b/Modules/FindQt4.cmake
+@@ -972,13 +972,13 @@
+     )
+ 
+   FIND_PROGRAM(QT_LUPDATE_EXECUTABLE
+-    NAMES lupdate
++    NAMES lupdate-qt4 lupdate
+     PATHS ${QT_BINARY_DIR}
+     NO_DEFAULT_PATH
+     )
+ 
+   FIND_PROGRAM(QT_LRELEASE_EXECUTABLE
+-    NAMES lrelease
++    NAMES lrelease-qt4 lrelease
+     PATHS ${QT_BINARY_DIR}
+     NO_DEFAULT_PATH
+     )

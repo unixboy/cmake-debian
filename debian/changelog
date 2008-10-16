@@ -1,8 +1,12 @@
 cmake (2.6.2-2~pre1) UNRELEASED; urgency=low
 
   * Add Vcs fields.
+  * Add patches:
+    - FindQt4_qt4_lupdate_lrelease.diff - prefer lupdate-qt4 to lupdate and
+      lrelease-qt4 to lrelease. This is specific to Debian Qt4
+      (Closes: #487528).
 
- -- Modestas Vainius <modestas@vainius.eu>  Wed, 15 Oct 2008 10:22:18 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 10:46:44 +0300
 
 cmake (2.6.2-1) experimental; urgency=low
 

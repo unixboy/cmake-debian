@@ -7,3 +7,4 @@ reinstate-arm.diff
 relative_path_fixes.diff
 relative_path_fixes2.diff
 manpage-generation-fixes.diff
+FindQt4_qt4_lupdate_lrelease.diff
