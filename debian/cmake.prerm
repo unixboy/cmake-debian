@@ -13,7 +13,7 @@ if [ "$1" = "failed-upgrade" ] && dpkg --compare-versions "$2" le 2.6.2-1; then
     #   ERROR: for details
     #
     # Therefore tell the user to ignore the error and exit gracefully.
-    echo <<END
+    cat >&2 <<END
 NOTE: The emacsen-common error above is harmless and can be safely ignored.
 NOTE: Upgrade will continue as usual.
 END
