@@ -38,7 +38,7 @@ configure-stamp:
 	echo CMAKE_CXX_FLAGS:STRING=$(CFLAGS) >> Build/CMakeCache.txt
 	$(if $(USE_DARTP),echo DART_ROOT:PATH=/usr/share/Dart              >> Build/CMakeCache.txt)
 	$(if $(USE_DARTP),echo BUILDNAME:STRING=cmake_2.2.3-1_$(DARCH).deb >> Build/CMakeCache.txt)
-	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man
+	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man --system-libs
 	chmod -x ChangeLog.manual
 	chmod -x Modules/*.cmake  Modules/*.cmake.in Modules/*.cxx Modules/Platform/*
 	touch $@

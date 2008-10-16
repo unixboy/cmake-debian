@@ -1,3 +1,13 @@
+cmake (2.6.0-6) unstable; urgency=medium
+
+  * Dynamically link against system libraries available in Debian.
+    Thanks to Michal Čihař (Closes: #502441).
+  * Urgency medium due to security issue above.
+  * Add Vcs fields.
+  * Add myself to Uploaders.
+
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 22:18:14 +0300
+
 cmake (2.6.0-5) unstable; urgency=medium
 
   * Fix build-deps: libncursesw5-dev doesn't work, just use the non wide one.

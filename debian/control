@@ -2,9 +2,11 @@ Source: cmake
 Section: devel
 Priority: optional
 Maintainer: A. Maitland Bottoms <bottoms@debian.org>
-Uploaders: Pierre Habouzit <madcoder@debian.org>
-Build-Depends: debhelper (>> 5.0.0), libncurses5-dev, tcl8.4, quilt, libcurl4-gnutls-dev
+Uploaders: Pierre Habouzit <madcoder@debian.org>, Modestas Vainius <modestas@vainius.eu>
+Build-Depends: debhelper (>> 5.0.0), libncurses5-dev, tcl8.4, quilt, libcurl4-gnutls-dev, libxmlrpc-c3-dev, libexpat1-dev, zlib1g-dev
 Standards-Version: 3.7.3
+Vcs-Git: git://git.debian.org/git/collab-maint/cmake.git
+Vcs-Browser: http://git.debian.org/git/collab-maint/cmake.git
 
 Package: cmake
 Architecture: any
