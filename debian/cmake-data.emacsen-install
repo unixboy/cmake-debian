@@ -3,7 +3,7 @@
 # emacsen install script for the Debian GNU/Linux cmake package
 
 FLAVOR=$1
-PACKAGE=cmake
+PACKAGE=cmake-data
 
 ELDIR=/usr/share/emacs/site-lisp/
 ELCDIR=/usr/share/${FLAVOR}/site-lisp/${PACKAGE}

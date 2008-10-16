@@ -1,2 +1,0 @@
-# this file is a template, not a real license
-cmake: extra-license-file usr/share/cmake-2.6/Templates/CPack.GenericLicense.txt

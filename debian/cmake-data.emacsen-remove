@@ -2,7 +2,7 @@
 set -e
 
 FLAVOR=$1
-PACKAGE=cmake
+PACKAGE=cmake-data
 ELCFILE=cmake-mode.elc
 
 if [ ${FLAVOR} != emacs ]; then

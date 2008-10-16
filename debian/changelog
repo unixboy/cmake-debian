@@ -1,4 +1,4 @@
-cmake (2.6.2-2~pre1) UNRELEASED; urgency=low
+cmake (2.6.2-2~pre6) UNRELEASED; urgency=low
 
   * Add Vcs fields.
   * Add patches:
@@ -16,8 +16,17 @@ cmake (2.6.2-2~pre1) UNRELEASED; urgency=low
   * Rewrite cmake cache initialization code. Pass initial cmake flags via
     file (--init= argument to the bootstrap script).
   * Make build verbose again.
+  * Prepare for multiple binary packages: switch to install files and to
+    debhelper v7 (due to more convenient install file handling), install
+    everything to debian/tmp initially.
+  * Add new binary packages:
+    - cmake-data - split off data files needed for each cmake flavour to run.
+      Move emacsen stuff in here too;
+    - cmake-curses-gui - splif off ccache here from the cmake package;
+    - cmake-qt-gui - build & install Qt4 based GUI (cmake-gui). Add menu file
+      and manual page (Closes: #482787).
 
- -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 20:12:16 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 20:48:13 +0300
 
 cmake (2.6.2-1) experimental; urgency=low
 
