@@ -44,7 +44,7 @@ configure-stamp: $(BUILD_FLAGS_FILE)
 	# pre-load the cache to avoid setting rpath:
 	rm -rf Build && mkdir -p Build
 	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
-	                         --init=../$(BUILD_FLAGS_FILE)
+	                         --init=../$(BUILD_FLAGS_FILE) --system-libs
 	chmod -x ChangeLog.manual
 	chmod -x Modules/*.cmake  Modules/*.cmake.in Modules/*.cxx Modules/Platform/*
 	touch $@

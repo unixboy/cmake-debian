@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: A. Maitland Bottoms <bottoms@debian.org>
 Uploaders: Pierre Habouzit <madcoder@debian.org>, Modestas Vainius <modestas@vainius.eu>
 DM-Upload-Allowed: yes
-Build-Depends: debhelper (>= 7), tcl8.4, quilt, libcurl4-gnutls-dev,
+Build-Depends: debhelper (>= 7), tcl8.4, quilt,
+ libcurl4-gnutls-dev, libxmlrpc-c3-dev, libexpat1-dev, zlib1g-dev,
  libncurses5-dev, libqt4-dev
 Standards-Version: 3.8.0
 Vcs-Git: git://git.debian.org/git/collab-maint/cmake.git

@@ -1,4 +1,4 @@
-cmake (2.6.2-2~pre6) UNRELEASED; urgency=low
+cmake (2.6.2-2~pre7) UNRELEASED; urgency=low
 
   * Add Vcs fields.
   * Add patches:
@@ -25,8 +25,10 @@ cmake (2.6.2-2~pre6) UNRELEASED; urgency=low
     - cmake-curses-gui - splif off ccache here from the cmake package;
     - cmake-qt-gui - build & install Qt4 based GUI (cmake-gui). Add menu file
       and manual page (Closes: #482787).
+  * Dynamically link against system libraries available in Debian
+    (Closes: #502441).
 
- -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 20:48:13 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 22:10:36 +0300
 
 cmake (2.6.2-1) experimental; urgency=low
 
