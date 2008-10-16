@@ -7,7 +7,7 @@ USE_DARTP:=
 DARCH      := $(shell dpkg --print-installation-architecture)
 CFLAGS     := -Wall -g $(if $(findstring noopt,$(DEB_BUILD_OPTIONS)),-O0,-O2)
 QUILT_CALL := QUILT_PATCHES=debian/patches quilt --quiltrc /dev/null
-
+BUILD_FLAGS_FILE := build-flags.cmake
 
 # Hack for parisc64 to close bug #133696
 ifeq ($(shell arch),parisc64)
@@ -22,23 +22,27 @@ patch-stamp:
 unpatch:
 	$(QUILT_CALL) pop -a -R || test $$? = 2
 
+$(BUILD_FLAGS_FILE):
+	touch $@
+	echo 'set(CMAKE_SKIP_RPATH YES CACHE BOOL "Skip rpath" FORCE)'          >> $@
+	echo 'set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Verbose build" FORCE)'  >> $@
+	echo 'set(CMAKE_C_FLAGS "$(CFLAGS)" CACHE STRING "C flags" FORCE)'      >> $@
+	echo 'set(CMAKE_CXX_FLAGS "$(CFLAGS)" CACHE STRING "C++ flags" FORCE)'  >> $@
+#	echo 'set(BUILD_WXDialog ON CACHE STRING "Build WXDialog" FORCE)'      >> $@
+#	echo 'set(TARGET_VERSION CACHE STRING ""FORCE)'                        >> $@
+#	echo 'set(TARGET_SOVERSION CACHE STRING "" FORCE)'                     >> $@
+#	echo 'set(BUILD_DOCUMENTATION ON CACHE BOOL "" FORCE)'                 >> $@
+#	echo 'set(BUILD_DOXYGEN ON CACHE BOOL "" FORCE)'                       >> $@
+	$(if $(USE_DARTP),echo 'set(DART_ROOT /usr/share/Dart CACHE STRING "" FORCE)'              >> $@)
+	$(if $(USE_DARTP),echo 'set(BUILDNAME "cmake_2.2.3-1_$(DARCH).deb" CACHE STRING "" FORCE)' >> $@)
+
 configure: configure-stamp
-configure-stamp:
+configure-stamp: $(BUILD_FLAGS_FILE)
 	dh_testdir
 	# pre-load the cache to avoid setting rpath:
 	rm -rf Build && mkdir -p Build
-	echo CMAKE_SKIP_RPATH:BOOL=YES        >> Build/CMakeCache.txt
-	#echo TARGET_VERSION:STRING=          >> Build/CMakeCache.txt
-	#echo TARGET_SOVERSION:STRING=        >> Build/CMakeCache.txt
-	#echo BUILD_DOCUMENTATION:BOOL=ON     >> Build/CMakeCache.txt
-	#echo BUILD_DOXYGEN:BOOL=ON           >> Build/CMakeCache.txt
-	#echo BUILD_WXDialog:BOOL=ON          >> Build/CMakeCache.txt
-	echo VERBOSE_BUILD:BOOL=ON            >> Build/CMakeCache.txt
-	echo CMAKE_C_FLAGS:STRING=$(CFLAGS)   >> Build/CMakeCache.txt
-	echo CMAKE_CXX_FLAGS:STRING=$(CFLAGS) >> Build/CMakeCache.txt
-	$(if $(USE_DARTP),echo DART_ROOT:PATH=/usr/share/Dart              >> Build/CMakeCache.txt)
-	$(if $(USE_DARTP),echo BUILDNAME:STRING=cmake_2.2.3-1_$(DARCH).deb >> Build/CMakeCache.txt)
-	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man
+	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
+	                         --init=../$(BUILD_FLAGS_FILE)
 	chmod -x ChangeLog.manual
 	chmod -x Modules/*.cmake  Modules/*.cmake.in Modules/*.cxx Modules/Platform/*
 	touch $@
@@ -52,7 +56,7 @@ build-stamp:
 clean: unpatch
 	dh_testdir
 	dh_testroot
-	rm -rf .pc build-stamp configure-stamp patch-stamp
+	rm -rf .pc build-stamp configure-stamp patch-stamp $(BUILD_FLAGS_FILE)
 	rm -rf Build
 	dh_clean
 
