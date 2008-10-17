@@ -88,7 +88,7 @@ binary-arch: build install
 	dh_installcron
 	dh_installman
 	dh_installinfo
-	dh_installchangelogs ChangeLog.txt ChangeLog.manual
+	dh_installchangelogs ChangeLog.manual
 	dh_link
 	dh_strip
 	dh_compress -XCMake.pdf

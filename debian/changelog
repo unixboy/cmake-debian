@@ -28,8 +28,11 @@ cmake (2.6.2-2~pre8) UNRELEASED; urgency=low
   * Dynamically link against system libraries available in Debian
     (Closes: #502441).
   * Drop left-over debian/doxygen.config.
+  * Rename debian/docs to debian/cmake-data.docs and clean it up. Do not
+    install ChangeLog.txt. It is size and usefulness ratio is too low to
+    justify inclusion in the binary package.
 
- -- Modestas Vainius <modestas@vainius.eu>  Fri, 17 Oct 2008 12:10:51 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 17 Oct 2008 12:18:26 +0300
 
 cmake (2.6.2-1) experimental; urgency=low
 
