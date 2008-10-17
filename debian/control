@@ -31,7 +31,7 @@ Description: A cross-platform, open-source make system
 
 Package: cmake-data
 Architecture: all
-Depends: ${shlibs:Depends}, emacsen-common
+Depends: emacsen-common
 Replaces: cmake (<= 2.6.2-1)
 Conflicts: cmake (<= 2.6.2-1)
 Description: CMake data files (modules, templates and documentation)
