@@ -1,4 +1,4 @@
-cmake (2.6.2-2~pre7) UNRELEASED; urgency=low
+cmake (2.6.2-2~pre8) UNRELEASED; urgency=low
 
   * Add Vcs fields.
   * Add patches:
@@ -27,8 +27,9 @@ cmake (2.6.2-2~pre7) UNRELEASED; urgency=low
       and manual page (Closes: #482787).
   * Dynamically link against system libraries available in Debian
     (Closes: #502441).
+  * Drop left-over debian/doxygen.config.
 
- -- Modestas Vainius <modestas@vainius.eu>  Thu, 16 Oct 2008 22:10:36 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 17 Oct 2008 12:10:51 +0300
 
 cmake (2.6.2-1) experimental; urgency=low
 
