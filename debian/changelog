@@ -1,4 +1,4 @@
-cmake (2.6.2-2~pre8) UNRELEASED; urgency=low
+cmake (2.6.2-2~pre9) UNRELEASED; urgency=low
 
   * Add Vcs fields.
   * Add patches:
@@ -24,15 +24,15 @@ cmake (2.6.2-2~pre8) UNRELEASED; urgency=low
       Move emacsen stuff in here too;
     - cmake-curses-gui - splif off ccache here from the cmake package;
     - cmake-qt-gui - build & install Qt4 based GUI (cmake-gui). Add menu file
-      and manual page (Closes: #482787).
+      and manual page (Closes: #482787). Update debian/copyright.
   * Dynamically link against system libraries available in Debian
     (Closes: #502441).
-  * Drop left-over debian/doxygen.config.
+  * Remove left-over debian/doxygen.config.
   * Rename debian/docs to debian/cmake-data.docs and clean it up. Do not
     install ChangeLog.txt. It is size and usefulness ratio is too low to
     justify inclusion in the binary package.
 
- -- Modestas Vainius <modestas@vainius.eu>  Fri, 17 Oct 2008 12:18:26 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Sat, 01 Nov 2008 13:53:13 +0200
 
 cmake (2.6.2-1) experimental; urgency=low
 

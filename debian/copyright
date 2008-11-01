@@ -19,6 +19,7 @@ CMake was initially developed by Kitware with the following sponsorship:
 
 The CMake copyright is as follows:
 
+----
 Copyright (c) 2002 Kitware, Inc., Insight Consortium
 All rights reserved.
 
@@ -38,9 +39,6 @@ met:
    endorse or promote products derived from this software without
    specific prior written permission.
 
- * Modified source versions must be plainly marked as such, and must
-   not be misrepresented as being the original software.
-
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS IS''
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -51,5 +49,12 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----
+This copyright information is available on the CMake web site:
+http://www.cmake.org/HTML/Copyright.html
 
-See also the CMake web site: http://www.cmake.org for more information.
+CMake is licensed under BSD "July 22 1999" style license and therefore the
+right to use and distribute it in binary form linked with Qt4 are granted by
+the Qt GPL Exception. See /usr/share/doc/libqtcore4/copyright for more
+information on the Qt GPL Exception. Complete text of the original BSD "July 22
+1999" license can be found in /usr/share/common-licenses/BSD on Debian systems.
