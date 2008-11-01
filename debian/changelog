@@ -1,4 +1,4 @@
-cmake (2.6.2-2~pre9) UNRELEASED; urgency=low
+cmake (2.6.2-2) experimental; urgency=low
 
   * Add Vcs fields.
   * Add patches:
@@ -32,7 +32,7 @@ cmake (2.6.2-2~pre9) UNRELEASED; urgency=low
     install ChangeLog.txt. It is size and usefulness ratio is too low to
     justify inclusion in the binary package.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 01 Nov 2008 13:53:13 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Sat, 01 Nov 2008 14:07:08 +0200
 
 cmake (2.6.2-1) experimental; urgency=low
 
