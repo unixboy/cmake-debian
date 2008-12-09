@@ -1,3 +1,4 @@
+find_package_support_prefix_lib_cmake.diff
 FindQt4.cmake2.6.diff
 do-not-use-lib64.diff
 findmpeg2-addpath.diff
