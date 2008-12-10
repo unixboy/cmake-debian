@@ -1,11 +1,12 @@
-cmake (2.6.2-3~pre2) UNRELEASED; urgency=low
+cmake (2.6.2-3~pre3) UNRELEASED; urgency=low
 
   * Fix typo in cmake-qt-gui description.
   * Merge patch from upstream to support <prefix>/lib/cmake search path in
     find_package() config mode. This enables reduction of /usr/lib cluttering
     (find_package_support_prefix_lib_cmake.diff).
+  * Tighten libqt4-dev build depend to version (>= 4.4.0) (Closes: #508349).
 
- -- Modestas Vainius <modestas@vainius.eu>  Wed, 10 Dec 2008 00:29:40 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Wed, 10 Dec 2008 14:41:11 +0200
 
 cmake (2.6.2-2) experimental; urgency=low
 
