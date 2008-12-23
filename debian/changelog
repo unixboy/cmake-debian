@@ -1,4 +1,4 @@
-cmake (2.6.2-3~pre3) UNRELEASED; urgency=low
+cmake (2.6.2-3) experimental; urgency=low
 
   * Fix typo in cmake-qt-gui description.
   * Merge patch from upstream to support <prefix>/lib/cmake search path in
@@ -6,7 +6,7 @@ cmake (2.6.2-3~pre3) UNRELEASED; urgency=low
     (find_package_support_prefix_lib_cmake.diff).
   * Tighten libqt4-dev build depend to version (>= 4.4.0) (Closes: #508349).
 
- -- Modestas Vainius <modestas@vainius.eu>  Wed, 10 Dec 2008 14:41:11 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Wed, 24 Dec 2008 00:45:20 +0200
 
 cmake (2.6.2-2) experimental; urgency=low
 
@@ -32,7 +32,7 @@ cmake (2.6.2-2) experimental; urgency=low
   * Add new binary packages:
     - cmake-data - split off data files needed for each cmake flavour to run.
       Move emacsen stuff in here too;
-    - cmake-curses-gui - splif off ccache here from the cmake package;
+    - cmake-curses-gui - splif off ccmake here from the cmake package;
     - cmake-qt-gui - build & install Qt4 based GUI (cmake-gui). Add menu file
       and manual page (Closes: #482787). Update debian/copyright.
   * Dynamically link against system libraries available in Debian
