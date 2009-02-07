@@ -1,3 +1,18 @@
+cmake (2.6.3~rc11-0r1) UNRELEASED; urgency=low
+
+  * New upstream pre-release.
+  * Update debian/patches:
+    - remove find_package_support_prefix_lib_cmake.diff, merged upstream;
+    - adopt FindQt4.cmake2.6.diff;
+    - refresh do-not-use-lib64.diff;
+    - remove relative_path_fixes.diff, merged upstream;
+    - refresh relative_path_fixes2.diff;
+    - remove manpage-generation-fixes.diff, merged upstream;
+    - refresh FindQt4_qt4_lupdate_lrelease.diff;
+    - remove FindMPEG2_include_FindSDL_fix.diff, merged upstream;
+
+ -- Modestas Vainius <modestas@vainius.eu>  Sat, 07 Feb 2009 16:22:50 +0200
+
 cmake (2.6.2-3) experimental; urgency=low
 
   * Fix typo in cmake-qt-gui description.

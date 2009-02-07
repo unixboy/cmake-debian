@@ -1,6 +1,6 @@
 --- a/Source/cmFindLibraryCommand.cxx
 +++ b/Source/cmFindLibraryCommand.cxx
-@@ -158,6 +158,7 @@
+@@ -160,6 +160,7 @@
  
  void cmFindLibraryCommand::AddLib64Paths()
  {  
@@ -8,7 +8,7 @@
    if(!this->Makefile->GetLocalGenerator()->GetGlobalGenerator()->
       GetLanguageEnabled("C"))
      {
-@@ -205,6 +206,7 @@
+@@ -208,6 +209,7 @@
      {
      this->SearchPaths = path64;
      }

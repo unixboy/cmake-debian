@@ -1,6 +1,6 @@
 --- a/Modules/FindQt4.cmake
 +++ b/Modules/FindQt4.cmake
-@@ -972,13 +972,13 @@
+@@ -824,13 +824,13 @@
      )
  
    FIND_PROGRAM(QT_LUPDATE_EXECUTABLE

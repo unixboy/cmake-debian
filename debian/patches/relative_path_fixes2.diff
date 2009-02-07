@@ -3,7 +3,7 @@ Improved error handling for cmLocalGenerator::Convert().
 Small inconsistency fix for the previous relative_path_fixes.diff patch.
 --- a/Source/cmLocalGenerator.cxx
 +++ b/Source/cmLocalGenerator.cxx
-@@ -2124,25 +2124,17 @@
+@@ -2127,25 +2127,17 @@
                                        bool optional)
  {
    const char* remotePath = this->GetRelativeRootPath(remote);
