@@ -3,8 +3,8 @@
   Program:   CMake - Cross-Platform Makefile Generator
   Module:    $RCSfile: cmMakefileExecutableTargetGenerator.cxx,v $
   Language:  C++
-  Date:      $Date: 2008-09-03 13:43:18 $
-  Version:   $Revision: 1.46.2.2 $
+  Date:      $Date: 2008-10-24 15:18:52 $
+  Version:   $Revision: 1.46.2.3 $
 
   Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
   See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -353,36 +353,9 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
 
   // Construct object file lists that may be needed to expand the
   // rule.
-  std::string variableName;
-  std::string variableNameExternal;
-  this->WriteObjectsVariable(variableName, variableNameExternal);
   std::string buildObjs;
-  if(useResponseFile)
-    {
-    std::string objects;
-    this->WriteObjectsString(objects);
-    std::string objects_rsp =
-      this->CreateResponseFile("objects.rsp", objects, depends);
-    buildObjs = "@";
-    buildObjs += this->Convert(objects_rsp.c_str(),
-                               cmLocalGenerator::NONE,
-                               cmLocalGenerator::SHELL);
-    }
-  else if(useLinkScript)
-    {
-    this->WriteObjectsString(buildObjs);
-    }
-  else
-    {
-    buildObjs = "$(";
-    buildObjs += variableName;
-    buildObjs += ") $(";
-    buildObjs += variableNameExternal;
-    buildObjs += ")";
-    }
-  std::string cleanObjs = "$(";
-  cleanObjs += variableName;
-  cleanObjs += ")";
+  this->CreateObjectLists(useLinkScript, false, useResponseFile,
+                          buildObjs, depends);
 
   cmLocalGenerator::RuleVariables vars;
   vars.Language = linkLanguage;
@@ -440,7 +413,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   this->LocalGenerator->CreateCDCommand
     (commands1,
      this->Makefile->GetStartOutputDirectory(),
-     this->Makefile->GetHomeOutputDirectory());
+     cmLocalGenerator::HOME_OUTPUT);
   commands.insert(commands.end(), commands1.begin(), commands1.end());
   commands1.clear();
 
@@ -454,7 +427,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
     commands1.push_back(symlink);
     this->LocalGenerator->CreateCDCommand(commands1,
                                   this->Makefile->GetStartOutputDirectory(),
-                                  this->Makefile->GetHomeOutputDirectory());
+                                  cmLocalGenerator::HOME_OUTPUT);
     commands.insert(commands.end(), commands1.begin(), commands1.end());
     commands1.clear();
     }
