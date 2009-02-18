@@ -10,8 +10,9 @@ cmake (2.6.3~rc11-0r1) UNRELEASED; urgency=low
     - remove manpage-generation-fixes.diff, merged upstream;
     - refresh FindQt4_qt4_lupdate_lrelease.diff;
     - remove FindMPEG2_include_FindSDL_fix.diff, merged upstream;
+  * Use dh_prep instead of deprecated dh_clean -k (fixes lintian warning).
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 07 Feb 2009 16:22:50 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 19 Feb 2009 00:10:45 +0200
 
 cmake (2.6.2-4) unstable; urgency=low
 
