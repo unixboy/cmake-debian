@@ -70,6 +70,7 @@ install: build
 	# Add here commands to install the package into debian/cmake.
 	cd Build && $(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 	dh_lintian
+	dh_desktop
 	#cp Docs/cmake-indent.vim debian/cmake/usr/share/vim/addons/indent/cmake.vim
 	#cp Docs/cmake-syntax.vim debian/cmake/usr/share/vim/addons/syntax/cmake.vim
 
