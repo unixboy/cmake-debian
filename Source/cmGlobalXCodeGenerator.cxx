@@ -3,8 +3,8 @@
 Program:   CMake - Cross-Platform Makefile Generator
 Module:    $RCSfile: cmGlobalXCodeGenerator.cxx,v $
 Language:  C++
-Date:      $Date: 2009-02-04 16:44:17 $
-Version:   $Revision: 1.186.2.10 $
+Date:      $Date: 2009-02-19 16:53:45 $
+Version:   $Revision: 1.186.2.13 $
 
 Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
 See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -2691,11 +2691,11 @@ cmGlobalXCodeGenerator::CreateXCodeDependHackTarget(
           {
           std::string universal = t->GetDirectory();
           universal += "/";
-          universal += this->CurrentMakefile->GetProjectName();
+          universal += this->CurrentProject;
           universal += ".build/";
           universal += configName;
           universal += "/";
-          universal += t->GetName();
+          universal += t->GetFullName(configName);
           universal += ".build/Objects-normal/";
           for( std::vector<std::string>::iterator arch = 
                  this->Architectures.begin();
@@ -2704,7 +2704,7 @@ cmGlobalXCodeGenerator::CreateXCodeDependHackTarget(
             std::string universalFile = universal;
             universalFile += *arch;
             universalFile += "/";
-            universalFile += t->GetName();
+            universalFile += t->GetFullName(configName);
             makefileStream << "\t/bin/rm -f "
                            << 
               this->ConvertToRelativeForMake(universalFile.c_str())

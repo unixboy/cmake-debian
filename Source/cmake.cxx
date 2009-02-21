@@ -3,8 +3,8 @@
   Program:   CMake - Cross-Platform Makefile Generator
   Module:    $RCSfile: cmake.cxx,v $
   Language:  C++
-  Date:      $Date: 2009-01-13 18:03:53 $
-  Version:   $Revision: 1.375.2.16 $
+  Date:      $Date: 2009-02-06 21:15:16 $
+  Version:   $Revision: 1.375.2.17 $
 
   Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
   See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
@@ -2651,6 +2651,28 @@ int cmake::CheckBuildSystem()
       std::auto_ptr<cmLocalGenerator> lgd(ggd->CreateLocalGenerator());
       lgd->SetGlobalGenerator(ggd.get());
       lgd->ClearDependencies(mf, verbose);
+      }
+    }
+
+  // If any byproduct of makefile generation is missing we must re-run.
+  std::vector<std::string> products;
+  if(const char* productStr = mf->GetDefinition("CMAKE_MAKEFILE_PRODUCTS"))
+    {
+    cmSystemTools::ExpandListArgument(productStr, products);
+    }
+  for(std::vector<std::string>::const_iterator pi = products.begin();
+      pi != products.end(); ++pi)
+    {
+    if(!(cmSystemTools::FileExists(pi->c_str()) ||
+         cmSystemTools::FileIsSymlink(pi->c_str())))
+      {
+      if(verbose)
+        {
+        cmOStringStream msg;
+        msg << "Re-run cmake, missing byproduct: " << *pi << "\n";
+        cmSystemTools::Stdout(msg.str().c_str());
+        }
+      return 1;
       }
     }
 
