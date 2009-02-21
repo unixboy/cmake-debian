@@ -1,6 +1,6 @@
-cmake (2.6.3~rc11-0r1) UNRELEASED; urgency=low
+cmake (2.6.3-0r1) UNRELEASED; urgency=low
 
-  * New upstream pre-release.
+  * New upstream release.
   * Update debian/patches:
     - remove find_package_support_prefix_lib_cmake.diff, merged upstream;
     - adopt FindQt4.cmake2.6.diff;
@@ -13,7 +13,7 @@ cmake (2.6.3~rc11-0r1) UNRELEASED; urgency=low
   * Use dh_prep instead of deprecated dh_clean -k (fixes lintian warning).
   * Call dh_desktop in the install target (fixes lintian warning).
 
- -- Modestas Vainius <modestas@vainius.eu>  Thu, 19 Feb 2009 00:13:42 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Sat, 21 Feb 2009 17:35:32 +0200
 
 cmake (2.6.2-4) unstable; urgency=low
 
