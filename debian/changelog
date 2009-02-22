@@ -12,8 +12,9 @@ cmake (2.6.3-0r1) UNRELEASED; urgency=low
     - remove FindMPEG2_include_FindSDL_fix.diff, merged upstream;
   * Use dh_prep instead of deprecated dh_clean -k (fixes lintian warning).
   * Call dh_desktop in the install target (fixes lintian warning).
+  * Install cmake-gui docs to the cmake-qt-gui package.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 21 Feb 2009 17:35:32 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Feb 2009 13:48:04 +0200
 
 cmake (2.6.2-4) unstable; urgency=low
 
