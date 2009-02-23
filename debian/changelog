@@ -16,8 +16,9 @@ cmake (2.6.3-1) experimental; urgency=low
   * Enable binary-indep target.
   * Add manpage_friendly_docs.diff patch to make some bits of documentation
     manpage friendly (eliminate warnings).
+  * Fix installation of lintian overrides (move dh_lintian to binary targets).
 
- -- Modestas Vainius <modestas@vainius.eu>  Tue, 24 Feb 2009 00:11:01 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Tue, 24 Feb 2009 00:26:34 +0200
 
 cmake (2.6.2-4) unstable; urgency=low
 

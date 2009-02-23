@@ -69,7 +69,6 @@ install: build
 	dh_installdirs
 	# Add here commands to install the package into debian/cmake.
 	cd Build && $(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
-	dh_lintian
 	#cp Docs/cmake-indent.vim debian/cmake/usr/share/vim/addons/indent/cmake.vim
 	#cp Docs/cmake-syntax.vim debian/cmake/usr/share/vim/addons/syntax/cmake.vim
 
@@ -87,6 +86,7 @@ binary-arch binary-indep: build install
 	dh_installman
 	dh_installinfo
 	dh_installchangelogs ChangeLog.manual
+	dh_lintian
 	dh_desktop
 	dh_link
 	dh_strip
