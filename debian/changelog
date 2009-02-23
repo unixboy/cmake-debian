@@ -1,4 +1,4 @@
-cmake (2.6.3-0r1) UNRELEASED; urgency=low
+cmake (2.6.3-1) experimental; urgency=low
 
   * New upstream release.
   * Update debian/patches:
@@ -11,10 +11,11 @@ cmake (2.6.3-0r1) UNRELEASED; urgency=low
     - refresh FindQt4_qt4_lupdate_lrelease.diff;
     - remove FindMPEG2_include_FindSDL_fix.diff, merged upstream;
   * Use dh_prep instead of deprecated dh_clean -k (fixes lintian warning).
-  * Call dh_desktop in the install target (fixes lintian warning).
+  * Call dh_desktop in the binary targets (fixes lintian warning).
   * Install cmake-gui docs to the cmake-qt-gui package.
+  * Enable binary-indep target.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Feb 2009 13:48:04 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Mon, 23 Feb 2009 22:35:37 +0200
 
 cmake (2.6.2-4) unstable; urgency=low
 
