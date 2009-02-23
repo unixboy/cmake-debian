@@ -14,8 +14,10 @@ cmake (2.6.3-1) experimental; urgency=low
   * Call dh_desktop in the binary targets (fixes lintian warning).
   * Install cmake-gui docs to the cmake-qt-gui package.
   * Enable binary-indep target.
+  * Add manpage_friendly_docs.diff patch to make some bits of documentation
+    manpage friendly (eliminate warnings).
 
- -- Modestas Vainius <modestas@vainius.eu>  Mon, 23 Feb 2009 22:35:37 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Tue, 24 Feb 2009 00:11:01 +0200
 
 cmake (2.6.2-4) unstable; urgency=low
 

@@ -6,3 +6,4 @@ executables-dont-need-fpic.diff
 reinstate-arm.diff
 relative_path_fixes2.diff
 FindQt4_qt4_lupdate_lrelease.diff
+manpage_friendly_docs.diff
