@@ -1,8 +1,9 @@
 cmake (2.6.3-2) UNRELEASED; urgency=low
 
   * Remove do-not-use-lib64.diff, no longer needed (according to upstream).
+  * Remove reinstate-arm.diff, merged upstream.
 
- -- Modestas Vainius <modestas@vainius.eu>  Thu, 26 Feb 2009 15:14:23 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Thu, 26 Feb 2009 22:40:09 +0200
 
 cmake (2.6.3-1) experimental; urgency=low
 

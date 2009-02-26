@@ -1,9 +1,7 @@
 FindQt4.cmake2.6.diff
-do-not-use-lib64.diff
 findmpeg2-addpath.diff
 kfreebsd-Platform.diff
 executables-dont-need-fpic.diff
-reinstate-arm.diff
 relative_path_fixes2.diff
 FindQt4_qt4_lupdate_lrelease.diff
 manpage_friendly_docs.diff
