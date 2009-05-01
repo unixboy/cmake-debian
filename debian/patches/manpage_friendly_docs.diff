@@ -9,6 +9,15 @@
  #
  # Variables used by this module, they can change the default behaviour and
  # need to be set before calling find_package:
+@@ -147,7 +147,7 @@
+ #                                       "component" (includes debug and optimized keywords
+ #                                       when needed).
+ #
+-# =====================================================================
++# ===================================== ============= =================
+ #
+ #
+ #  Copyright (c) 2006-2008 Andreas Schneider <mail@cynapses.org>
 --- a/Modules/FindRTI.cmake
 +++ b/Modules/FindRTI.cmake
 @@ -5,7 +5,7 @@

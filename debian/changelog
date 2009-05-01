@@ -6,8 +6,9 @@ cmake (2.6.4-1) unstable; urgency=low
     - FindQt4_qt4_lupdate_lrelease.diff - removed, merged upstream.
   * Bump Standards-Version to 3.8.1. No changes needed.
   * Remove deprecated dh_desktop from debian/rules.
+  * Update manpage_friendly_docs.diff patch to fix more lintian warnings.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 02 May 2009 01:10:57 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Sat, 02 May 2009 01:28:29 +0300
 
 cmake (2.6.3-2) unstable; urgency=low
 
