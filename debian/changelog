@@ -5,8 +5,9 @@ cmake (2.6.4-0r1) UNRELEASED; urgency=low
     - relative_path_fixes2.diff - removed, merged upstream;
     - FindQt4_qt4_lupdate_lrelease.diff - removed, merged upstream.
   * Bump Standards-Version to 3.8.1. No changes needed.
+  * Remove deprecated dh_desktop from debian/rules.
 
- -- Modestas Vainius <modestas@vainius.eu>  Fri, 01 May 2009 18:14:24 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 01 May 2009 18:21:44 +0300
 
 cmake (2.6.3-2) unstable; urgency=low
 

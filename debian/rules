@@ -87,7 +87,6 @@ binary-arch binary-indep: build install
 	dh_installinfo
 	dh_installchangelogs ChangeLog.manual
 	dh_lintian
-	dh_desktop
 	dh_link
 	dh_strip
 	dh_compress -XCMake.pdf
