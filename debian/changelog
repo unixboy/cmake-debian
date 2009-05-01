@@ -1,3 +1,9 @@
+cmake (2.6.4-0r1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 01 May 2009 17:45:20 +0300
+
 cmake (2.6.3-2) unstable; urgency=low
 
   * Remove do-not-use-lib64.diff, no longer needed (according to upstream).
