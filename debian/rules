@@ -1,26 +1,19 @@
 #!/usr/bin/make -f
 
+include /usr/share/quilt/quilt.make
+
 # The next line will cause Dart to be used if it is installed...
 #USE_DARTP:=$(shell if [ -d /usr/share/Dart ]; then echo true; fi )
 USE_DARTP:=
 
 DARCH      := $(shell dpkg --print-installation-architecture)
 CFLAGS     := -Wall -g $(if $(findstring noopt,$(DEB_BUILD_OPTIONS)),-O0,-O2)
-QUILT_CALL := QUILT_PATCHES=debian/patches quilt --quiltrc /dev/null
 BUILD_FLAGS_FILE := build-flags.cmake
 
 # Hack for parisc64 to close bug #133696
 ifeq ($(shell arch),parisc64)
 CFLAGS += -ffunction-sections
 endif
-
-patch: patch-stamp
-patch-stamp:
-	$(QUILT_CALL) push -a || test $$? = 2
-	touch $@
-
-unpatch:
-	$(QUILT_CALL) pop -a -R || test $$? = 2
 
 $(BUILD_FLAGS_FILE):
 	touch $@
@@ -49,7 +42,7 @@ configure-stamp: $(BUILD_FLAGS_FILE)
 	chmod -x Modules/*.cmake  Modules/*.cmake.in Modules/*.cxx Modules/Platform/*
 	touch $@
 
-build: patch-stamp configure-stamp build-stamp
+build: $(QUILT_STAMPFN) configure-stamp build-stamp
 build-stamp:
 	dh_testdir
 	cd Build && $(MAKE) $(if $(USE_DARTP),Experimental && $(MAKE) ExperimentalSubmit)
@@ -58,7 +51,7 @@ build-stamp:
 clean: unpatch
 	dh_testdir
 	dh_testroot
-	rm -rf .pc build-stamp configure-stamp patch-stamp $(BUILD_FLAGS_FILE)
+	rm -rf build-stamp configure-stamp $(BUILD_FLAGS_FILE)
 	rm -rf Build
 	dh_clean
 
@@ -98,4 +91,4 @@ binary-arch binary-indep: build install
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure patch unpatch
+.PHONY: build clean binary-indep binary-arch binary install configure
