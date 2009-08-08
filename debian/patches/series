@@ -4,3 +4,4 @@ findmpeg2-addpath.diff
 kfreebsd-Platform.diff
 executables-dont-need-fpic.diff
 manpage_friendly_docs.diff
+fix_bashisms.diff
