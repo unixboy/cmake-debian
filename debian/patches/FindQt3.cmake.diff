@@ -1,0 +1,23 @@
+Prefer *-qt3 binaries to generic names which might come from Qt4
+
+--- a/Modules/FindQt3.cmake
++++ b/Modules/FindQt3.cmake
+@@ -125,7 +125,7 @@
+ 
+ # qt 3 should prefer QTDIR over the PATH
+ FIND_PROGRAM(QT_MOC_EXECUTABLE
+-  NAMES moc moc-qt3
++  NAMES moc-qt3 moc
+   HINTS
+   $ENV{QTDIR}/bin
+   PATHS
+@@ -147,7 +147,8 @@
+ ENDIF(QT_MOC_EXECUTABLE)
+ 
+ # qt 3 should prefer QTDIR over the PATH
+-FIND_PROGRAM(QT_UIC_EXECUTABLE uic
++FIND_PROGRAM(QT_UIC_EXECUTABLE
++  NAMES uic-qt3 uic
+   HINTS
+   $ENV{QTDIR}/bin
+   PATHS

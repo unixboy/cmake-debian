@@ -1,4 +1,5 @@
 FindQt4.cmake2.6.diff
+FindQt3.cmake.diff
 findmpeg2-addpath.diff
 kfreebsd-Platform.diff
 executables-dont-need-fpic.diff
