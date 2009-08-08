@@ -15,6 +15,12 @@ ifeq ($(shell arch),parisc64)
 CFLAGS += -ffunction-sections
 endif
 
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+MAKEFLAGS += -j$(NUMJOBS)
+CONFIGURE_PARALLEL += --parallel=$(NUMJOBS)
+endif
+
 $(BUILD_FLAGS_FILE):
 	touch $@
 	echo 'set(CMAKE_SKIP_RPATH YES CACHE BOOL "Skip rpath" FORCE)'          >> $@
@@ -32,18 +38,18 @@ $(BUILD_FLAGS_FILE):
 	$(if $(USE_DARTP),echo 'set(BUILDNAME "cmake_2.2.3-1_$(DARCH).deb" CACHE STRING "" FORCE)' >> $@)
 
 configure: configure-stamp
-configure-stamp: $(BUILD_FLAGS_FILE)
+configure-stamp: $(QUILT_STAMPFN) $(BUILD_FLAGS_FILE)
 	dh_testdir
 	# pre-load the cache to avoid setting rpath:
 	rm -rf Build && mkdir -p Build
 	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
-	                         --init=../$(BUILD_FLAGS_FILE) --system-libs
+	                         --init=../$(BUILD_FLAGS_FILE) --system-libs $(CONFIGURE_PARALLEL)
 	chmod -x ChangeLog.manual
 	chmod -x Modules/*.cmake  Modules/*.cmake.in Modules/*.cxx Modules/Platform/*
 	touch $@
 
-build: $(QUILT_STAMPFN) configure-stamp build-stamp
-build-stamp:
+build: build-stamp
+build-stamp: configure-stamp
 	dh_testdir
 	cd Build && $(MAKE) $(if $(USE_DARTP),Experimental && $(MAKE) ExperimentalSubmit)
 	touch $@

@@ -5,8 +5,10 @@ cmake (2.6.4-2) UNRELEASED; urgency=low
   * Fix bashisms in CMake scripts (Closes: #530056).
   * Merge in 2.6.0-6 debian/changelog.
   * Use quilt.make rather than custom quilt patch implementation.
+  * Make debian/rules dpkg-buildpackage -jX safe and support parallel
+    in DEB_BUILD_OPTIONS (Closes: #538826).
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 08 Aug 2009 11:02:22 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Sat, 08 Aug 2009 11:06:53 +0300
 
 cmake (2.6.4-1) unstable; urgency=low
 
