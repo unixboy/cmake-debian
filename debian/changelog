@@ -1,4 +1,4 @@
-cmake (2.6.4-2) UNRELEASED; urgency=low
+cmake (2.6.4-2) unstable; urgency=low
 
   * Prefer *-qt3 binary names to generic ones in FinqQt3.cmake
     (Closes: #538864).
