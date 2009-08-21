@@ -13,7 +13,7 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/cmake.git;a=summary
 
 Package: cmake
 Architecture: any
-Depends: ${shlibs:Depends}, cmake-data (= ${source:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cmake-data (= ${source:Version})
 Description: A cross-platform, open-source make system
  CMake is used to control the software compilation process using
  simple platform and compiler independent configuration files. CMake
@@ -31,7 +31,7 @@ Description: A cross-platform, open-source make system
 
 Package: cmake-data
 Architecture: all
-Depends: emacsen-common
+Depends: emacsen-common, ${misc:Depends}
 Replaces: cmake (<= 2.6.2-1)
 Conflicts: cmake (<= 2.6.2-1)
 Description: CMake data files (modules, templates and documentation)
@@ -41,7 +41,7 @@ Description: CMake data files (modules, templates and documentation)
 
 Package: cmake-curses-gui
 Architecture: any
-Depends: ${shlibs:Depends}, cmake (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cmake (= ${binary:Version})
 Replaces: cmake (<= 2.6.2-1)
 Description: Curses based user interface for CMake (ccmake)
  CMake is used to control the software compilation process using simple
@@ -56,7 +56,7 @@ Description: Curses based user interface for CMake (ccmake)
 
 Package: cmake-qt-gui
 Architecture: any
-Depends: ${shlibs:Depends}, cmake (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cmake (= ${binary:Version})
 Description: Qt4 based user interface for CMake (cmake-gui)
  CMake is used to control the software compilation process using simple
  platform and compiler independent configuration files. CMake generates native
