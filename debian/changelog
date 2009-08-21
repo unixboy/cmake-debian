@@ -7,8 +7,10 @@ cmake (2.6.4-2) UNRELEASED; urgency=low
   * Use quilt.make rather than custom quilt patch implementation.
   * Make debian/rules dpkg-buildpackage -jX safe and support parallel
     in DEB_BUILD_OPTIONS (Closes: #538826).
+  * Add FindPerlLibs.cmake-perl-5.10.diff patch which adds perl 5.10 support in
+    FindPerlLibs.cmake  (Closes: #541609). Thanks to Joshua Rubin.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 08 Aug 2009 11:06:53 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 21 Aug 2009 19:35:21 +0300
 
 cmake (2.6.4-1) unstable; urgency=low
 
