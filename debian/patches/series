@@ -6,3 +6,4 @@ executables-dont-need-fpic.diff
 manpage_friendly_docs.diff
 fix_bashisms.diff
 FindPerlLibs.cmake-perl-5.10.diff
+FindJNI.cmake-more-arches.diff
