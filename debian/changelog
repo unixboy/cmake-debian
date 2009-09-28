@@ -5,6 +5,7 @@ cmake (2.6.4-3) UNRELEASED; urgency=low
   * Improve debian/watch:
     - make it scan remote directories recursively;
     - make it work with new upstream RC release mangling.
+  * Remove Pierre Habouzit from Uploaders by his own request.
 
  -- Modestas Vainius <modestas@vainius.eu>  Fri, 21 Aug 2009 21:48:12 +0300
 
