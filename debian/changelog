@@ -2,6 +2,9 @@ cmake (2.6.4-3) UNRELEASED; urgency=low
 
   * Bump Standards-Version to 3.8.3, no changes needed.
   * Add ${misc:Depends} to Depends fields of packages.
+  * Improve debian/watch:
+    - make it scan remote directories recursively;
+    - make it work with new upstream RC release mangling.
 
  -- Modestas Vainius <modestas@vainius.eu>  Fri, 21 Aug 2009 21:48:12 +0300
 
