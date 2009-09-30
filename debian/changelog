@@ -1,4 +1,4 @@
-cmake (2.6.4-3) UNRELEASED; urgency=low
+cmake (2.6.4-3) unstable; urgency=low
 
   * Bump Standards-Version to 3.8.3, no changes needed.
   * Add ${misc:Depends} to Depends fields of packages.
@@ -16,7 +16,7 @@ cmake (2.6.4-3) UNRELEASED; urgency=low
   * Update debian/copyright with more details (Closes: #544290).
   * Make cmake-curses-gui and cmake-qt-gui packages provide 'cmake-gui'.
 
- -- Modestas Vainius <modestas@vainius.eu>  Fri, 21 Aug 2009 21:48:12 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Wed, 30 Sep 2009 20:51:13 +0300
 
 cmake (2.6.4-2) unstable; urgency=low
 
