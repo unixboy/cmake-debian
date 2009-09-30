@@ -14,6 +14,7 @@ cmake (2.6.4-3) UNRELEASED; urgency=low
   * Backport Modules/FindVTK.cmake from CMake 2.8 CVS. It adds support for VTK
     5.4. Patch FindVTK.cmake-vtk-5.4.diff (Closes: #546030).
   * Update debian/copyright with more details (Closes: #544290).
+  * Make cmake-curses-gui and cmake-qt-gui packages provide 'cmake-gui'.
 
  -- Modestas Vainius <modestas@vainius.eu>  Fri, 21 Aug 2009 21:48:12 +0300
 
