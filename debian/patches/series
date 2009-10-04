@@ -2,3 +2,4 @@ FindQt3.cmake.diff
 kfreebsd-Platform.diff
 executables-dont-need-fpic.diff
 fix_bashisms.diff
+manpage_friendly_docs.diff
