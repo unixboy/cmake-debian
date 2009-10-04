@@ -6,7 +6,7 @@ include /usr/share/quilt/quilt.make
 #USE_DARTP:=$(shell if [ -d /usr/share/Dart ]; then echo true; fi )
 USE_DARTP:=
 
-DARCH      := $(shell dpkg --print-installation-architecture)
+DARCH      := $(shell dpkg --print-architecture)
 CFLAGS     := -Wall -g $(if $(findstring noopt,$(DEB_BUILD_OPTIONS)),-O0,-O2)
 BUILD_FLAGS_FILE := build-flags.cmake
 

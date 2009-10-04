@@ -14,6 +14,8 @@ cmake (2.8.0~rc2-0r2) UNRELEASED; urgency=low
     - FindJNI.cmake-more-arches.diff - remove, was taken from upstream;
     - FindVTK.cmake-vtk-5.4.diff - remove, was taken from upstream.
   * Update install files.
+  * Call dpkg with --print-architecture rather than obsolete 
+    --print-installation-architecture.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
 
