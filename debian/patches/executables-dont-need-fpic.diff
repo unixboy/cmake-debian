@@ -1,11 +1,21 @@
-Any special options needed for linking with shared libraries can be put
-in CMAKE_SHARED_LIBRARY_LINK_C_FLAGS.
+From: Ben Hutchings <ben@decadent.org.uk>
+Subject: Do not use -fPIC when linking executables
+ cmake includes ${CMAKE_SHARED_LIBRARY_C_FLAGS} in the command line to
+ link an executable, and by default this is -fPIC.  Either the use or
+ the definition of this variable is wrong, because executables should
+ not be linked with this option by default.
+ .
+ It's not entirely obvious how this variable gets into the command
+ line, but you can verify that it does by changing its value to e.g. -D
+ SHARED and running make VERBOSE=1.
+ .
+ Any special options needed for linking with shared libraries can be put
+ in CMAKE_SHARED_LIBRARY_LINK_C_FLAGS.
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=478404
 
-See http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=478404
-
---- cmake-2.6.0.orig/Source/cmMakefileExecutableTargetGenerator.cxx
-+++ cmake-2.6.0/Source/cmMakefileExecutableTargetGenerator.cxx
-@@ -201,11 +201,6 @@
+--- a/Source/cmMakefileExecutableTargetGenerator.cxx
++++ b/Source/cmMakefileExecutableTargetGenerator.cxx
+@@ -199,11 +199,6 @@
    std::string flags;
    std::string linkFlags;
  

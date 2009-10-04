@@ -1,10 +1,4 @@
-FindQt4.cmake2.6.diff
 FindQt3.cmake.diff
-findmpeg2-addpath.diff
 kfreebsd-Platform.diff
 executables-dont-need-fpic.diff
-manpage_friendly_docs.diff
 fix_bashisms.diff
-FindPerlLibs.cmake-perl-5.10.diff
-FindJNI.cmake-more-arches.diff
-FindVTK.cmake-vtk-5.4.diff

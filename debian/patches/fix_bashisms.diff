@@ -1,4 +1,8 @@
-Fix bashisms in CMake scripts. Thanks to Raphael Geissert for heads up.
+From: Modestas Vainius <modestas@vainius.eu>
+Subject: Fix bashisms in CMake scripts.
+ Fix bashisms found in /bin/sh scripts. Thanks to Raphael Geissert for heads
+ up.
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=530056
 
 --- a/Modules/CPack.RuntimeScript.in
 +++ b/Modules/CPack.RuntimeScript.in

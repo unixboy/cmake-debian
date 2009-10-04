@@ -1,6 +1,18 @@
 cmake (2.8.0~rc2-0r1) UNRELEASED; urgency=low
 
   * New upstream development release.
+  * Update patches:
+    - FindQt4.cmake2.6.diff - remove, no longer needed as original bug has been
+      fixed since 2.6;
+    - FindQt3.cmake.diff - refresh, add DEP-3 headers;
+    - findmpeg2-addpath.diff - remove, bug fixed upstream (in other way);
+    - kfreebsd-Platform.diff - refresh, add DEP-3 headers;
+    - executables-dont-need-fpic.diff - refresh, app DEP-3 headers;
+    - manpage_friendly_docs.diff - remove, merged upstream;
+    - fix_bashisms.diff - add DEP-3 headers;
+    - FindPerlLibs.cmake-perl-5.10.diff - remove, fixed upstream differently;
+    - FindJNI.cmake-more-arches.diff - remove, was taken from upstream;
+    - FindVTK.cmake-vtk-5.4.diff - remove, was taken from upstream.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
 
