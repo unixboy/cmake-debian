@@ -1,6 +1,7 @@
 cmake (2.8.0~rc2-0r3) UNRELEASED; urgency=low
 
   * New upstream development release.
+    - ctest no longer segfaults on such a invalid input (Closes: #528530).
   * Update patches:
     - FindQt4.cmake2.6.diff - remove, no longer needed as original bug has been
       fixed since 2.6;
