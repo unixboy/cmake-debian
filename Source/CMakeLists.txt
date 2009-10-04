@@ -1,3 +1,14 @@
+#=============================================================================
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
 INCLUDE(CheckIncludeFile)
 # Check if we can build support for ELF parsing.
 CHECK_INCLUDE_FILE("elf.h" HAVE_ELF_H)
@@ -11,6 +22,10 @@ ENDIF(HAVE_ELF_H)
 CONFIGURE_FILE(
   "${CMake_SOURCE_DIR}/Source/cmConfigure.cmake.h.in"
   "${CMake_BINARY_DIR}/Source/cmConfigure.h"
+  )
+CONFIGURE_FILE(
+  "${CMake_SOURCE_DIR}/Source/cmVersionConfig.h.in"
+  "${CMake_BINARY_DIR}/Source/cmVersionConfig.h"
   )
 CONFIGURE_FILE(
   "${CMake_SOURCE_DIR}/Source/CPack/cmCPackConfigure.h.in"
@@ -112,6 +127,8 @@ SET(SRCS
   cmComputeTargetDepends.cxx
   cmCustomCommand.cxx
   cmCustomCommand.h
+  cmDefinitions.cxx
+  cmDefinitions.h
   cmDepends.cxx
   cmDepends.h
   cmDependsC.cxx
@@ -153,6 +170,8 @@ SET(SRCS
   cmFileTimeComparison.cxx
   cmFileTimeComparison.h
   cmGeneratedFileStream.cxx
+  cmGeneratorExpression.cxx
+  cmGeneratorExpression.h
   cmGlobalGenerator.cxx
   cmGlobalGenerator.h
   cmGlobalUnixMakefileGenerator3.cxx
@@ -187,6 +206,8 @@ SET(SRCS
   cmOrderDirectories.h
   cmPolicies.h
   cmPolicies.cxx
+  cmProcessTools.cxx
+  cmProcessTools.h
   cmProperty.cxx
   cmProperty.h
   cmPropertyDefinition.cxx
@@ -195,6 +216,8 @@ SET(SRCS
   cmPropertyDefinitionMap.h
   cmPropertyMap.cxx
   cmPropertyMap.h
+  cmScriptGenerator.h
+  cmScriptGenerator.cxx
   cmSourceFile.cxx
   cmSourceFile.h
   cmSourceFileLocation.cxx
@@ -207,12 +230,16 @@ SET(SRCS
   cmTarget.h
   cmTest.cxx
   cmTest.h
+  cmTestGenerator.cxx
+  cmTestGenerator.h
   cmVariableWatch.cxx
   cmVariableWatch.h
   cmVersion.cxx
   cmVersion.h
   cmXMLParser.cxx
   cmXMLParser.h
+  cmXMLSafe.cxx
+  cmXMLSafe.h
   cmake.cxx
   cmake.h
   cmakewizard.cxx
@@ -235,8 +262,6 @@ IF(APPLE)
     cmXCode21Object.cxx
     cmGlobalXCodeGenerator.cxx
     cmGlobalXCodeGenerator.h
-    cmGlobalXCode21Generator.cxx
-    cmGlobalXCode21Generator.h
     cmLocalXCodeGenerator.cxx
     cmLocalXCodeGenerator.h)
 ENDIF(APPLE)
@@ -270,9 +295,20 @@ IF (WIN32)
       cmGlobalVisualStudio8Win64Generator.h
       cmGlobalVisualStudio9Win64Generator.cxx
       cmGlobalVisualStudio9Win64Generator.h
+      cmVisualStudioGeneratorOptions.h
+      cmVisualStudioGeneratorOptions.cxx
+      cmVisualStudio10TargetGenerator.h
+      cmVisualStudio10TargetGenerator.cxx
+      cmLocalVisualStudio10Generator.cxx
+      cmLocalVisualStudio10Generator.h
+      cmGlobalVisualStudio10Generator.h
+      cmGlobalVisualStudio10Generator.cxx
       cmGlobalVisualStudioGenerator.cxx
       cmGlobalVisualStudioGenerator.h
       cmGlobalWatcomWMakeGenerator.cxx
+      cmIDEFlagTable.h
+      cmIDEOptions.cxx
+      cmIDEOptions.h
       cmLocalVisualStudio6Generator.cxx
       cmLocalVisualStudio6Generator.h
       cmLocalVisualStudio7Generator.cxx
@@ -314,6 +350,8 @@ INCLUDE_DIRECTORIES(
 # Sources for CTestLib
 #
 SET(CTEST_SRCS cmCTest.cxx
+  CTest/cmProcess.cxx
+  CTest/cmCTestBatchTestHandler.cxx
   CTest/cmCTestBuildAndTestHandler.cxx
   CTest/cmCTestBuildCommand.cxx
   CTest/cmCTestBuildHandler.cxx
@@ -324,10 +362,13 @@ SET(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestEmptyBinaryDirectoryCommand.cxx
   CTest/cmCTestGenericHandler.cxx
   CTest/cmCTestHandlerCommand.cxx
+  CTest/cmCTestLaunch.cxx
   CTest/cmCTestMemCheckCommand.cxx
   CTest/cmCTestMemCheckHandler.cxx
+  CTest/cmCTestMultiProcessHandler.cxx
   CTest/cmCTestReadCustomFilesCommand.cxx
   CTest/cmCTestRunScriptCommand.cxx
+  CTest/cmCTestRunTest.cxx
   CTest/cmCTestScriptHandler.cxx
   CTest/cmCTestSleepCommand.cxx
   CTest/cmCTestStartCommand.cxx
@@ -337,6 +378,21 @@ SET(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestTestHandler.cxx
   CTest/cmCTestUpdateCommand.cxx
   CTest/cmCTestUpdateHandler.cxx
+
+  CTest/cmCTestVC.cxx
+  CTest/cmCTestVC.h
+  CTest/cmCTestGlobalVC.cxx
+  CTest/cmCTestGlobalVC.h
+  CTest/cmCTestCVS.cxx
+  CTest/cmCTestCVS.h
+  CTest/cmCTestSVN.cxx
+  CTest/cmCTestSVN.h
+  CTest/cmCTestBZR.cxx
+  CTest/cmCTestBZR.h
+  CTest/cmCTestGIT.cxx
+  CTest/cmCTestGIT.h
+  CTest/cmCTestHG.cxx
+  CTest/cmCTestHG.h
   )
 
 # Build CTestLib
@@ -423,31 +479,11 @@ IF(BUILD_CursesDialog)
   INCLUDE(${CMake_SOURCE_DIR}/Source/CursesDialog/CMakeLists.txt)
 ENDIF(BUILD_CursesDialog)
 
-# MFC GUI
-# MFC libraries are only available on Visual Studio
-IF(BUILD_MFCDialog)
-  SUBDIRS(MFCDialog)
-ENDIF(BUILD_MFCDialog)
-
 # Qt GUI
 OPTION(BUILD_QtDialog "Build Qt dialog for CMake" FALSE)
 IF(BUILD_QtDialog)
   SUBDIRS(QtDialog)
 ENDIF(BUILD_QtDialog)
-
-# WX Widgets GUI
-OPTION(BUILD_WXDialog "Build wxWidgets dialog for CMake" FALSE)
-MARK_AS_ADVANCED(BUILD_WXDialog)
-IF(BUILD_WXDialog)
-  SUBDIRS(WXDialog)
-ENDIF(BUILD_WXDialog)
-
-# FLTK GUI, needs some work: generator selection, paths with spaces, ...
-# OPTION(BUILD_FLTKDialog "Build FLTK dialog for CMake" FALSE)
-# MARK_AS_ADVANCED(BUILD_FLTKDialog)
-# IF(BUILD_FLTKDialog)
-#  SUBDIRS(FLTKDialog)
-# ENDIF(BUILD_FLTKDialog)
 
 INCLUDE (${CMAKE_BINARY_DIR}/Source/LocalUserOptions.cmake OPTIONAL)
 INCLUDE (${CMAKE_SOURCE_DIR}/Source/LocalUserOptions.cmake OPTIONAL)
@@ -460,3 +496,4 @@ IF(APPLE)
 ENDIF(APPLE)
 
 INSTALL_FILES(${CMAKE_DATA_DIR}/include cmCPluginAPI.h)
+

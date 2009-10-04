@@ -1,6 +1,7 @@
 SET(CMAKE_SHARED_LIBRARY_SUFFIX ".sl")          # .so
 SET(CMAKE_DL_LIBS "dld")
 SET(CMAKE_FIND_LIBRARY_SUFFIXES ".sl" ".so" ".a")
+SET(CMAKE_EXTRA_SHARED_LIBRARY_SUFFIXES ".so")
 
 # The HP linker needs to find transitive shared library dependencies
 # in the -L path.  Therefore the runtime path must be added to the
@@ -88,6 +89,18 @@ ELSE(CMAKE_COMPILER_IS_GNUCXX)
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 # set flags for gcc support
 INCLUDE(Platform/UnixPaths)
+
+# Look in both 32-bit and 64-bit implict link directories, but tell
+# CMake not to pass the paths to the linker.  The linker will find the
+# library for the proper architecture.  In the future we should detect
+# which path will be used by the linker.  Since the pointer type size
+# CMAKE_SIZEOF_VOID_P is not set until after this file executes, we
+# would need to append to CMAKE_SYSTEM_LIBRARY_PATH at a later point
+# (after CMakeTest(LANG)Compiler.cmake runs for at least one language).
+LIST(APPEND CMAKE_SYSTEM_LIBRARY_PATH /usr/lib/hpux32)
+LIST(APPEND CMAKE_SYSTEM_LIBRARY_PATH /usr/lib/hpux64)
+LIST(APPEND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+  /usr/lib/hpux32 /usr/lib/hpux64)
 
 IF(NOT CMAKE_COMPILER_IS_GNUCC)
   SET (CMAKE_C_CREATE_PREPROCESSED_SOURCE "<CMAKE_C_COMPILER> <DEFINES> <FLAGS> -E <SOURCE> > <PREPROCESSED_SOURCE>")

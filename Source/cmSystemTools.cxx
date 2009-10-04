@@ -1,24 +1,23 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSystemTools.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-10 22:28:08 $
-  Version:   $Revision: 1.368.2.8 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSystemTools.h"   
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
 #include <string.h>
+#include <stdlib.h>
+#ifdef __QNX__
+# include <malloc.h> /* for malloc/free on QNX */
+#endif
 
 #include <cmsys/RegularExpression.hxx>
 #include <cmsys/Directory.hxx>
@@ -235,48 +234,6 @@ std::string cmSystemTools::EscapeSpaces(const char* str)
     }
 }
 
-
-std::string cmSystemTools::RemoveEscapes(const char* s)
-{
-  std::string result = "";
-  for(const char* ch = s; *ch; ++ch)
-    {
-    if(*ch == '\\' && *(ch+1) != ';')
-      {
-      ++ch;
-      switch (*ch)
-        {
-        case '\\': result.insert(result.end(), '\\'); break;
-        case '"': result.insert(result.end(), '"'); break;
-        case ' ': result.insert(result.end(), ' '); break;
-        case 't': result.insert(result.end(), '\t'); break;
-        case 'n': result.insert(result.end(), '\n'); break;
-        case 'r': result.insert(result.end(), '\r'); break;
-        case '#': result.insert(result.end(), '#'); break;
-        case '(': result.insert(result.end(), '('); break;
-        case ')': result.insert(result.end(), ')'); break;
-        case '0': result.insert(result.end(), '\0'); break;
-        case '\0':
-          {
-          cmSystemTools::Error("Trailing backslash in argument:\n", s);
-          return result;
-          }
-        default:
-          {
-          std::string chStr(1, *ch);
-          cmSystemTools::Error("Invalid escape sequence \\", chStr.c_str(),
-                               "\nin argument ", s);
-          }
-        }
-      }
-    else
-      {
-      result.insert(result.end(), *ch);
-      }
-    }
-  return result;
-}
-
 void cmSystemTools::Error(const char* m1, const char* m2,
                           const char* m3, const char* m4)
 {
@@ -490,6 +447,38 @@ void cmSystemTools::ParseWindowsCommandLine(const char* command,
     }
 }
 
+//----------------------------------------------------------------------------
+class cmSystemToolsArgV
+{
+  char** ArgV;
+public:
+  cmSystemToolsArgV(char** argv): ArgV(argv) {}
+  ~cmSystemToolsArgV()
+    {
+    for(char** arg = this->ArgV; arg && *arg; ++arg)
+      {
+      free(*arg);
+      }
+    free(this->ArgV);
+    }
+  void Store(std::vector<std::string>& args) const
+    {
+    for(char** arg = this->ArgV; arg && *arg; ++arg)
+      {
+      args.push_back(*arg);
+      }
+    }
+};
+
+//----------------------------------------------------------------------------
+void cmSystemTools::ParseUnixCommandLine(const char* command,
+                                         std::vector<std::string>& args)
+{
+  // Invoke the underlying parser.
+  cmSystemToolsArgV argv = cmsysSystem_Parse_CommandForUnix(command, 0);
+  argv.Store(args);
+}
+
 std::string cmSystemTools::EscapeWindowsShellArgument(const char* arg,
                                                       int shell_flags)
 {
@@ -516,12 +505,12 @@ std::vector<cmStdString> cmSystemTools::ParseArguments(const char* command)
 
   bool win_path = false;
 
-  if ( command[0] != '/' && command[1] == ':' && command[2] == '\\' ||
-       command[0] == '\"' && command[1] != '/' && command[2] == ':' 
-       && command[3] == '\\' || 
-       command[0] == '\'' && command[1] != '/' && command[2] == ':' 
-       && command[3] == '\\' || 
-       command[0] == '\\' && command[1] == '\\')
+  if ((command[0] != '/' && command[1] == ':' && command[2] == '\\') ||
+      (command[0] == '\"' && command[1] != '/' && command[2] == ':'
+       && command[3] == '\\') ||
+      (command[0] == '\'' && command[1] != '/' && command[2] == ':'
+       && command[3] == '\\') ||
+      (command[0] == '\\' && command[1] == '\\'))
     {
     win_path = true;
     }
@@ -898,7 +887,9 @@ bool RunCommandViaPopen(const char* command,
     {
     commandInDir = command;
     }
+#ifndef __VMS
   commandInDir += " 2>&1";
+#endif
   command = commandInDir.c_str();
   const int BUFFER_SIZE = 4096;
   char buffer[BUFFER_SIZE];
@@ -1097,6 +1088,31 @@ bool cmSystemTools::DoesFileExistWithExtensions(
   return false;
 }
 
+std::string cmSystemTools::FileExistsInParentDirectories(const char* fname,
+  const char* directory, const char* toplevel)
+{
+  std::string file = fname;
+  cmSystemTools::ConvertToUnixSlashes(file);
+  std::string dir = directory;
+  cmSystemTools::ConvertToUnixSlashes(dir);
+  std::string prevDir;
+  while(dir != prevDir)
+    {
+    std::string path = dir + "/" + file;
+    if ( cmSystemTools::FileExists(path.c_str()) )
+      {
+      return path;
+      }
+    if ( dir.size() < strlen(toplevel) )
+      {
+      break;
+      }
+    prevDir = dir;
+    dir = cmSystemTools::GetParentDirectory(dir.c_str());
+    }
+  return "";
+}
+
 bool cmSystemTools::cmCopyFile(const char* source, const char* destination)
 {
   return Superclass::CopyFileAlways(source, destination);
@@ -1106,6 +1122,56 @@ bool cmSystemTools::CopyFileIfDifferent(const char* source,
   const char* destination)
 {
   return Superclass::CopyFileIfDifferent(source, destination);
+}
+
+//----------------------------------------------------------------------------
+bool cmSystemTools::RenameFile(const char* oldname, const char* newname)
+{
+#ifdef _WIN32
+  /* On Windows the move functions will not replace existing files.
+     Check if the destination exists.  */
+  struct stat newFile;
+  if(stat(newname, &newFile) == 0)
+    {
+    /* The destination exists.  We have to replace it carefully.  The
+       MoveFileEx function does what we need but is not available on
+       Win9x.  */
+    OSVERSIONINFO osv;
+    DWORD attrs;
+
+    /* Make sure the destination is not read only.  */
+    attrs = GetFileAttributes(newname);
+    if(attrs & FILE_ATTRIBUTE_READONLY)
+      {
+      SetFileAttributes(newname, attrs & ~FILE_ATTRIBUTE_READONLY);
+      }
+
+    /* Check the windows version number.  */
+    osv.dwOSVersionInfoSize = sizeof(osv);
+    GetVersionEx(&osv);
+    if(osv.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+      {
+      /* This is Win9x.  There is no MoveFileEx implementation.  We
+         cannot quite rename the file atomically.  Just delete the
+         destination and then move the file.  */
+      DeleteFile(newname);
+      return MoveFile(oldname, newname) != 0;
+      }
+    else
+      {
+      /* This is not Win9x.  Use the MoveFileEx implementation.  */
+      return MoveFileEx(oldname, newname, MOVEFILE_REPLACE_EXISTING) != 0;
+      }
+    }
+  else
+    {
+    /* The destination does not exist.  Just move the file.  */
+    return MoveFile(oldname, newname) != 0;
+    }
+#else
+  /* On UNIX we have an OS-provided call to do this atomically.  */
+  return rename(oldname, newname) == 0;
+#endif
 }
 
 bool cmSystemTools::ComputeFileMD5(const char* source, char* md5out)
@@ -1529,33 +1595,8 @@ std::string cmSystemTools::RelativePath(const char* local, const char* remote)
   return cmsys::SystemTools::RelativePath(local, remote);
 }
 
-class cmDeletingCharVector : public std::vector<char*>
-{
-public:
-  ~cmDeletingCharVector()
-    {
-      for(std::vector<char*>::iterator i = this->begin();
-          i != this->end(); ++i)
-        {
-        delete []*i;
-        }
-    }
-};
-
-        
-bool cmSystemTools::PutEnv(const char* value)
-{ 
-  static cmDeletingCharVector localEnvironment;
-  char* envVar = new char[strlen(value)+1];
-  strcpy(envVar, value);
-  int ret = putenv(envVar);
-  // save the pointer in the static vector so that it can
-  // be deleted on exit
-  localEnvironment.push_back(envVar);
-  return ret == 0;
-}
-
 #ifdef CMAKE_BUILD_WITH_CMAKE
+//----------------------------------------------------------------------
 bool cmSystemTools::UnsetEnv(const char* value)
 {
 #if !defined(HAVE_UNSETENV)
@@ -1568,6 +1609,7 @@ bool cmSystemTools::UnsetEnv(const char* value)
 #endif
 }
 
+//----------------------------------------------------------------------
 std::vector<std::string> cmSystemTools::GetEnvironmentVariables()
 {
   std::vector<std::string> env;
@@ -1577,6 +1619,54 @@ std::vector<std::string> cmSystemTools::GetEnvironmentVariables()
     env.push_back(environ[cc]);
     }
   return env;
+}
+
+//----------------------------------------------------------------------
+std::vector<std::string> cmSystemTools::AppendEnv(
+  std::vector<std::string>* env)
+{
+  std::vector<std::string> origEnv = GetEnvironmentVariables();
+
+  if (env && env->size()>0)
+    {
+    std::vector<std::string>::const_iterator eit;
+
+    for (eit = env->begin(); eit!= env->end(); ++eit)
+      {
+      PutEnv(eit->c_str());
+      }
+    }
+
+  return origEnv;
+}
+
+//----------------------------------------------------------------------
+void cmSystemTools::RestoreEnv(const std::vector<std::string>& env)
+{
+  std::vector<std::string>::const_iterator eit;
+
+  // First clear everything in the current environment:
+  //
+  std::vector<std::string> currentEnv = GetEnvironmentVariables();
+  for (eit = currentEnv.begin(); eit!= currentEnv.end(); ++eit)
+    {
+    std::string var(*eit);
+
+    std::string::size_type pos = var.find("=");
+    if (pos != std::string::npos)
+      {
+      var = var.substr(0, pos);
+      }
+
+    UnsetEnv(var.c_str());
+    }
+
+  // Then put back each entry from the original environment:
+  //
+  for (eit = env.begin(); eit!= env.end(); ++eit)
+    {
+    PutEnv(eit->c_str());
+    }
 }
 #endif
 
@@ -1592,56 +1682,6 @@ void cmSystemTools::EnableVSConsoleOutput()
 #ifdef _WIN32
   cmSystemTools::PutEnv("vsconsoleoutput=1");
 #endif
-}
-
-std::string cmSystemTools::MakeXMLSafe(const char* str)
-{
-  std::vector<char> result;
-  result.reserve(500);
-  const char* pos = str;
-  for ( ;*pos; ++pos)
-    {
-    char ch = *pos;
-    if ( (ch > 126 || ch < 32) && ch != 9  && ch != 10 && ch != 13 
-         && ch != '\r' )
-      {
-      char buffer[33];
-      sprintf(buffer, "&lt;%d&gt;", static_cast<int>(ch));
-      //sprintf(buffer, "&#x%0x;", (unsigned int)ch);
-      result.insert(result.end(), buffer, buffer+strlen(buffer));
-      }
-    else
-      {
-      const char* const encodedChars[] = {
-        "&amp;",
-        "&lt;",
-        "&gt;"
-      };
-      switch ( ch )
-        {
-        case '&':
-          result.insert(result.end(), encodedChars[0], encodedChars[0]+5);
-          break;
-        case '<':
-          result.insert(result.end(), encodedChars[1], encodedChars[1]+4);
-          break;
-        case '>':
-          result.insert(result.end(), encodedChars[2], encodedChars[2]+4);
-          break;
-        case '\n':
-          result.push_back('\n');
-          break;
-        case '\r': break; // Ignore \r
-        default:
-          result.push_back(ch);
-        }
-      }
-    }
-  if ( result.size() == 0 )
-    {
-    return "";
-    }
-  return std::string(&*result.begin(), result.size());
 }
 
 bool cmSystemTools::IsPathToFramework(const char* path)

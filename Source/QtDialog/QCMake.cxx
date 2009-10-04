@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: QCMake.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-05-23 20:09:43 $
-  Version:   $Revision: 1.21.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "QCMake.h"
 
@@ -67,6 +62,15 @@ QCMake::QCMake(QObject* p)
   std::vector<std::string>::iterator iter;
   for(iter = generators.begin(); iter != generators.end(); ++iter)
     {
+    // Skip the generator "KDevelop3", since there is also
+    // "KDevelop3 - Unix Makefiles", which is the full and official name.
+    // The short name is actually only still there since this was the name
+    // in CMake 2.4, to keep "command line argument compatibility", but
+    // this is not necessary in the GUI.
+    if (*iter == "KDevelop3")
+      {
+      continue;
+      }
     this->AvailableGenerators.append(iter->c_str());
     }
 }
@@ -82,8 +86,10 @@ void QCMake::loadCache(const QString& dir)
   this->setBinaryDirectory(dir);
 }
 
-void QCMake::setSourceDirectory(const QString& dir)
+void QCMake::setSourceDirectory(const QString& _dir)
 {
+  QString dir = 
+    cmSystemTools::GetActualCaseForPath(_dir.toAscii().data()).c_str();
   if(this->SourceDirectory != dir)
     {
     this->SourceDirectory = QDir::fromNativeSeparators(dir);
@@ -91,8 +97,10 @@ void QCMake::setSourceDirectory(const QString& dir)
     }
 }
 
-void QCMake::setBinaryDirectory(const QString& dir)
+void QCMake::setBinaryDirectory(const QString& _dir)
 {
+  QString dir = 
+    cmSystemTools::GetActualCaseForPath(_dir.toAscii().data()).c_str();
   if(this->BinaryDirectory != dir)
     {
     this->BinaryDirectory = QDir::fromNativeSeparators(dir);
@@ -286,6 +294,10 @@ QCMakePropertyList QCMake::properties() const
     else if(i.GetType() == cmCacheManager::STRING)
       {
       prop.Type = QCMakeProperty::STRING;
+      if (i.PropertyExists("STRINGS"))
+        {
+        prop.Strings = QString(i.GetProperty("STRINGS")).split(";");
+        }
       }
 
     ret.append(prop);

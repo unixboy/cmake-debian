@@ -4,7 +4,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 1.3)
 #
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTEST_CXX_FLAGS")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTEST_C_FLAGS")
-SET(CMAKE_C_FLAGS "${CMAKE_ANSI_CFLAGS} ${CMAKE_C_FLAGS}")
 
 IF(COMPLEX_TEST_CMAKELIB)
   # Link to CMake lib
@@ -12,7 +11,13 @@ IF(COMPLEX_TEST_CMAKELIB)
   LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Source/kwsys)
   LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Utilities/cmexpat)
   LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Utilities/cmzlib)
-  LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Utilities/cmcurl)
+  # prefer the new curl if it is around
+  IF(EXISTS ${Complex_BINARY_DIR}/../../Utilities/cmcurl-7.19.0)
+    LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Utilities/cmcurl-7.19.0/lib)
+  ENDIF(EXISTS ${Complex_BINARY_DIR}/../../Utilities/cmcurl-7.19.0)
+  IF(EXISTS ${Complex_BINARY_DIR}/../../Utilities/cmcurl)
+    LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Utilities/cmcurl)
+  ENDIF(EXISTS ${Complex_BINARY_DIR}/../../Utilities/cmcurl)
   LINK_DIRECTORIES(${Complex_BINARY_DIR}/../../Utilities/cmtar)
 ENDIF(COMPLEX_TEST_CMAKELIB)
 

@@ -1,7 +1,25 @@
 
+#=============================================================================
+# Copyright 2004-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 # This file sets the basic flags for the Fortran language in CMake.
 # It also loads the available platform file for the system-compiler
 # if it exists.
+
+# Load compiler-specific information.
+IF(CMAKE_Fortran_COMPILER_ID)
+  INCLUDE(Compiler/${CMAKE_Fortran_COMPILER_ID}-Fortran OPTIONAL)
+ENDIF(CMAKE_Fortran_COMPILER_ID)
 
 SET(CMAKE_BASE_NAME)
 GET_FILENAME_COMPONENT(CMAKE_BASE_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)

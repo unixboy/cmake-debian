@@ -1,3 +1,14 @@
+#=============================================================================
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
 SUBDIRS(Doxygen KWStyle)
 
 MAKE_DIRECTORY(${CMake_BINARY_DIR}/Docs)
@@ -12,6 +23,7 @@ MACRO(ADD_DOCS target dependency)
   IF(CMD)
     ADD_CUSTOM_COMMAND(
       OUTPUT ${CMake_BINARY_DIR}/Docs/${target}.txt
+      ${${target}-PATH} # Possibly set PATH, see below.
       COMMAND ${CMD}
       ARGS --help-full ${CMake_BINARY_DIR}/Docs/${target}.txt
            --help-full ${CMake_BINARY_DIR}/Docs/${target}.html
@@ -29,6 +41,19 @@ MACRO(ADD_DOCS target dependency)
     SET(DOC_FILES ${DOC_FILES} ${CMake_BINARY_DIR}/Docs/${target}.txt)
   ENDIF(CMD)
 ENDMACRO(ADD_DOCS target dependency)
+
+# Help cmake-gui find the Qt DLLs on Windows.
+SET(WIN_SHELL_GENS "Visual Studio|NMake|MinGW|Watcom|Borland")
+IF(BUILD_QtDialog AND "${CMAKE_GENERATOR}" MATCHES "${WIN_SHELL_GENS}"
+    AND EXISTS "${QT_QMAKE_EXECUTABLE}" AND NOT CMAKE_NO_AUTO_QT_ENV)
+  GET_FILENAME_COMPONENT(Qt_BIN_DIR "${QT_QMAKE_EXECUTABLE}" PATH)
+  IF(EXISTS "${Qt_BIN_DIR}/QtCore4.dll")
+    # Tell the macro to set the path before running cmake-gui.
+    STRING(REPLACE ";" "\\;" _PATH "PATH=${Qt_BIN_DIR};%PATH%")
+    SET(cmake-gui-PATH COMMAND set "${_PATH}")
+  ENDIF(EXISTS "${Qt_BIN_DIR}/QtCore4.dll")
+ENDIF(BUILD_QtDialog AND "${CMAKE_GENERATOR}" MATCHES "${WIN_SHELL_GENS}"
+  AND EXISTS "${QT_QMAKE_EXECUTABLE}" AND NOT CMAKE_NO_AUTO_QT_ENV)
 
 # add the docs for the executables
 ADD_DOCS(ctest      ${CMake_SOURCE_DIR}/Utilities/Doxygen/authors.txt)

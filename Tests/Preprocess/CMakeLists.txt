@@ -4,11 +4,6 @@ project(Preprocess)
 # This test is meant both as a test and as a reference for supported
 # syntax on native tool command lines.
 
-# We need ansi C support.
-IF(CMAKE_ANSI_CFLAGS)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_ANSI_CFLAGS}")
-ENDIF(CMAKE_ANSI_CFLAGS)
-
 # Determine the build tool being used.  Not all characters can be
 # escaped for all build tools.  This test checks all characters known
 # to work with each tool and documents those known to not work.
@@ -39,6 +34,9 @@ endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio 7$")
 if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   set(PP_VS 1)
 endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+if("${CMAKE_GENERATOR}" MATCHES "Visual Studio 10")
+  set(PP_VS100 1)
+endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio 10")
 
 # Some tests below check the PP_* variables set above.  They are meant
 # to test the case that the build tool is at fault.  Other tests below
@@ -54,7 +52,7 @@ endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 # must not have it escaped inside the configured header.
 set(STRING_EXTRA "")
 
-if(NOT BORLAND AND NOT PP_VS70)
+if(NOT BORLAND AND NOT PP_VS70 AND NOT PP_VS100)
   # Borland, VS70 IDE: ;
   # The Borland compiler will simply not accept a non-escaped semicolon
   # on the command line.  If it is escaped \; then the escape character
@@ -62,12 +60,14 @@ if(NOT BORLAND AND NOT PP_VS70)
   #
   # The VS 7.0 IDE separates definitions on semicolons and commas with
   # no regard for quotes.  Fortunately VS 7.1 and above are okay.
+  # VS 10 seems to also not like semicolons
   set(SEMICOLON "\;")
-endif(NOT BORLAND AND NOT PP_VS70)
+endif()
 
 if(NOT PP_VS6)
-  # VS 6 IDE: spaces
-  # The project parser unconditionally separates arguments at spaces.
+  # VS 6 IDE: spaces and '"', '$', or ';'
+  # The project parser cannot handle spaces if there are quotes.
+  # Since we test passing in a quoted string, we cannot have spaces.
   set(STRING_EXTRA "${STRING_EXTRA} ")
 
   if(NOT PP_BORLAND AND NOT PP_WATCOM)
@@ -177,7 +177,7 @@ set(EXPR "x*y+!(x==(y+1*2))*f(x${EXPR_OP1}2)")
 
 if(NOT WATCOM)
   # Watcom does not support - or / because it parses them as options.
-  set(EXPR "${EXPR}+y/x-x")
+  set(EXPR "${EXPR} + y/x-x")
 endif(NOT WATCOM)
 
 #-----------------------------------------------------------------------------

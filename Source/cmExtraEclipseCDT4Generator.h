@@ -1,21 +1,16 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2004-2009 Kitware, Inc.
+  Copyright 2004 Alexander Neundorf (neundorf@kde.org)
+  Copyright 2007 Miguel A. Figueroa-Villanueva
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExtraEclipseCDT4Generator.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:06 $
-  Version:   $Revision: 1.4.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  Copyright (c) 2004 Alexander Neundorf, neundorf@kde.org. All rights reserved.
-  Copyright (c) 2007 Miguel A. Figueroa-Villanueva. All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmExtraEclipseCDT4Generator_h
 #define cmExtraEclipseCDT4Generator_h
 
@@ -91,7 +86,9 @@ private:
                                     const cmMakefile& makefile);
   static void AppendTarget         (cmGeneratedFileStream& fout,
                                     const std::string&     target,
-                                    const std::string&     make);
+                                    const std::string&     make,
+                                    const std::string&     path,
+                                    const char* prefix = "");
   static void AppendScannerProfile (cmGeneratedFileStream& fout,
                                     const std::string&   profileID,
                                     bool                 openActionEnabled,
@@ -119,7 +116,6 @@ private:
   std::vector<std::string> OutLinkedResources;
   std::string HomeDirectory;
   std::string HomeOutputDirectory;
-  std::set<std::string> TargetsToIgnore;
   bool IsOutOfSourceBuild;
   bool GenerateSourceProject;
 

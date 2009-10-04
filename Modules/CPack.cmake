@@ -136,7 +136,10 @@
 #   whether the program directory should be added to the system PATH
 #   variable.
 #
-#   CPACK_NSIS_DISPLAY_NAME - The title displayed at the top of the
+#   CPACK_NSIS_DISPLAY_NAME - The display name string that appears in
+#   the Windows Add/Remove Program control panel
+#
+#   CPACK_NSIS_PACKAGE_NAME - The title displayed at the top of the
 #   installer.
 #
 #   CPACK_NSIS_INSTALLED_ICON_NAME - A path to the executable that
@@ -372,8 +375,9 @@
 #   UPLOAD_DIRECTORY is the local directory where CPack will create the 
 #   various archives for each of the components. The contents of this
 #   directory should be uploaded to a location accessible by the URL given
-#   in the site argument. If omitted, CPack will use the directory CPackUploads
-#   inside the CMake binary directory to store the generated archives.
+#   in the site argument. If omitted, CPack will use the directory 
+#   CPackUploads inside the CMake binary directory to store the generated
+#   archives.
 #
 #   The ALL flag indicates that all components be downloaded. Otherwise, only 
 #   those components explicitly marked as DOWNLOADED or that have a specified 
@@ -385,6 +389,18 @@
 #   "Modify" button) to change the set of installed components. NO_ADD_REMOVE
 #   turns off this behavior. This option is ignored on Mac OS X.
 
+#=============================================================================
+# Copyright 2006-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
 # Pick a configuration file
 SET(cpack_input_file "${CMAKE_ROOT}/Templates/CPackConfig.cmake.in")
@@ -779,6 +795,7 @@ cpack_set_if_not_set(CPACK_CMAKE_GENERATOR "${CMAKE_GENERATOR}")
 cpack_set_if_not_set(CPACK_TOPLEVEL_TAG "${CPACK_SYSTEM_NAME}")
 
 cpack_set_if_not_set(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}")
+cpack_set_if_not_set(CPACK_NSIS_PACKAGE_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}")
 
 cpack_set_if_not_set(CPACK_OUTPUT_CONFIG_FILE
   "${CMAKE_BINARY_DIR}/CPackConfig.cmake")

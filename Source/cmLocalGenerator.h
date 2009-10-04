@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLocalGenerator.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-23 17:58:45 $
-  Version:   $Revision: 1.103.2.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmLocalGenerator_h
 #define cmLocalGenerator_h
 
@@ -203,6 +198,7 @@ public:
       {
         memset(this, 0,  sizeof(*this));
       }
+    cmTarget* CMTarget;
     const char* TargetPDB;
     const char* TargetVersionMajor;
     const char* TargetVersionMinor;
@@ -213,6 +209,7 @@ public:
     const char* Source;
     const char* AssemblySource;
     const char* PreprocessedSource;
+    const char* Output;
     const char* Object;
     const char* ObjectDir;
     const char* Flags;
@@ -222,6 +219,7 @@ public:
     const char* LinkFlags;
     const char* LanguageCompileFlags;
     const char* Defines;
+    const char* RuleLauncher;
   };
 
   /** Set whether to treat conversions to SHELL as a link script shell.  */
@@ -257,7 +255,7 @@ public:
    * or quoted.
    */
   std::string ConvertToRelativePath(const std::vector<std::string>& local,
-                                    const char* remote);
+                                    const char* remote, bool force=false);
 
   /**
    * Get the relative path from the generator output directory to a
@@ -296,11 +294,15 @@ public:
   void GenerateFrameworkInfoPList(cmTarget* target,
                                   const char* targetName,
                                   const char* fname);
-protected:
   /** Construct a comment for a custom command.  */
   std::string ConstructComment(const cmCustomCommand& cc,
                                const char* default_comment = "");
+  // Compute object file names.
+  std::string GetObjectFileNameWithoutTarget(const cmSourceFile& source,
+                                             std::string const& dir_max,
+                                             bool* hasSourceExtension = 0);
 
+protected:
   /** Fill out these strings for the given target.  Libraries to link,
    *  flags, and linkflags. */
   void GetTargetFlags(std::string& linkLibs, 
@@ -317,6 +319,11 @@ protected:
   // Expand rule variables in a single string
   std::string ExpandRuleVariable(std::string const& variable,
                                  const RuleVariables& replaceValues);
+
+  const char* GetRuleLauncher(cmTarget* target, const char* prop);
+  void InsertRuleLauncher(std::string& s, cmTarget* target,
+                          const char* prop);
+
   
   /** Convert a target to a utility target for unsupported 
    *  languages of a generator */
@@ -338,12 +345,9 @@ protected:
     std::ostream& os, const char* config,
     std::vector<std::string> const& configurationTypes);
 
-  // Compute object file names.
-  std::string GetObjectFileNameWithoutTarget(const cmSourceFile& source,
-                                             std::string const& dir_max,
-                                             bool* hasSourceExtension = 0);
   std::string& CreateSafeUniqueObjectFileName(const char* sin,
                                               std::string const& dir_max);
+  void ComputeObjectMaxPath();
 
   void ConfigureRelativePaths();
   std::string FindRelativePathTopSource();
@@ -355,6 +359,9 @@ protected:
   /** Check whether the native build system supports the given
       definition.  Issues a warning.  */
   virtual bool CheckDefinition(std::string const& define) const;
+
+  /** Read the input CMakeLists.txt file.  */
+  void ReadInputFile();
 
   cmMakefile *Makefile;
   cmGlobalGenerator *GlobalGenerator;

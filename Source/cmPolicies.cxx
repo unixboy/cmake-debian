@@ -355,6 +355,81 @@ cmPolicies::cmPolicies()
     "The NEW behavior for this policy is to allow the commands to do their "
     "default cmake_policy PUSH and POP.",
     2,6,3, cmPolicies::WARN);
+
+    this->DefinePolicy(
+    CMP0012, "CMP0012",
+    "The if() command can recognize named boolean constants.",
+    "In CMake versions prior to 2.6.5 the only boolean constants were 0 "
+    "and 1. Other boolean constants such as true, false, yes, no, "
+    "on, off, y, n, notfound, ignore (all case insensitive) were recognized "
+    "in some cases but not all. In later versions of cmake these values are "
+    "treated as boolean constants more consistently and should not be used "
+    "as variable names. "
+    "The OLD behavior for this policy is to allow variables to have names "
+    "such as true and to dereference them. "
+    "The NEW behavior for this policy is to treat strings like true as a "
+    "boolean constant.",
+    2,6,5, cmPolicies::WARN);
+
+    this->DefinePolicy(
+    CMP0013, "CMP0013",
+    "Duplicate binary directories are not allowed.",
+    "CMake 2.6.3 and below silently permitted add_subdirectory() calls "
+    "to create the same binary directory multiple times.  "
+    "During build system generation files would be written and then "
+    "overwritten in the build tree and could lead to strange behavior.  "
+    "CMake 2.6.4 and above explicitly detect duplicate binary directories.  "
+    "CMake 2.6.4 always considers this case an error.  "
+    "In CMake 2.6.5 and above this policy determines whether or not "
+    "the case is an error.  "
+    "The OLD behavior for this policy is to allow duplicate binary "
+    "directories.  "
+    "The NEW behavior for this policy is to disallow duplicate binary "
+    "directories with an error.",
+    2,6,5, cmPolicies::WARN);
+
+    this->DefinePolicy(
+    CMP0014, "CMP0014",
+    "Input directories must have CMakeLists.txt.",
+    "CMake versions before 2.8 silently ignored missing CMakeLists.txt "
+    "files in directories referenced by add_subdirectory() or subdirs(), "
+    "treating them as if present but empty.  "
+    "In CMake 2.8.0 and above this policy determines whether or not "
+    "the case is an error.  "
+    "The OLD behavior for this policy is to silently ignore the problem.  "
+    "The NEW behavior for this policy is to report an error.",
+    2,8,0, cmPolicies::WARN);
+
+    this->DefinePolicy(
+    CMP0015, "CMP0015",
+    "The set() CACHE mode and option() command make the cache value visible.",
+    "In CMake 2.6 and below the CACHE mode of the set() command and the "
+    "option() command did not expose the value from the named cache entry "
+    "if it was already set both in the cache and as a local variable.  "
+    "This led to subtle differences between first and later configurations "
+    "because a conflicting local variable would be overridden only when the "
+    "cache value was first created.  "
+    "For example, the code\n"
+    "  set(x 1)\n"
+    "  set(before ${x})\n"
+    "  set(x 2 CACHE STRING \"X\")\n"
+    "  set(after ${x})\n"
+    "  message(STATUS \"${before},${after}\")\n"
+    "would print \"1,2\" on the first run and \"1,1\" on future runs."
+    "\n"
+    "CMake 2.8.0 and above prefer to expose the cache value in all cases by "
+    "removing the local variable definition, but this changes behavior in "
+    "subtle cases when the local variable has a different value than that "
+    "exposed from the cache.  "
+    "The example above will always print \"1,2\"."
+    "\n"
+    "This policy determines whether the commands should always expose the "
+    "cache value.  "
+    "The OLD behavior for this policy is to leave conflicting local "
+    "variable values untouched and hide the true cache value.  "
+    "The NEW behavior for this policy is to always expose the cache value.",
+    2,8,0, cmPolicies::WARN);
+
 }
 
 cmPolicies::~cmPolicies()
@@ -422,7 +497,7 @@ bool cmPolicies::ApplyPolicyVersion(cmMakefile *mf,
     }
   
   // it is an error if the policy version is less than 2.4
-  if (majorVer < 2 || majorVer == 2 && minorVer < 4)
+  if (majorVer < 2 || (majorVer == 2 && minorVer < 4))
     {
     mf->IssueMessage(cmake::FATAL_ERROR,
       "An attempt was made to set the policy version of CMake to something "
@@ -604,8 +679,7 @@ void cmPolicies::GetDocumentation(std::vector<cmDocumentationEntry>& v)
     if(i->first != cmPolicies::CMP0000)
       {
       full << "  "
-           << "CMake version " << cmVersion::GetMajorVersion()
-           << "." << cmVersion::GetMinorVersion() << " ";
+           << "CMake version " << cmVersion::GetCMakeVersion() << " ";
       // add in some more text here based on status
       switch (i->second->Status)
         {
@@ -667,7 +741,7 @@ cmPolicies::DiagnoseAncientPolicies(std::vector<PolicyID> const& ancient,
   cmOStringStream e;
   e << "The project requests behavior compatible with CMake version \""
     << majorVer << "." << minorVer << "." << patchVer
-    << "\", which requires OLD the behavior for some policies:\n";
+    << "\", which requires the OLD behavior for some policies:\n";
   for(std::vector<PolicyID>::const_iterator
         i = ancient.begin(); i != ancient.end(); ++i)
     {

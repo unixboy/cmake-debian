@@ -1,15 +1,13 @@
 #=============================================================================
+# KWSys - Kitware System Library
+# Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 #
-#  Program:   KWSys - Kitware System Library
-#  Module:    $RCSfile: CMakeLists.txt,v $
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
 #
-#  Copyright (c) Kitware, Inc., Insight Consortium.  All rights reserved.
-#  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-#
-#     This software is distributed WITHOUT ANY WARRANTY; without even
-#     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-#     PURPOSE.  See the above copyright notices for more information.
-#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
 #=============================================================================
 
 # The Kitware System Library is intended to be included in other
@@ -55,6 +53,8 @@
 #  KWSYS_INSTALL_INCLUDE_DIR   kwsys should be installed by a "make install".
 #                              The values should be specified relative to
 #                              the installation prefix and NOT start with '/'.
+#  KWSYS_INSTALL_DOC_DIR     = The installation target directory for documentation
+#                              such as copyright information.
 #
 #  KWSYS_INSTALL_COMPONENT_NAME_RUNTIME     = Name of runtime and development
 #  KWSYS_INSTALL_COMPONENT_NAME_DEVELOPMENT   installation components.
@@ -122,6 +122,16 @@ ENDIF(KWSYS_STANDALONE)
 # The project name is that of the specified namespace.
 PROJECT(${KWSYS_NAMESPACE})
 
+# Some properties we set only with CMake 2.6 and above.
+IF(COMMAND SET_PROPERTY)
+  MACRO(KWSYS_SET_PROPERTY)
+    SET_PROPERTY(${ARGV})
+  ENDMACRO(KWSYS_SET_PROPERTY)
+ELSE(COMMAND SET_PROPERTY)
+  MACRO(KWSYS_SET_PROPERTY)
+  ENDMACRO(KWSYS_SET_PROPERTY)
+ENDIF(COMMAND SET_PROPERTY)
+
 # Tell CMake how to follow dependencies of sources in this directory.
 IF(COMMAND SET_PROPERTY)
   SET_PROPERTY(DIRECTORY
@@ -129,11 +139,16 @@ IF(COMMAND SET_PROPERTY)
     "KWSYS_HEADER(%)=<${KWSYS_NAMESPACE}/%>"
     )
 ENDIF(COMMAND SET_PROPERTY)
+# add option to disable memory cleanup at exit of putenv memory
+IF(DEFINED KWSYS_DO_NOT_CLEAN_PUTENV)
+  SET(KWSYS_DO_NOT_CLEAN_PUTENV 1)
+ELSE(DEFINED KWSYS_DO_NOT_CLEAN_PUTENV)
+  SET(KWSYS_DO_NOT_CLEAN_PUTENV 0)
+ENDIF(DEFINED KWSYS_DO_NOT_CLEAN_PUTENV)
 
 # Select library components.
 IF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
   SET(KWSYS_ENABLE_C 1)
-
   # Enable all components.
   SET(KWSYS_USE_Base64 1)
   SET(KWSYS_USE_Directory 1)
@@ -154,7 +169,24 @@ IF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
   SET(KWSYS_USE_SystemInformation 1)
   SET(KWSYS_USE_CPU 1)
 ENDIF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
-  
+
+# Enforce component dependencies.
+IF(KWSYS_USE_SystemTools)
+  SET(KWSYS_USE_Directory 1)
+ENDIF(KWSYS_USE_SystemTools)
+IF(KWSYS_USE_Glob)
+  SET(KWSYS_USE_Directory 1)
+  SET(KWSYS_USE_SystemTools 1)
+  SET(KWSYS_USE_RegularExpression 1)
+ENDIF(KWSYS_USE_Glob)
+IF(KWSYS_USE_Process)
+  SET(KWSYS_USE_System 1)
+ENDIF(KWSYS_USE_Process)
+IF(KWSYS_USE_SystemInformation)
+  SET(KWSYS_USE_FundamentalType 1)
+  SET(KWSYS_USE_Process 1)
+ENDIF(KWSYS_USE_SystemInformation)
+
 # Setup the large file support default.
 IF(KWSYS_LFS_DISABLE)
   SET(KWSYS_LFS_REQUESTED 0)
@@ -310,14 +342,19 @@ ENDIF(NOT CMAKE_COMPILER_IS_GNUCXX)
 
 #-----------------------------------------------------------------------------
 # Configure Large File Support.
+KWSYS_PLATFORM_CXX_TEST(KWSYS_CXX_HAS_CSTDIO
+  "Checking whether header cstdio is available" DIRECT)
 SET(KWSYS_LFS_AVAILABLE 0)
 IF(KWSYS_LFS_REQUESTED)
   # Large File Support is requested.
   SET(KWSYS_LFS_REQUESTED 1)
 
   # Check for large file support.
+  SET(KWSYS_PLATFORM_CXX_TEST_DEFINES
+    -DKWSYS_CXX_HAS_CSTDIO=${KWSYS_CXX_HAS_CSTDIO})
   KWSYS_PLATFORM_CXX_TEST_RUN(KWSYS_LFS_WORKS
     "Checking for Large File Support" DIRECT)
+  SET(KWSYS_PLATFORM_CXX_TEST_DEFINES)
 
   IF(KWSYS_LFS_WORKS)
     SET(KWSYS_LFS_AVAILABLE 1)
@@ -415,6 +452,11 @@ ELSE(KWSYS_IOS_USE_ANSI AND NOT WATCOM)
   KWSYS_PLATFORM_CXX_TEST(KWSYS_STL_STRING_HAVE_ISTREAM
     "Checking whether stl string has istream operator>>" DIRECT)
 ENDIF(KWSYS_IOS_USE_ANSI AND NOT WATCOM)
+SET(KWSYS_PLATFORM_CXX_TEST_DEFINES
+  -DKWSYS_IOS_USE_ANSI=${KWSYS_IOS_USE_ANSI}
+  -DKWSYS_IOS_HAVE_STD=${KWSYS_IOS_HAVE_STD})
+KWSYS_PLATFORM_CXX_TEST(KWSYS_IOS_HAVE_BINARY
+  "Checking whether ios has binary openmode" DIRECT)
 SET(KWSYS_PLATFORM_CXX_TEST_DEFINES)
 
 KWSYS_PLATFORM_CXX_TEST(KWSYS_CXX_HAS_NULL_TEMPLATE_ARGS
@@ -532,6 +574,22 @@ SET(KWSYS_HEADER_DIR "${KWSYS_HEADER_ROOT}/${KWSYS_NAMESPACE}")
 INCLUDE_DIRECTORIES(${KWSYS_HEADER_ROOT})
 
 #-----------------------------------------------------------------------------
+IF(KWSYS_INSTALL_DOC_DIR)
+  # Assign the license to the runtime component since it must be
+  # distributed with binary forms of this software.
+  IF(KWSYS_INSTALL_COMPONENT_NAME_RUNTIME)
+    SET(KWSYS_INSTALL_LICENSE_OPTIONS ${KWSYS_INSTALL_LICENSE_OPTIONS}
+      COMPONENT ${KWSYS_INSTALL_COMPONENT_NAME_RUNTIME}
+      )
+  ENDIF(KWSYS_INSTALL_COMPONENT_NAME_RUNTIME)
+
+  # Install the license under the documentation directory.
+  INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Copyright.txt
+    DESTINATION ${KWSYS_INSTALL_DOC_DIR}/${KWSYS_NAMESPACE}
+    ${KWSYS_INSTALL_LICENSE_OPTIONS})
+ENDIF(KWSYS_INSTALL_DOC_DIR)
+
+#-----------------------------------------------------------------------------
 # Create STL header wrappers to block warnings in the STL headers and
 # give standard names by which they may be included.
 SET(KWSYS_STL_HEADER_EXTRA_string 1)
@@ -635,19 +693,6 @@ SET(KWSYS_HXX_FILES Configure String
   auto_ptr
   )
 
-# Enforce component dependencies.
-IF(KWSYS_USE_SystemTools)
-  SET(KWSYS_USE_Directory 1)
-ENDIF(KWSYS_USE_SystemTools)
-IF(KWSYS_USE_Glob)
-  SET(KWSYS_USE_Directory 1)
-  SET(KWSYS_USE_SystemTools 1)
-  SET(KWSYS_USE_RegularExpression 1)
-ENDIF(KWSYS_USE_Glob)
-IF(KWSYS_USE_Process)
-  SET(KWSYS_USE_System 1)
-ENDIF(KWSYS_USE_Process)
-
 # Add selected C++ classes.
 SET(cppclasses
   Directory DynamicLoader Glob RegularExpression SystemTools
@@ -725,6 +770,7 @@ FOREACH(c ${KWSYS_CLASSES})
   # Configure the header for this class.
   CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/${c}.hxx.in ${KWSYS_HEADER_DIR}/${c}.hxx
                  @ONLY IMMEDIATE)
+  SET(KWSYS_CXX_SRCS ${KWSYS_CXX_SRCS} ${KWSYS_HEADER_DIR}/${c}.hxx)
 
   # Create an install target for the header.
   IF(KWSYS_INSTALL_INCLUDE_DIR)
@@ -743,6 +789,7 @@ FOREACH(h ${KWSYS_H_FILES})
   # Configure the header into the given directory.
   CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/${h}.h.in ${KWSYS_HEADER_DIR}/${h}.h
                  @ONLY IMMEDIATE)
+  SET(KWSYS_C_SRCS ${KWSYS_C_SRCS} ${KWSYS_HEADER_DIR}/${h}.h)
 
   # Create an install target for the header.
   IF(KWSYS_INSTALL_INCLUDE_DIR)
@@ -761,6 +808,7 @@ FOREACH(h ${KWSYS_HXX_FILES})
   # Configure the header into the given directory.
   CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/${h}.hxx.in ${KWSYS_HEADER_DIR}/${h}.hxx
                  @ONLY IMMEDIATE)
+  SET(KWSYS_CXX_SRCS ${KWSYS_CXX_SRCS} ${KWSYS_HEADER_DIR}/${h}.hxx)
 
   # Create an install target for the header.
   IF(KWSYS_INSTALL_INCLUDE_DIR)
@@ -779,6 +827,7 @@ ENDFOREACH(h)
 IF(KWSYS_C_SRCS OR KWSYS_CXX_SRCS)
   ADD_LIBRARY(${KWSYS_NAMESPACE} ${KWSYS_LIBRARY_TYPE}
     ${KWSYS_C_SRCS} ${KWSYS_CXX_SRCS})
+  KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE} PROPERTY LABELS ${KWSYS_LABELS_LIB})
   IF(KWSYS_USE_DynamicLoader)
     IF(UNIX)
       TARGET_LINK_LIBRARIES(${KWSYS_NAMESPACE} ${CMAKE_DL_LIBS})
@@ -808,6 +857,7 @@ ENDIF(KWSYS_C_SRCS OR KWSYS_CXX_SRCS)
 # Add a C-only library if requested.
 IF(KWSYS_ENABLE_C AND KWSYS_C_SRCS)
   ADD_LIBRARY(${KWSYS_NAMESPACE}_c ${KWSYS_LIBRARY_TYPE} ${KWSYS_C_SRCS})
+  KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}_c PROPERTY LABELS ${KWSYS_LABELS_LIB})
 
   # Apply user-defined target properties to the library.
   IF(KWSYS_PROPERTIES_C)
@@ -829,6 +879,12 @@ ENDIF(KWSYS_ENABLE_C AND KWSYS_C_SRCS)
 # line to configure the namespace in the C and C++ source files.
 ADD_DEFINITIONS("-DKWSYS_NAMESPACE=${KWSYS_NAMESPACE}")
 
+IF(KWSYS_USE_String)
+  # Activate code in "String.c".  See the comment in the source.
+  SET_SOURCE_FILES_PROPERTIES(String.c PROPERTIES
+    COMPILE_FLAGS "-DKWSYS_STRING_C")
+ENDIF(KWSYS_USE_String)
+
 #-----------------------------------------------------------------------------
 # Process execution on windows needs to build a forwarding executable
 # that works around a Win9x bug.  We encode the executable into a C
@@ -840,6 +896,8 @@ IF(KWSYS_USE_Process)
     # encode it into a C file.
     ADD_EXECUTABLE(${KWSYS_NAMESPACE}ProcessFwd9x ProcessFwd9x.c)
     ADD_EXECUTABLE(${KWSYS_NAMESPACE}EncodeExecutable EncodeExecutable.c)
+    KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}ProcessFwd9x PROPERTY LABELS ${KWSYS_LABELS_EXE})
+    KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}EncodeExecutable PROPERTY LABELS ${KWSYS_LABELS_EXE})
 
     # Construct the location of the executable to be encoded.
     SET(BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -902,9 +960,11 @@ IF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
       ${KWSYS_C_TESTS}
       )
     ADD_EXECUTABLE(${KWSYS_NAMESPACE}TestsC ${KWSYS_C_TEST_SRCS})
+    KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}TestsC PROPERTY LABELS ${KWSYS_LABELS_EXE})
     TARGET_LINK_LIBRARIES(${KWSYS_NAMESPACE}TestsC ${KWSYS_NAMESPACE}_c)
     FOREACH(test ${KWSYS_C_TESTS})
       ADD_TEST(kwsys.${test} ${EXEC_DIR}/${KWSYS_NAMESPACE}TestsC ${test} ${KWSYS_TEST_ARGS_${test}})
+      KWSYS_SET_PROPERTY(TEST kwsys.${test} PROPERTY LABELS ${KWSYS_LABELS_TEST})
     ENDFOREACH(test)
 
     # C++ tests
@@ -928,12 +988,14 @@ IF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
       SET(KWSYS_CXX_TESTS ${KWSYS_CXX_TESTS} testDynamicLoader)
       # If kwsys contains the DynamicLoader, need extra library
       ADD_LIBRARY(${KWSYS_NAMESPACE}TestDynload MODULE testDynload.c)
+      KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}TestDynload PROPERTY LABELS ${KWSYS_LABELS_LIB})
     ENDIF(KWSYS_USE_DynamicLoader)
     CREATE_TEST_SOURCELIST(
       KWSYS_CXX_TEST_SRCS ${KWSYS_NAMESPACE}TestsCxx.cxx
       ${KWSYS_CXX_TESTS}
       )
     ADD_EXECUTABLE(${KWSYS_NAMESPACE}TestsCxx ${KWSYS_CXX_TEST_SRCS})
+    KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}TestsCxx PROPERTY LABELS ${KWSYS_LABELS_EXE})
     TARGET_LINK_LIBRARIES(${KWSYS_NAMESPACE}TestsCxx ${KWSYS_NAMESPACE})
     SET(TEST_SYSTEMTOOLS_BIN_FILE
       "${CMAKE_CURRENT_SOURCE_DIR}/testSystemTools.bin")
@@ -980,17 +1042,29 @@ IF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
       )
     FOREACH(test ${KWSYS_CXX_TESTS})
       ADD_TEST(kwsys.${test} ${EXEC_DIR}/${KWSYS_NAMESPACE}TestsCxx ${test} ${KWSYS_TEST_ARGS_${test}})
+      KWSYS_SET_PROPERTY(TEST kwsys.${test} PROPERTY LABELS ${KWSYS_LABELS_TEST})
     ENDFOREACH(test)
 
     # Process tests.
     ADD_EXECUTABLE(${KWSYS_NAMESPACE}TestProcess testProcess.c)
+    KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}TestProcess PROPERTY LABELS ${KWSYS_LABELS_EXE})
     TARGET_LINK_LIBRARIES(${KWSYS_NAMESPACE}TestProcess ${KWSYS_NAMESPACE}_c)
     IF(NOT CYGWIN)
       SET(KWSYS_TEST_PROCESS_7 7)
     ENDIF(NOT CYGWIN)
     FOREACH(n 1 2 3 4 5 6 ${KWSYS_TEST_PROCESS_7})
       ADD_TEST(kwsys.testProcess-${n} ${EXEC_DIR}/${KWSYS_NAMESPACE}TestProcess ${n})
+      KWSYS_SET_PROPERTY(TEST kwsys.testProcess-${n} PROPERTY LABELS ${KWSYS_LABELS_TEST})
     ENDFOREACH(n)
+
+    # Test SharedForward
+    CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/testSharedForward.c.in
+                   ${PROJECT_BINARY_DIR}/testSharedForward.c @ONLY IMMEDIATE)
+    ADD_EXECUTABLE(${KWSYS_NAMESPACE}TestSharedForward
+                   ${PROJECT_BINARY_DIR}/testSharedForward.c)
+    KWSYS_SET_PROPERTY(TARGET ${KWSYS_NAMESPACE}TestSharedForward PROPERTY LABELS ${KWSYS_LABELS_EXE})
+    ADD_TEST(kwsys.testSharedForward ${EXEC_DIR}/${KWSYS_NAMESPACE}TestSharedForward 1)
+    KWSYS_SET_PROPERTY(TEST kwsys.testSharedForward PROPERTY LABELS ${KWSYS_LABELS_TEST})
 
     # Configure some test properties.
     IF(COMMAND SET_TESTS_PROPERTIES AND COMMAND GET_TEST_PROPERTY AND KWSYS_STANDALONE)

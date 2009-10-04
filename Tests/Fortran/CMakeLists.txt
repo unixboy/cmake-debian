@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
-project(testf Fortran C)
+project(testf C CXX Fortran)
 message("CTEST_FULL_OUTPUT ")
 set(CMAKE_VERBOSE_MAKEFILE 1)
 message("ENV_FLAGS = $ENV{FFLAGS}")
@@ -14,59 +14,70 @@ function(test_fortran_c_interface_module)
   message(STATUS "Testing FortranCInterface module")
   # test the C to Fortran interface module
   include(FortranCInterface)
+  FortranCInterface_VERIFY()
+  FortranCInterface_VERIFY(CXX)
   if(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
-    if(FORTRAN_C_MODULE_MANGLING_FOUND)
+    if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "SunPro|MIPSpro")
+      set(module_expected 1)
+    endif()
+    if(FortranCInterface_MODULE_FOUND OR module_expected)
       set(srcs foo.f)
       set(FORTRAN_FUNCTIONS test_mod:sub)
-    else(FORTRAN_C_MODULE_MANGLING_FOUND)
-      if(CMAKE_Fortran_COMPILER_ID MATCHES "SunPro|MIPSpro")
-        message("${CMAKE_Fortran_COMPILER_ID} compilers do not support"
-          " linking Fortran module procedures from C")
-      else()
-        message("This will fail, but let the user see the error")
-        set(srcs foo.f)
-        set(FORTRAN_FUNCTIONS test_mod:sub)
-      endif()
-    endif(FORTRAN_C_MODULE_MANGLING_FOUND)
+      set(MYC_DEFS TEST_MOD)
+    else()
+      message("${CMAKE_Fortran_COMPILER_ID} compilers do not support"
+        " linking Fortran module procedures from C")
+    endif()
   endif()
-  set(FORTRAN_FUNCTIONS ${FORTRAN_FUNCTIONS} my_sub mysub )
-  set(srcs ${srcs} mysub.f foo.c)
-  create_fortran_c_interface("F_" FORTRAN_FUNCTIONS 
-    "${testf_BINARY_DIR}/foo.h")
+  list(APPEND FORTRAN_FUNCTIONS my_sub mysub)
+  FortranCInterface_HEADER(foo.h
+    MACRO_NAMESPACE "FC_"
+    SYMBOL_NAMESPACE "F_"
+    SYMBOLS ${FORTRAN_FUNCTIONS}
+    )
   include_directories("${testf_BINARY_DIR}")
-  
+
   # if the name mangling is not found for a F90 compiler
   # print out some diagnostic stuff for the dashboard
-  if(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
-    if(NOT FORTRAN_C_MODULE_MANGLING_FOUND)
-      file(GLOB_RECURSE O_OBJFILES
-        "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CheckFortranLink/*.o"
-        "*.o" )
-      file(GLOB_RECURSE OBJ_OBJFILES 
-        "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CheckFortranLink/*.obj")
-      find_program(DUMPBIN dumpbin)
-      find_program(NM nm)
-      foreach(ofile ${O_OBJFILES} ${OBJ_OBJFILES})
-        if(DEPENDS)
-          execute_process(COMMAND ${DUMPBIN} /symbols "${ofile}" 
-            OUTPUT_VARIABLE out)
-          message("symbols in ${ofile}:\n${out}")
-        endif()
-        if(NM)
-          execute_process(COMMAND ${NM} "${ofile}" OUTPUT_VARIABLE out)
-          message("symbols in ${ofile}:\n${out}")
-        endif()
-      endforeach()
+  if(NOT FortranCInterface_GLOBAL_FOUND OR
+      (NOT FortranCInterface_MODULE_FOUND AND module_expected) )
+    find_program(FortranCInterface_EXE
+      NAMES FortranCInterface
+      PATHS ${FortranCInterface_BINARY_DIR} ${FortranCInterface_BINARY_DIR}/Debug
+      NO_DEFAULT_PATH
+      )
+    find_program(DUMPBIN dumpbin)
+    find_program(NM nm)
+    if(FortranCInterface_EXE)
+      if(DEPENDS)
+        execute_process(COMMAND ${DUMPBIN} /symbols "${FortranCInterface_EXE}"
+                        OUTPUT_VARIABLE out)
+        message("symbols in ${FortranCInterface_EXE}:\n${out}")
+      endif()
+      if(NM)
+        execute_process(COMMAND ${NM} "${FortranCInterface_EXE}"
+                        OUTPUT_VARIABLE out)
+        message("symbols in ${FortranCInterface_EXE}:\n${out}")
+      endif()
     endif()
   endif()
   message("Fortran = ${CMAKE_Fortran_COMPILER_ID}")
   message("C = ${CMAKE_C_COMPILER_ID}")
-  add_executable(foo ${srcs})
-  if(NOT ("$ENV{EXTRA_FORTRAN_C_LIBS}" STREQUAL ""))
-    message(STATUS 
-      "linking in extra C to Fortran libs $ENV{EXTRA_FORTRAN_C_LIBS}")
-    target_link_libraries(foo $ENV{EXTRA_FORTRAN_C_LIBS})
-  endif()
+
+  add_library(myfort mysub.f ${srcs})
+
+  add_library(myc myc.c)
+  target_link_libraries(myc myfort)
+  set_property(TARGET myc PROPERTY COMPILE_DEFINITIONS ${MYC_DEFS})
+
+  add_library(mycxx mycxx.cxx)
+  target_link_libraries(mycxx myc)
+
+  add_executable(mainc mainc.c)
+  target_link_libraries(mainc myc)
+  add_executable(maincxx maincxx.c)
+  target_link_libraries(maincxx mycxx)
+
   # print out some stuff to help debug on machines via cdash
   file(READ "${testf_BINARY_DIR}/foo.h" fooh)
   message("foo.h contents:\n${fooh}")

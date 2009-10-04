@@ -18,7 +18,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: select.c,v 1.2.12.1 2008-11-04 20:16:45 hoffman Exp $
+ * $Id: select.c,v 1.3 2008-09-15 22:23:37 hoffman Exp $
  ***************************************************************************/
 
 #include "setup.h"

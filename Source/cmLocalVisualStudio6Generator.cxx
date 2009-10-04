@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLocalVisualStudio6Generator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:36 $
-  Version:   $Revision: 1.141.2.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmGlobalGenerator.h"
 #include "cmLocalVisualStudio6Generator.h"
 #include "cmMakefile.h"
@@ -33,6 +28,58 @@ cmLocalVisualStudio6Generator::cmLocalVisualStudio6Generator()
 cmLocalVisualStudio6Generator::~cmLocalVisualStudio6Generator()
 {
 }
+
+//----------------------------------------------------------------------------
+// Helper class to write build events.
+class cmLocalVisualStudio6Generator::EventWriter
+{
+public:
+  EventWriter(cmLocalVisualStudio6Generator* lg,
+              const char* config, std::string& code):
+    LG(lg), Config(config), Code(code), First(true) {}
+  void Start(const char* event)
+    {
+    this->First = true;
+    this->Event = event;
+    }
+  void Finish()
+    {
+    this->Code += (this->First? "" : "\n");
+    }
+  void Write(std::vector<cmCustomCommand> const& ccs)
+    {
+    for(std::vector<cmCustomCommand>::const_iterator ci = ccs.begin();
+        ci != ccs.end(); ++ci)
+      {
+      this->Write(*ci);
+      }
+    }
+  void Write(cmCustomCommand const& cc)
+    {
+    if(this->First)
+      {
+      this->Code += this->Event + "_Cmds=";
+      this->First = false;
+      }
+    else
+      {
+      this->Code += "\\\n\t";
+      }
+    this->Code +=
+      this->LG->ConstructScript(cc.GetCommandLines(),
+                                cc.GetWorkingDirectory(),
+                                this->Config,
+                                cc.GetEscapeOldStyle(),
+                                cc.GetEscapeAllowMakeVars(),
+                                "\\\n\t");
+    }
+private:
+  cmLocalVisualStudio6Generator* LG;
+  const char* Config;
+  std::string& Code;
+  bool First;
+  std::string Event;
+};
 
 void cmLocalVisualStudio6Generator::AddHelperCommands()
 {
@@ -106,8 +153,6 @@ void cmLocalVisualStudio6Generator::OutputDSPFile()
   
   // Create the DSP or set of DSP's for libraries and executables
 
-  // clear project names
-  this->CreatedProjectNames.clear();
   cmTargets &tgts = this->Makefile->GetTargets(); 
   for(cmTargets::iterator l = tgts.begin(); 
       l != tgts.end(); l++)
@@ -148,7 +193,9 @@ void cmLocalVisualStudio6Generator::OutputDSPFile()
       }
     // INCLUDE_EXTERNAL_MSPROJECT command only affects the workspace
     // so don't build a projectfile for it
-    if (strncmp(l->first.c_str(), "INCLUDE_EXTERNAL_MSPROJECT", 26) != 0)
+    const char* path = 
+      l->second.GetProperty("EXTERNAL_MSPROJECT");
+    if(!path)
       {
       // check to see if the dsp is going into a sub-directory
       std::string::size_type pos = l->first.rfind('/');
@@ -178,7 +225,6 @@ void cmLocalVisualStudio6Generator::CreateSingleDSP(const char *lname,
   // add to the list of projects
   std::string pname = GetVS6TargetName(lname);
 
-  this->CreatedProjectNames.push_back(pname);
   // create the dsp.cmake file
   std::string fname;
   fname = this->Makefile->GetStartOutputDirectory();
@@ -212,6 +258,10 @@ void cmLocalVisualStudio6Generator::AddDSPBuildRule(cmTarget& tgt)
   std::string makefileIn = this->Makefile->GetStartDirectory();
   makefileIn += "/";
   makefileIn += "CMakeLists.txt";
+  if(!cmSystemTools::FileExists(makefileIn.c_str()))
+    {
+    return;
+    }
   std::string comment = "Building Custom Rule ";
   comment += makefileIn;
   std::string args;
@@ -781,97 +831,30 @@ cmLocalVisualStudio6Generator::CreateTargetRules(cmTarget &target,
                                                  const char* configName, 
                                                  const char * /* libName */)
 {
-  std::string customRuleCode = "";
-
   if (target.GetType() >= cmTarget::UTILITY )
     {
-    return customRuleCode;
+    return "";
     }
 
-  // are there any rules?
-  if (target.GetPreBuildCommands().size() + 
-      target.GetPreLinkCommands().size() + 
-      target.GetPostBuildCommands().size() == 0)
-    {
-    return customRuleCode;
-    }
-    
-  customRuleCode = "# Begin Special Build Tool\n";
+  std::string customRuleCode = "# Begin Special Build Tool\n";
+  EventWriter event(this, configName, customRuleCode);
 
-  // Write the pre-build and pre-link together (VS6 does not support
-  // both).  Make sure no continuation character is put on the last
-  // line.
-  int prelink_total = (static_cast<int>(target.GetPreBuildCommands().size())+
-                       static_cast<int>(target.GetPreLinkCommands().size()));
-  int prelink_count = 0;
-  if(prelink_total > 0)
+  // Write the pre-build and pre-link together (VS6 does not support both).
+  event.Start("PreLink");
+  event.Write(target.GetPreBuildCommands());
+  event.Write(target.GetPreLinkCommands());
+  cmsys::auto_ptr<cmCustomCommand> pcc(
+    this->MaybeCreateImplibDir(target, configName));
+  if(pcc.get())
     {
-    // header stuff
-    customRuleCode += "PreLink_Cmds=";
+    event.Write(*pcc);
     }
-  for (std::vector<cmCustomCommand>::const_iterator cr =
-         target.GetPreBuildCommands().begin();
-       cr != target.GetPreBuildCommands().end(); ++cr)
-    {
-    if(prelink_count++ > 0)
-      {
-      customRuleCode += "\\\n\t";
-      }
-    customRuleCode += this->ConstructScript(cr->GetCommandLines(),
-                                            cr->GetWorkingDirectory(),
-                                            configName, 
-                                            cr->GetEscapeOldStyle(),
-                                            cr->GetEscapeAllowMakeVars(),
-                                            "\\\n\t");
-    }
-  for (std::vector<cmCustomCommand>::const_iterator cr =
-         target.GetPreLinkCommands().begin();
-       cr != target.GetPreLinkCommands().end(); ++cr)
-    {
-    if(prelink_count++ > 0)
-      {
-      customRuleCode += "\\\n\t";
-      }
-    customRuleCode += this->ConstructScript(cr->GetCommandLines(),
-                                            cr->GetWorkingDirectory(),
-                                            configName,
-                                            cr->GetEscapeOldStyle(),
-                                            cr->GetEscapeAllowMakeVars(),
-                                            "\\\n\t");
-    }
-  if(prelink_total > 0)
-    {
-    customRuleCode += "\n";
-    }
+  event.Finish();
 
-  // Write the post-build rules.  Make sure no continuation character
-  // is put on the last line.
-  int postbuild_total = 
-    static_cast<int>(target.GetPostBuildCommands().size());
-  int postbuild_count = 0;
-  if(postbuild_total > 0)
-    {
-    customRuleCode += "PostBuild_Cmds=";
-    }
-  for (std::vector<cmCustomCommand>::const_iterator cr =
-         target.GetPostBuildCommands().begin();
-       cr != target.GetPostBuildCommands().end(); ++cr)
-    {
-    if(postbuild_count++ > 0)
-      {
-      customRuleCode += "\\\n\t";
-      }
-    customRuleCode += this->ConstructScript(cr->GetCommandLines(),
-                                            cr->GetWorkingDirectory(),
-                                            configName,
-                                            cr->GetEscapeOldStyle(),
-                                            cr->GetEscapeAllowMakeVars(),
-                                            "\\\n\t");
-    }
-  if(postbuild_total > 0)
-    {
-    customRuleCode += "\n";
-    }
+  // Write the post-build rules.
+  event.Start("PostBuild");
+  event.Write(target.GetPostBuildCommands());
+  event.Finish();
 
   customRuleCode += "# End Special Build Tool\n";
   return customRuleCode;
@@ -897,9 +880,8 @@ void cmLocalVisualStudio6Generator
                  const char *libName, cmTarget &target, 
                  std::vector<cmSourceGroup> &)
 {
-  // Lookup the output directory for the target.
-  std::string outPath = target.GetDirectory();
-
+  bool targetBuilds = (target.GetType() >= cmTarget::EXECUTABLE &&
+                       target.GetType() <= cmTarget::MODULE_LIBRARY);
 #ifdef CM_USE_OLD_VS6
   // Lookup the library and executable output directories.
   std::string libPath;
@@ -1151,12 +1133,10 @@ void cmLocalVisualStudio6Generator
     }
 
   // Get standard libraries for this language.
-  if(target.GetType() >= cmTarget::EXECUTABLE && 
-     target.GetType() <= cmTarget::MODULE_LIBRARY)
+  if(targetBuilds)
     {
     // Get the language to use for linking.
-    const char* linkLanguage = 
-      target.GetLinkerLanguage(this->GetGlobalGenerator());
+    const char* linkLanguage = target.GetLinkerLanguage();
     if(!linkLanguage)
       {
       cmSystemTools::Error
@@ -1429,10 +1409,15 @@ void cmLocalVisualStudio6Generator
        removeQuotes(this->ConvertToOptionallyRelativeOutputPath
                     (exePath.c_str())).c_str());
 #endif
-    cmSystemTools::ReplaceString
-      (line, "OUTPUT_DIRECTORY",
-       removeQuotes(this->ConvertToOptionallyRelativeOutputPath
-                    (outPath.c_str())).c_str());
+
+    if(targetBuilds)
+      {
+      std::string outPath = target.GetDirectory();
+      cmSystemTools::ReplaceString
+        (line, "OUTPUT_DIRECTORY",
+         removeQuotes(this->ConvertToOptionallyRelativeOutputPath
+                      (outPath.c_str())).c_str());
+      }
 
     cmSystemTools::ReplaceString(line, 
                                  "EXTRA_DEFINES", 
@@ -1450,8 +1435,7 @@ void cmLocalVisualStudio6Generator
     if(target.GetType() >= cmTarget::EXECUTABLE && 
        target.GetType() <= cmTarget::MODULE_LIBRARY)
       {
-      const char* linkLanguage = 
-        target.GetLinkerLanguage(this->GetGlobalGenerator());
+      const char* linkLanguage = target.GetLinkerLanguage();
       if(!linkLanguage)
         {
         cmSystemTools::Error
@@ -1712,11 +1696,12 @@ cmLocalVisualStudio6Generator
     }
 
   // Now do the VS6-specific check.
-  if(define.find_first_of(" ") != define.npos)
+  if(define.find_first_of(" ") != define.npos &&
+     define.find_first_of("\"$;") != define.npos)
     {
     cmOStringStream e;
     e << "WARNING: The VS6 IDE does not support preprocessor definition "
-      << "values with spaces.\n"
+      << "values with spaces and '\"', '$', or ';'.\n"
       << "CMake is dropping a preprocessor definition: " << define << "\n"
       << "Consider defining the macro in a (configured) header file.\n";
     cmSystemTools::Message(e.str().c_str());

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: CMakeSetup.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-21 19:43:45 $
-  Version:   $Revision: 1.17.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "QCMake.h"  // include to disable MS warnings
 #include <QApplication>
 #include <QFileInfo>
@@ -21,6 +16,10 @@
 #include <QTranslator>
 #include <QLocale>
 #include "QMacInstallDialog.h"
+
+#ifdef Q_OS_WIN
+#include "windows.h"  // for SetErrorMode
+#endif
 
 #include "CMakeSetupDialog.h"
 #include "cmDocumentation.h"
@@ -104,6 +103,10 @@ int main(int argc, char** argv)
     }
 
   QApplication app(argc, argv);
+#ifdef Q_OS_WIN
+  // QApplication changes error mode, let's put it back
+  SetErrorMode(0);
+#endif
   
   // clean out standard Qt paths for plugins, which we don't use anyway
   // when creating Mac bundles, it potentially causes problems
@@ -143,9 +146,6 @@ int main(int argc, char** argv)
   app.setWindowIcon(QIcon(":/Icons/CMakeSetup.png"));
   
   CMakeSetupDialog dialog;
-  QString title = QString("CMake %1");
-  title = title.arg(cmVersion::GetCMakeVersion().c_str());
-  dialog.setWindowTitle(title);
   dialog.show();
  
   cmsys::CommandLineArguments arg;

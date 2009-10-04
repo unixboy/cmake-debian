@@ -1,13 +1,12 @@
 # - Find OpenSceneGraph
 # This module searches for the OpenSceneGraph core "osg" library as well as
-# OpenThreads, and whatever additional COMPONENTS that you specify.
+# OpenThreads, and whatever additional COMPONENTS (nodekits) that you specify.
 #    See http://www.openscenegraph.org
 #
-# NOTE: If you would like to use this module in your CMAKE_MODULE_PATH instead
-# of requiring CMake >= 2.6.3, you will also need to download
-# FindOpenThreads.cmake, Findosg_functions.cmake, Findosg.cmake, as well as
-# files for any Components you need to call (FindosgDB.cmake,
-# FindosgUtil.cmake, etc.)
+# NOTE: To use this module effectively you must either require CMake >= 2.6.3
+# with cmake_minimum_required(VERSION 2.6.3) or download and place
+# FindOpenThreads.cmake, Findosg_functions.cmake, Findosg.cmake,
+# and Find<etc>.cmake files into your CMAKE_MODULE_PATH.
 #
 #==================================
 #
@@ -40,26 +39,34 @@
 #==================================
 # Example Usage:
 #
-#  find_package(OpenSceneGraph 2.0.0 COMPONENTS osgDB osgUtil)
+#  find_package(OpenSceneGraph 2.0.0 REQUIRED osgDB osgUtil)
+#      # libOpenThreads & libosg automatically searched
 #  include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 #
 #  add_executable(foo foo.cc)
 #  target_link_libraries(foo ${OPENSCENEGRAPH_LIBRARIES})
 #
-#==================================
+
+#=============================================================================
+# Copyright 2009 Kitware, Inc.
+# Copyright 2009 Philip Lowman <philip@yhbt.com>
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 #
 # Naming convention:
 #  Local variables of the form _osg_foo
 #  Input variables of the form OpenSceneGraph_FOO
 #  Output variables of the form OPENSCENEGRAPH_FOO
 #
-# Copyright (c) 2009, Philip Lowman <philip@yhbt.com>
-#
-# Redistribution AND use is allowed according to the terms of the New
-# BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
-#
-#==================================
 
 include(Findosg_functions)
 
@@ -126,7 +133,7 @@ endif()
 #
 # Version checking
 #
-if(OpenSceneGraph_FIND_VERSION)
+if(OpenSceneGraph_FIND_VERSION AND OPENSCENEGRAPH_VERSION)
     if(OpenSceneGraph_FIND_VERSION_EXACT)
         if(NOT OPENSCENEGRAPH_VERSION VERSION_EQUAL ${OpenSceneGraph_FIND_VERSION})
             set(_osg_version_not_exact TRUE)
@@ -140,11 +147,7 @@ if(OpenSceneGraph_FIND_VERSION)
     endif()
 endif()
 
-set(_osg_required)
 set(_osg_quiet)
-if(OpenSceneGraph_FIND_REQUIRED)
-    set(_osg_required "REQUIRED")
-endif()
 if(OpenSceneGraph_FIND_QUIETLY)
     set(_osg_quiet "QUIET")
 endif()
@@ -156,7 +159,7 @@ foreach(_osg_module ${_osg_modules_to_process})
         message("[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
             "Calling find_package(${_osg_module} ${_osg_required} ${_osg_quiet})")
     endif()
-    find_package(${_osg_module} ${_osg_required} ${_osg_quiet})
+    find_package(${_osg_module} ${_osg_quiet})
 
     string(TOUPPER ${_osg_module} _osg_module_UC)
     list(APPEND OPENSCENEGRAPH_INCLUDE_DIR ${${_osg_module_UC}_INCLUDE_DIR})
@@ -196,8 +199,29 @@ elseif(_osg_version_not_exact)
             "(exactly), version ${OPENSCENEGRAPH_VERSION} was found.")
     endif()
 else()
-    # If the version was OK, we should hit this case where we can do the
-    # typical user notifications
+
+    #
+    # Check each module to see if it's found
+    #
+    if(OpenSceneGraph_FIND_REQUIRED)
+        set(_osg_missing_message)
+        foreach(_osg_module ${_osg_modules_to_process})
+            string(TOUPPER ${_osg_module} _osg_module_UC)
+            if(NOT ${_osg_module_UC}_FOUND)
+                set(_osg_missing_nodekit_fail true)
+                set(_osg_missing_message "${_osg_missing_message} ${_osg_module}")
+            endif()
+        endforeach()
+    
+        if(_osg_missing_nodekit_fail)
+            message(FATAL_ERROR "ERROR: Missing the following osg "
+                "libraries: ${_osg_missing_message}.\n"
+                "Consider using CMAKE_PREFIX_PATH or the OSG_DIR "
+                "environment variable.  See the "
+                "${CMAKE_CURRENT_LIST_FILE} for more details.")
+        endif()
+    endif()
+
     include(FindPackageHandleStandardArgs)
     FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenSceneGraph DEFAULT_MSG OPENSCENEGRAPH_LIBRARIES OPENSCENEGRAPH_INCLUDE_DIR)
 endif()

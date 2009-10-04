@@ -1,22 +1,16 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2004-2009 Kitware, Inc.
+  Copyright 2004 Alexander Neundorf (neundorf@kde.org)
+  Copyright 2007 Miguel A. Figueroa-Villanueva
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExtraEclipseCDT4Generator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:01 $
-  Version:   $Revision: 1.13.2.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  Copyright (c) 2004 Alexander Neundorf neundorf@kde.org, All rights reserved.
-  Copyright (c) 2007 Miguel A. Figueroa-Villanueva. All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
-
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmExtraEclipseCDT4Generator.h"
 #include "cmGlobalUnixMakefileGenerator3.h"
 #include "cmLocalUnixMakefileGenerator3.h"
@@ -40,36 +34,6 @@ cmExtraEclipseCDT4Generator
 //  this->SupportedGlobalGenerators.push_back("MSYS Makefiles");
 #endif
   this->SupportedGlobalGenerators.push_back("Unix Makefiles");
-
-  // don't create these targets in Eclipse, they are too many and 
-  // should be only rarely used directly
-  this->TargetsToIgnore.insert("preinstall");
-  this->TargetsToIgnore.insert("install/local");
-  this->TargetsToIgnore.insert("ContinuousBuild");
-  this->TargetsToIgnore.insert("ContinuousConfigure");
-  this->TargetsToIgnore.insert("ContinuousCoverage");
-  this->TargetsToIgnore.insert("ContinuousMemCheck");
-  this->TargetsToIgnore.insert("ContinuousStart");
-  this->TargetsToIgnore.insert("ContinuousSubmit");
-  this->TargetsToIgnore.insert("ContinuousTest");
-  this->TargetsToIgnore.insert("ContinuousUpdate");
-  this->TargetsToIgnore.insert("ExperimentalBuild");
-  this->TargetsToIgnore.insert("ExperimentalConfigure");
-  this->TargetsToIgnore.insert("ExperimentalCoverage");
-  this->TargetsToIgnore.insert("ExperimentalMemCheck");
-  this->TargetsToIgnore.insert("ExperimentalStart");
-  this->TargetsToIgnore.insert("ExperimentalSubmit");
-  this->TargetsToIgnore.insert("ExperimentalTest");
-  this->TargetsToIgnore.insert("ExperimentalUpdate");
-  this->TargetsToIgnore.insert("NightlyBuild");
-  this->TargetsToIgnore.insert("NightlyConfigure");
-  this->TargetsToIgnore.insert("NightlyCoverage");
-  this->TargetsToIgnore.insert("NightlyMemCheck");
-  this->TargetsToIgnore.insert("NightlyMemoryCheck");
-  this->TargetsToIgnore.insert("NightlyStart");
-  this->TargetsToIgnore.insert("NightlySubmit");
-  this->TargetsToIgnore.insert("NightlyTest");
-  this->TargetsToIgnore.insert("NightlyUpdate");
 }
 
 //----------------------------------------------------------------------------
@@ -604,6 +568,75 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
         }
       }
     }
+  // add system defined c macros
+  const char* cDefs=mf->GetDefinition("CMAKE_ECLIPSE_C_SYSTEM_DEFINED_MACROS");
+  if(cDefs)
+    {
+    // Expand the list.
+    std::vector<std::string> defs;
+    cmSystemTools::ExpandListArgument(cDefs, defs, true);
+
+    // the list must contain only definition-value pairs:
+    if ((defs.size() % 2) == 0)
+      {
+      std::vector<std::string>::const_iterator di = defs.begin();
+      while (di != defs.end())
+        {
+        std::string def = *di;
+        ++di;
+        std::string val;
+        if (di != defs.end())
+          {
+          val = *di;
+          ++di;
+          }
+
+        // insert the definition if not already added.
+        if(emmited.find(def) == emmited.end())
+          {
+          emmited.insert(def);
+          fout << "<pathentry kind=\"mac\" name=\"" << def
+               << "\" path=\"\" value=\"" << this->EscapeForXML(val)
+               << "\"/>\n";
+          }
+        }
+      }
+    }
+  // add system defined c++ macros
+  const char* cxxDefs = mf->GetDefinition(
+                                    "CMAKE_ECLIPSE_CXX_SYSTEM_DEFINED_MACROS");
+  if(cxxDefs)
+    {
+    // Expand the list.
+    std::vector<std::string> defs;
+    cmSystemTools::ExpandListArgument(cxxDefs, defs, true);
+
+    // the list must contain only definition-value pairs:
+    if ((defs.size() % 2) == 0)
+      {
+      std::vector<std::string>::const_iterator di = defs.begin();
+      while (di != defs.end())
+        {
+        std::string def = *di;
+        ++di;
+        std::string val;
+        if (di != defs.end())
+          {
+          val = *di;
+          ++di;
+          }
+
+        // insert the definition if not already added.
+        if(emmited.find(def) == emmited.end())
+          {
+          emmited.insert(def);
+          fout << "<pathentry kind=\"mac\" name=\"" << def
+               << "\" path=\"\" value=\"" << this->EscapeForXML(val)
+               << "\"/>\n";
+          }
+        }
+      }
+    }
 
   // include dirs
   emmited.clear();
@@ -615,7 +648,7 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
     const std::vector<std::string>& includeDirs
       = (*it)->GetMakefile()->GetIncludeDirectories();
     this->AppendIncludeDirectories(fout, includeDirs, emmited);
-      }
+    }
   // now also the system include directories, in case we found them in 
   // CMakeSystemSpecificInformation.cmake. This makes Eclipse find the 
   // standard headers.
@@ -638,6 +671,7 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
     cmSystemTools::ExpandListArgument(systemIncludeDirs.c_str(), dirs);
     this->AppendIncludeDirectories(fout, dirs, emmited);
     }
+
   fout << "</storageModule>\n";
 
   // add build targets
@@ -649,15 +683,16 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
   const std::string make = mf->GetRequiredDefinition("CMAKE_MAKE_PROGRAM");
   cmGlobalGenerator* generator
     = const_cast<cmGlobalGenerator*>(this->GlobalGenerator);
+  
+  std::string allTarget;
+  std::string cleanTarget;
   if (generator->GetAllTargetName())
     {
-    emmited.insert(generator->GetAllTargetName());
-    this->AppendTarget(fout, generator->GetAllTargetName(), make);
+    allTarget = generator->GetAllTargetName();
     }
   if (generator->GetCleanTargetName())
     {
-    emmited.insert(generator->GetCleanTargetName());
-    this->AppendTarget(fout, generator->GetCleanTargetName(), make);
+    cleanTarget = generator->GetCleanTargetName();
     }
 
   // add all executable and library targets and some of the GLOBAL 
@@ -668,59 +703,69 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
        ++it)
     {
     const cmTargets& targets = (*it)->GetMakefile()->GetTargets();
-    for(cmTargets::const_iterator t = targets.begin(); t != targets.end(); ++t)
+    cmMakefile* makefile=(*it)->GetMakefile();
+    std::string subdir = (*it)->Convert(makefile->GetCurrentOutputDirectory(),
+                           cmLocalGenerator::HOME_OUTPUT);
+    if (subdir == ".")
       {
-      bool addFastTarget = false;
-      switch(t->second.GetType())
+      subdir = "";
+      }
+
+    for(cmTargets::const_iterator ti=targets.begin(); ti!=targets.end(); ++ti)
+      {
+      switch(ti->second.GetType())
         {
-        case cmTarget::EXECUTABLE:
-        case cmTarget::STATIC_LIBRARY:
-        case cmTarget::SHARED_LIBRARY:
-        case cmTarget::MODULE_LIBRARY:
-           addFastTarget = true;
-           // no break here
-        case cmTarget::UTILITY:
         case cmTarget::GLOBAL_TARGET:
           {
-          bool insertTarget = true;
-          if(insertTarget &&
-             (std::set<std::string>::const_iterator(
-               this->TargetsToIgnore.find(t->first)) !=
-              this->TargetsToIgnore.end()))
-            {
-            insertTarget = false;
-            }
+          bool insertTarget = false;
+          // Only add the global targets from CMAKE_BINARY_DIR, 
+          // not from the subdirs
+          if (subdir.empty())
+           {
+           insertTarget = true;
+           // only add the "edit_cache" target if it's not ccmake, because
+           // this will not work within the IDE
+           if (ti->first == "edit_cache")
+             {
+             if (strstr(makefile->GetRequiredDefinition
+                                    ("CMAKE_EDIT_COMMAND"), "ccmake")!=NULL)
+               {
+               insertTarget = false;
+               }
+             }
+           }
+         if (insertTarget)
+           {
+           this->AppendTarget(fout, ti->first, make, subdir, ": ");
+           }
+         }
+         break;
+       case cmTarget::UTILITY:
+         // Add all utility targets, except the Nightly/Continuous/
+         // Experimental-"sub"targets as e.g. NightlyStart
+         if (((ti->first.find("Nightly")==0)   &&(ti->first!="Nightly"))
+          || ((ti->first.find("Continuous")==0)&&(ti->first!="Continuous"))
+          || ((ti->first.find("Experimental")==0) 
+                                            && (ti->first!="Experimental")))
+           {
+           break;
+           }
 
-          if(insertTarget && (emmited.find(t->first) != emmited.end()))
-            {
-            insertTarget = false;
-            }
-
-          // add the edit_cache target only if it's not ccmake
-          // otherwise ccmake will be executed in the log view of Eclipse,
-          // which is no terminal, so curses don't work there, Alex
-          if (insertTarget && (t->first=="edit_cache"))
-            {
-            if (strstr(mf->GetRequiredDefinition("CMAKE_EDIT_COMMAND"), 
-                                                 "ccmake")!=NULL)
-              {
-              insertTarget = false;
-              }
-            }
-
-          if (insertTarget)
-            {
-            emmited.insert(t->first);
-            this->AppendTarget(fout, t->first, make);
-            if (addFastTarget || t->first=="install")
-              {
-              std::string fastTarget = t->first;
-              fastTarget = fastTarget + "/fast";
-              this->AppendTarget(fout, fastTarget, make);
-              }
-            }
-          break;
-          }
+         this->AppendTarget(fout, ti->first, make, subdir, ": ");
+         break;
+       case cmTarget::EXECUTABLE:
+       case cmTarget::STATIC_LIBRARY:
+       case cmTarget::SHARED_LIBRARY:
+       case cmTarget::MODULE_LIBRARY:
+         {
+         const char* prefix = (ti->second.GetType()==cmTarget::EXECUTABLE ?
+                                                          "[exe] " : "[lib] ");
+         this->AppendTarget(fout, ti->first, make, subdir, prefix);
+         std::string fastTarget = ti->first;
+         fastTarget += "/fast";
+         this->AppendTarget(fout, fastTarget, make, subdir, prefix);
+         }
+         break;
         // ignore these:
         case cmTarget::INSTALL_FILES:
         case cmTarget::INSTALL_PROGRAMS:
@@ -729,7 +774,38 @@ void cmExtraEclipseCDT4Generator::CreateCProjectFile() const
           break;
         }
       }
+      
+    // insert the all and clean targets in every subdir
+    if (!allTarget.empty())
+      {
+      this->AppendTarget(fout, allTarget, make, subdir, ": ");
+      }
+    if (!cleanTarget.empty())
+      {
+      this->AppendTarget(fout, cleanTarget, make, subdir, ": ");
+      }
+
+    //insert rules for compiling, preprocessing and assembling individual files
+    cmLocalUnixMakefileGenerator3* lumg=(cmLocalUnixMakefileGenerator3*)*it;
+    std::vector<std::string> objectFileTargets;
+    lumg->GetIndividualFileTargets(objectFileTargets);
+    for(std::vector<std::string>::const_iterator fit=objectFileTargets.begin();
+        fit != objectFileTargets.end();
+        ++fit)
+      {
+      const char* prefix = "[obj] ";
+      if ((*fit)[fit->length()-1] == 's')
+        {
+        prefix = "[to asm] ";
+        }
+      else if ((*fit)[fit->length()-1] == 'i')
+        {
+        prefix = "[pre] ";
+        }
+      this->AppendTarget(fout, *fit, make, subdir, prefix);
+      }
     }
+
   fout << "</buildTargets>\n"
           "</storageModule>\n"
           ;
@@ -882,13 +958,23 @@ void cmExtraEclipseCDT4Generator
   fout << "</storageModule>\n";
 }
 
+// The prefix is prepended before the actual name of the target. The purpose
+// of that is to sort the targets in the view of Eclipse, so that at first
+// the global/utility/all/clean targets appear ": ", then the executable
+// targets "[exe] ", then the libraries "[lib]", then the rules for the
+// object files "[obj]", then for preprocessing only "[pre] " and 
+// finally the assembly files "[to asm] ". Note the "to" in "to asm", 
+// without it, "asm" would be the first targets in the list, with the "to"
+// they are the last targets, which makes more sense.
 void cmExtraEclipseCDT4Generator::AppendTarget(cmGeneratedFileStream& fout,
                                                const std::string&     target,
-                                               const std::string&     make)
+                                               const std::string&     make,
+                                               const std::string&     path,
+                                               const char* prefix)
 {
   fout << 
-    "<target name=\"" << target << "\""
-    " path=\"\""
+    "<target name=\"" << prefix << target << "\""
+    " path=\"" << path.c_str() << "\""
     " targetID=\"org.eclipse.cdt.make.MakeTargetBuilder\">\n"
     "<buildCommand>"
     << cmExtraEclipseCDT4Generator::GetEclipsePath(make)
