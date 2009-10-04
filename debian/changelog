@@ -23,6 +23,7 @@ cmake (2.8.0~rc2-0r3) UNRELEASED; urgency=low
     CMake.desktop.
   * Add scripts-and-permissions.diff - fixes a couple issues with scripts
     from Modules/ and Templates/ (thanks to lintian).
+  * Remove obsolete README.Debian.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
 
