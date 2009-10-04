@@ -32,7 +32,7 @@ Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=340764
 +  # fix for GNU/kFreeBSD, remove the GNU/
 +  IF(${_PREFIX}_NAME MATCHES kFreeBSD)
 +    SET(${_PREFIX}_NAME kFreeBSD)
-+  ENDIF(${PREFIX}_NAME MATCHES kFreeBSD)
++  ENDIF(${_PREFIX}_NAME MATCHES kFreeBSD)
 +
    # fix for CYGWIN which has windows version in it 
    IF(${_PREFIX}_NAME MATCHES CYGWIN)
