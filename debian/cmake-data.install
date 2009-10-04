@@ -1,6 +1,6 @@
 Docs/cmake-mode.el  usr/share/emacs/site-lisp
 debian/cmake.xpm    usr/share/pixmaps
-usr/share/cmake-2.6/*
+usr/share/cmake-2.8/*
 usr/share/doc/cmake/cmake-commands.html
 usr/share/doc/cmake/cmake-commands.txt
 usr/share/doc/cmake/cmake-compatcommands.html
