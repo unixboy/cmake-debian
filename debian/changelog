@@ -16,6 +16,7 @@ cmake (2.8.0~rc2-0r2) UNRELEASED; urgency=low
   * Update install files.
   * Call dpkg with --print-architecture rather than obsolete 
     --print-installation-architecture.
+  * Fix lintian override cmake-data: extra-license-file.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
 
