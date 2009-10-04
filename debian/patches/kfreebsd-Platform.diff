@@ -30,9 +30,9 @@ Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=340764
    ENDIF(${_PREFIX}_NAME MATCHES BSD.OS)
  
 +  # fix for GNU/kFreeBSD, remove the GNU/
-+  IF(CMAKE_SYSTEM_NAME MATCHES kFreeBSD)
-+    SET(CMAKE_SYSTEM_NAME kFreeBSD)
-+  ENDIF(CMAKE_SYSTEM_NAME MATCHES kFreeBSD)
++  IF(${_PREFIX}_NAME MATCHES kFreeBSD)
++    SET(${_PREFIX}_NAME kFreeBSD)
++  ENDIF(${PREFIX}_NAME MATCHES kFreeBSD)
 +
    # fix for CYGWIN which has windows version in it 
    IF(${_PREFIX}_NAME MATCHES CYGWIN)
