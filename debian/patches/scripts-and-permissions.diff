@@ -1,0 +1,29 @@
+From: Modestas Vainius <modestas@vainius.eu>
+Subject: Fix scripts and their permissions in Modules/ and Templates/
+ The first hunk fixes permissions of Modules/SquishRunTestCase.sh script.
+ INSTALL() used to remove executable permissions.
+ .
+ The second hunk adds #!/bin/sh to the top of the script
+ Templates/cygwin-package.sh.in. All executable interpreted scripts
+ should have this directive.
+Forwarded: yes.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -460,7 +460,7 @@
+   DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                         GROUP_READ GROUP_EXECUTE
+                         WORLD_READ WORLD_EXECUTE
+-  PATTERN "*.sh.in" PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
++  PATTERN "*.sh*" PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                                 GROUP_READ GROUP_EXECUTE
+                                 WORLD_READ WORLD_EXECUTE
+   PATTERN "CVS" EXCLUDE
+--- a/Templates/cygwin-package.sh.in
++++ b/Templates/cygwin-package.sh.in
+@@ -1,3 +1,5 @@
++#!/bin/sh
++
+ # this is a sample shell script used for building a cmake
+ # based project for a cygwin setup package.
+ 

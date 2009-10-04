@@ -21,6 +21,8 @@ cmake (2.8.0~rc2-0r2) UNRELEASED; urgency=low
     problems.
   * Add desktop-remove-deprecated.diff - remove deprecated Enconding field from
     CMake.desktop.
+  * Add scripts-and-permissions.diff - fixes a couple issues with scripts
+    from Modules/ and Templates/ (thanks to lintian).
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
 

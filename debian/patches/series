@@ -4,3 +4,4 @@ executables-dont-need-fpic.diff
 fix_bashisms.diff
 manpage_friendly_docs.diff
 desktop-remove-deprecated.diff
+scripts-and-permissions.diff
