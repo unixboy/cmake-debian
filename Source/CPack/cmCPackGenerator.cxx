@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:55 $
-  Version:   $Revision: 1.6.2.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "cmCPackGenerator.h"
 
@@ -24,10 +19,15 @@
 #include "cmLocalGenerator.h"
 #include "cmGeneratedFileStream.h"
 #include "cmCPackComponentGroup.h"
+#include "cmXMLSafe.h"
 
 #include <cmsys/SystemTools.hxx>
 #include <cmsys/Glob.hxx>
 #include <memory> // auto_ptr
+
+#if defined(__HAIKU__)
+#include <StorageKit.h>
+#endif
 
 //----------------------------------------------------------------------
 cmCPackGenerator::cmCPackGenerator()
@@ -143,7 +143,7 @@ int cmCPackGenerator::PrepareNames()
       "Read description file: " << descFileName << std::endl);
     while ( ifs && cmSystemTools::GetLineFromStream(ifs, line) )
       {
-      ostr << cmSystemTools::MakeXMLSafe(line.c_str()) << std::endl;
+      ostr << cmXMLSafe(line) << std::endl;
       }
     this->SetOptionIfNotSet("CPACK_PACKAGE_DESCRIPTION", ostr.str().c_str());
     }
@@ -622,7 +622,6 @@ int cmCPackGenerator::InstallProjectViaInstallCMakeProjects(
         cmGlobalGenerator gg;
         gg.SetCMakeInstance(&cm);
         std::auto_ptr<cmLocalGenerator> lg(gg.CreateLocalGenerator());
-        lg->SetGlobalGenerator(&gg);
         cmMakefile *mf = lg->GetMakefile();
         std::string realInstallDirectory = tempInstallDirectory;
         if ( !installSubDirectory.empty() && installSubDirectory != "/" )
@@ -1025,6 +1024,16 @@ const char* cmCPackGenerator::GetInstallPath()
   this->InstallPath += this->GetOption("CPACK_PACKAGE_NAME");
   this->InstallPath += "-";
   this->InstallPath += this->GetOption("CPACK_PACKAGE_VERSION");
+#elif defined(__HAIKU__)
+  BPath dir;
+  if (find_directory(B_COMMON_DIRECTORY, &dir) == B_OK)
+    {
+    this->InstallPath = dir.Path();
+    }
+  else
+    {
+    this->InstallPath = "/boot/common";
+    }
 #else
   this->InstallPath = "/usr/local/";
 #endif

@@ -57,7 +57,8 @@
 #
 # Currently this module searches for the following version numbers:
 # 1.33, 1.33.0, 1.33.1, 1.34, 1.34.0, 1.34.1, 1.35, 1.35.0, 1.35.1,
-# 1.36, 1.36.0, 1.36.1, 1.37, 1.37.0, 1.38, 1.38.0
+# 1.36, 1.36.0, 1.36.1, 1.37, 1.37.0, 1.38, 1.38.0, 1.39, 1.39.0,
+# 1.40, 1.40.0
 #
 # NOTE: If you add a new major 1.x version in Boost_ADDITIONAL_VERSIONS you should
 # add both 1.x and 1.x.0 as shown above.  Official Boost include directories
@@ -66,7 +67,7 @@
 #
 # SET(Boost_ADDITIONAL_VERSIONS "0.99" "0.99.0" "1.78" "1.78.0")
 #
-# ============================================================================
+# ===================================== ============= ========================
 #
 # Variables used by this module, they can change the default behaviour and
 # need to be set before calling find_package:
@@ -133,7 +134,7 @@
 #   Boost_SUBMINOR_VERSION              subminor version number of boost
 #
 #   Boost_LIB_DIAGNOSTIC_DEFINITIONS    [WIN32 Only] You can call
-#                                       add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINTIIONS})
+#                                       add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
 #                                       to have diagnostic information about Boost's
 #                                       automatic linking outputted during compilation time.
 #
@@ -146,21 +147,23 @@
 #   Boost_${COMPONENT}_LIBRARY          Contains the libraries for the specified Boost
 #                                       "component" (includes debug and optimized keywords
 #                                       when needed).
-#
-# =====================================================================
-#
-#
-#  Copyright (c) 2006-2008 Andreas Schneider <mail@cynapses.org>
-#  Copyright (c) 2007      Wengo
-#  Copyright (c) 2007      Mike Jackson
-#  Copyright (c) 2008      Andreas Pakulat <apaku@gmx.de>
-#
-#  Redistribution AND use is allowed according to the terms of the New
-#  BSD license.
-#  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
-#
 
-
+#=============================================================================
+# Copyright 2006-2009 Kitware, Inc.
+# Copyright 2006-2008 Andreas Schneider <mail@cynapses.org>
+# Copyright 2007      Wengo
+# Copyright 2007      Mike Jackson
+# Copyright 2008      Andreas Pakulat <apaku@gmx.de>
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
 #-------------------------------------------------------------------------------
 #  FindBoost functions & macros
@@ -271,7 +274,7 @@ else(Boost_FIND_VERSION_EXACT)
   # The user has not requested an exact version.  Among known
   # versions, find those that are acceptable to the user request.
   set(_Boost_KNOWN_VERSIONS ${Boost_ADDITIONAL_VERSIONS}
-    "1.38.0" "1.38" "1.37.0" "1.37"
+    "1.40.0" "1.40" "1.39.0" "1.39" "1.38.0" "1.38" "1.37.0" "1.37"
     "1.36.1" "1.36.0" "1.36" "1.35.1" "1.35.0" "1.35" "1.34.1" "1.34.0"
     "1.34" "1.33.1" "1.33.0" "1.33")
   set(_boost_TEST_VERSIONS)
@@ -380,6 +383,7 @@ ELSE (_boost_IN_CACHE)
   SET(_boost_INCLUDE_SEARCH_DIRS
     C:/boost/include
     C:/boost
+    "$ENV{ProgramFiles}/boost/include"
     "$ENV{ProgramFiles}/boost"
     /sw/local/include
   )
@@ -543,7 +547,14 @@ ELSE (_boost_IN_CACHE)
     # NOTE: this is not perfect yet, if you experience any issues
     # please report them and use the Boost_COMPILER variable
     # to work around the problems.
-    if (MSVC90)
+    if("${CMAKE_CXX_COMPILER}" MATCHES "icl" 
+        OR "${CMAKE_CXX_COMPILER}" MATCHES "icpc") 
+      if(WIN32)
+        set (_boost_COMPILER "-iw")
+      else()
+        set (_boost_COMPILER "-il")
+      endif()
+    elseif (MSVC90)
       SET (_boost_COMPILER "-vc90")
     elseif (MSVC80)
       SET (_boost_COMPILER "-vc80")
@@ -555,13 +566,8 @@ ELSE (_boost_IN_CACHE)
       SET (_boost_COMPILER "-vc6") # yes, this is correct
     elseif (BORLAND)
       SET (_boost_COMPILER "-bcb")
-    elseif("${CMAKE_CXX_COMPILER}" MATCHES "icl" 
-        OR "${CMAKE_CXX_COMPILER}" MATCHES "icpc") 
-      if(WIN32)
-        set (_boost_COMPILER "-iw")
-      else()
-        set (_boost_COMPILER "-il")
-      endif()
+    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "SunPro")
+      set(_boost_COMPILER "-sw")
     elseif (MINGW)
       if(${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION} VERSION_LESS 1.34)
           SET(_boost_COMPILER "-mgw") # no GCC version encoding prior to 1.34
@@ -616,9 +622,10 @@ ELSE (_boost_IN_CACHE)
   SET( _boost_STATIC_TAG "")
   set( _boost_ABI_TAG "")
   IF (WIN32)
-    IF(MSVC)
+    IF(MSVC OR "${CMAKE_CXX_COMPILER}" MATCHES "icl"
+            OR "${CMAKE_CXX_COMPILER}" MATCHES "icpc")
       SET (_boost_ABI_TAG "g")
-    ENDIF(MSVC)
+    ENDIF()
     IF( Boost_USE_STATIC_LIBS )
       SET( _boost_STATIC_TAG "-s")
     ENDIF( Boost_USE_STATIC_LIBS )
@@ -634,11 +641,15 @@ ELSE (_boost_IN_CACHE)
   # ------------------------------------------------------------------------
   #  Begin finding boost libraries
   # ------------------------------------------------------------------------
-  
+
   SET(_boost_LIBRARIES_SEARCH_DIRS
+    ${Boost_INCLUDE_DIR}/lib
+    ${Boost_INCLUDE_DIR}/../lib
     C:/boost/lib
     C:/boost
     "$ENV{ProgramFiles}/boost/boost_${Boost_MAJOR_VERSION}_${Boost_MINOR_VERSION}_${Boost_SUBMINOR_VERSION}/lib"
+    "$ENV{ProgramFiles}/boost/boost_${Boost_MAJOR_VERSION}_${Boost_MINOR_VERSION}/lib"
+    "$ENV{ProgramFiles}/boost/lib"
     "$ENV{ProgramFiles}/boost"
     /sw/local/lib
   )

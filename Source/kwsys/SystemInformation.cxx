@@ -1,18 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  KWSys - Kitware System Library
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   BatchMake
-  Module:    $RCSfile: SystemInformation.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-04-07 19:32:07 $
-  Version:   $Revision: 1.22.2.7 $
-  Copyright (c) 2005 Insight Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifdef _WIN32
 # include <winsock.h> // WSADATA, include before sys/types.h
 #endif
@@ -49,6 +45,14 @@
 # include <windows.h>
 #endif
 
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <mach/vm_statistics.h>
+#include <mach/host_info.h>
+#include <mach/mach.h>
+#include <mach/mach_types.h>
+#endif
+
 #ifdef __linux
 # include <sys/procfs.h>
 # include <sys/types.h>
@@ -60,6 +64,10 @@
 #elif __hpux
 # include <sys/param.h>
 # include <sys/pstat.h>
+#endif
+
+#ifdef __HAIKU__
+#include <OS.h>
 #endif
 
 #include <memory.h>
@@ -100,7 +108,7 @@ public:
   const char * GetExtendedProcessorName();
   const char * GetProcessorSerialNumber();
   int GetProcessorCacheSize();
-  int GetLogicalProcessorsPerPhysical();
+  unsigned int GetLogicalProcessorsPerPhysical();
   float GetProcessorClockFrequency();
   int GetProcessorAPICID();
   int GetProcessorCacheXSize(long int);
@@ -162,7 +170,7 @@ public:
     bool HasMMXPlus;
     bool HasSSEMMX;
     bool SupportsHyperthreading;
-    int LogicalProcessorsPerPhysical;
+    unsigned int LogicalProcessorsPerPhysical;
     int APIC_ID;
     CPUPowerManagement PowerManagement;
     } CPUExtendedFeatures;  
@@ -191,7 +199,7 @@ public:
     
   enum Manufacturer 
     {
-    AMD, Intel, NSC, UMC, Cyrix, NexGen, IDT, Rise, Transmeta, Sun, UnknownManufacturer
+    AMD, Intel, NSC, UMC, Cyrix, NexGen, IDT, Rise, Transmeta, Sun, IBM, Motorola, UnknownManufacturer
     };
 protected:
 
@@ -241,6 +249,9 @@ protected:
   bool QuerySolarisInfo();
   kwsys_stl::string ParseValueFromKStat(const char* arguments);
   kwsys_stl::string RunProcess(kwsys_stl::vector<const char*> args);
+
+  //For Haiku OS
+  bool QueryHaikuInfo();
 
   // Evaluate the memory information.
   int QueryMemory();
@@ -310,7 +321,7 @@ int SystemInformation::GetProcessorCacheSize()
 {
   return this->Implementation->GetProcessorCacheSize();
 }
-int SystemInformation::GetLogicalProcessorsPerPhysical()
+unsigned int SystemInformation::GetLogicalProcessorsPerPhysical()
 {
   return this->Implementation->GetLogicalProcessorsPerPhysical();
 }
@@ -535,6 +546,8 @@ void SystemInformationImplementation::RunCPUCheck()
   this->ParseSysCtl();
 #elif defined (__SVR4) && defined (__sun)
   this->QuerySolarisInfo();
+#elif defined(__HAIKU__)
+  this->QueryHaikuInfo();
 #else
   this->RetreiveInformationFromCpuInfoFile();
 #endif
@@ -551,6 +564,8 @@ void SystemInformationImplementation::RunMemoryCheck()
   this->ParseSysCtl();
 #elif defined (__SVR4) && defined (__sun)
   this->QuerySolarisInfo();
+#elif defined(__HAIKU__)
+  this->QueryHaikuInfo();
 #else
   this->QueryMemory();
 #endif
@@ -618,6 +633,10 @@ const char * SystemInformationImplementation::GetVendorID()
       return "Transmeta";
     case Sun:
       return "Sun Microelectronics";
+    case IBM:
+      return "IBM";
+    case Motorola:
+      return "Motorola";
     default:
       return "Unknown Manufacturer";
     }
@@ -669,7 +688,7 @@ const char * SystemInformationImplementation::GetProcessorSerialNumber()
 }
 
 /** Return the logical processors per physical */
-int SystemInformationImplementation::GetLogicalProcessorsPerPhysical()
+unsigned int SystemInformationImplementation::GetLogicalProcessorsPerPhysical()
 {
   return this->Features.ExtendedFeatures.LogicalProcessorsPerPhysical;
 }
@@ -957,7 +976,9 @@ void SystemInformationImplementation::FindManufacturer()
   else if (strcmp (this->ChipID.Vendor, "GenuineTMx86") == 0)  this->ChipManufacturer = Transmeta;      // Transmeta
   else if (strcmp (this->ChipID.Vendor, "TransmetaCPU") == 0)  this->ChipManufacturer = Transmeta;      // Transmeta
   else if (strcmp (this->ChipID.Vendor, "Geode By NSC") == 0)  this->ChipManufacturer = NSC;          // National Semiconductor
-  else if (strcmp (this->ChipID.Vendor, "Sun") == 0)  this->ChipManufacturer = Sun;          // Sun Microelectronics
+  else if (strcmp (this->ChipID.Vendor, "Sun") == 0)           this->ChipManufacturer = Sun;          // Sun Microelectronics
+  else if (strcmp (this->ChipID.Vendor, "IBM") == 0)           this->ChipManufacturer = IBM;          // IBM Microelectronics
+  else if (strcmp (this->ChipID.Vendor, "Motorola") == 0)      this->ChipManufacturer = Motorola;          // Motorola Microelectronics
   else                          this->ChipManufacturer = UnknownManufacturer;  // Unknown manufacturer
 }
 
@@ -1552,7 +1573,7 @@ bool SystemInformationImplementation::RetrieveExtendedCPUFeatures()
     }
 
   // Check to see if what we are about to do is supported...
-  if (!RetrieveCPUExtendedLevelSupport (0x80000001)) 
+  if (!RetrieveCPUExtendedLevelSupport(static_cast<int>(0x80000001)))
     {
     return false;
     }
@@ -1687,7 +1708,7 @@ bool SystemInformationImplementation::RetrieveProcessorSerialNumber()
 bool SystemInformationImplementation::RetrieveCPUPowerManagement()
 {  
   // Check to see if what we are about to do is supported...
-  if (!RetrieveCPUExtendedLevelSupport (0x80000007)) 
+  if (!RetrieveCPUExtendedLevelSupport(static_cast<int>(0x80000007)))
     {
     this->Features.ExtendedFeatures.PowerManagement.HasFrequencyID = false;
     this->Features.ExtendedFeatures.PowerManagement.HasVoltageID = false;
@@ -1744,9 +1765,12 @@ bool SystemInformationImplementation::RetrieveCPUPowerManagement()
 bool SystemInformationImplementation::RetrieveExtendedCPUIdentity()
 {
   // Check to see if what we are about to do is supported...
-  if (!RetrieveCPUExtendedLevelSupport(0x80000002)) return false;
-  if (!RetrieveCPUExtendedLevelSupport(0x80000003)) return false;
-  if (!RetrieveCPUExtendedLevelSupport(0x80000004)) return false;
+  if (!RetrieveCPUExtendedLevelSupport(static_cast<int>(0x80000002)))
+    return false;
+  if (!RetrieveCPUExtendedLevelSupport(static_cast<int>(0x80000003)))
+    return false;
+  if (!RetrieveCPUExtendedLevelSupport(static_cast<int>(0x80000004)))
+    return false;
    
 #if USE_ASM_INSTRUCTIONS
   int ProcessorNameStartPos = 0;
@@ -1899,6 +1923,7 @@ bool SystemInformationImplementation::RetrieveClassicalCPUIdentity()
             case 8: sprintf (this->ChipID.ProcessorName,"Pentium III (0.18 micron) With 256 KB On-Die L2 Cache "); break;
             case 0xa: sprintf (this->ChipID.ProcessorName,"Pentium III (0.18 micron) With 1 Or 2 MB On-Die L2 Cache "); break;
             case 0xb: sprintf (this->ChipID.ProcessorName,"Pentium III (0.13 micron) With 256 Or 512 KB On-Die L2 Cache "); break;
+            case 23: sprintf (this->ChipID.ProcessorName, "Intel(R) Core(TM)2 Duo CPU     T9500  @ 2.60GHz"); break;
             default: sprintf (this->ChipID.ProcessorName,"Unknown P6 family"); return false;
             }
           break;
@@ -2158,7 +2183,7 @@ int SystemInformationImplementation::RetreiveInformationFromCpuInfoFile()
   size_t fileSize = 0;
   while(!feof(fd))
     {
-    buffer += static_cast<unsigned char>(fgetc(fd));
+    buffer += static_cast<char>(fgetc(fd));
     fileSize++;
     }
   fclose( fd );
@@ -2193,7 +2218,8 @@ int SystemInformationImplementation::RetreiveInformationFromCpuInfoFile()
   kwsys_stl::string cores =
                         this->ExtractValueFromCpuInfoFile(buffer,"cpu cores");
   int numberOfCoresPerCPU=atoi(cores.c_str());
-  this->NumberOfPhysicalCPU=numberOfCoresPerCPU*(maxId+1);
+  this->NumberOfPhysicalCPU=static_cast<unsigned int>(
+    numberOfCoresPerCPU*(maxId+1));
 
 #else // __CYGWIN__
   // does not have "physical id" entries, neither "cpu cores"
@@ -2211,7 +2237,7 @@ int SystemInformationImplementation::RetreiveInformationFromCpuInfoFile()
     }
   // LogicalProcessorsPerPhysical>1 => hyperthreading.
   this->Features.ExtendedFeatures.LogicalProcessorsPerPhysical=
-                            this->NumberOfLogicalCPU/this->NumberOfPhysicalCPU;
+      this->NumberOfLogicalCPU/this->NumberOfPhysicalCPU;
 
   // CPU speed (checking only the first proc
   kwsys_stl::string CPUSpeed = this->ExtractValueFromCpuInfoFile(buffer,"cpu MHz");
@@ -2357,16 +2383,30 @@ int SystemInformationImplementation::QueryMemory()
     unsigned long temp;
     unsigned long cachedMem;
     unsigned long buffersMem;
-    fgets(buffer, sizeof(buffer), fd); // Skip "total: used:..."
-    
-    fscanf(fd, "Mem: %lu %lu %lu %lu %lu %lu\n",
-         &tp, &temp, &ap, &temp, &buffersMem, &cachedMem);
-    fscanf(fd, "Swap: %lu %lu %lu\n", &tv, &temp, &av);
-    
-    this->TotalVirtualMemory = tv>>10>>10;
-    this->TotalPhysicalMemory = tp>>10>>10;
-    this->AvailableVirtualMemory = av>>10>>10;
-    this->AvailablePhysicalMemory = (ap+buffersMem+cachedMem)>>10>>10;
+    char *r=fgets(buffer, sizeof(buffer), fd); // Skip "total: used:..."
+    int status=0;
+    if(r==buffer)
+      {
+      status+=fscanf(fd, "Mem: %lu %lu %lu %lu %lu %lu\n",
+                     &tp, &temp, &ap, &temp, &buffersMem, &cachedMem);
+      }
+    if(status==6)
+      {
+      status+=fscanf(fd, "Swap: %lu %lu %lu\n", &tv, &temp, &av);
+      }
+    if(status==9)
+      {
+      this->TotalVirtualMemory = tv>>10>>10;
+      this->TotalPhysicalMemory = tp>>10>>10;
+      this->AvailableVirtualMemory = av>>10>>10;
+      this->AvailablePhysicalMemory = (ap+buffersMem+cachedMem)>>10>>10;
+      }
+    else
+      {
+      kwsys_ios::cout << "Problem parsing /proc/meminfo" << kwsys_ios::endl;
+      fclose(fd);
+      return 0;
+      }
     }
   fclose( fd );
   return 1;
@@ -2512,6 +2552,20 @@ unsigned char SystemInformationImplementation::LogicalCPUPerPhysicalCPU(void)
     mov eax, 1
     cpuid
     mov Regebx, ebx
+    }
+#endif
+
+#ifdef __APPLE__
+    size_t len = 4;
+    int cores_per_package = 0;
+    int err = sysctlbyname("machdep.cpu.cores_per_package", &cores_per_package, &len, NULL, 0);
+    if (err != 0)
+    {
+      return 1; // That name was not found, default to 1
+    }
+    else
+    {
+      return static_cast<unsigned char>(cores_per_package);
     }
 #endif
   return static_cast<unsigned char> ((Regebx & NUM_LOGICAL_BITS) >> 16);
@@ -2707,50 +2761,115 @@ unsigned int SystemInformationImplementation::GetNumberOfPhysicalCPU()
   return this->NumberOfPhysicalCPU;
 }
 
-/** For Mac we Parse the sysctl -a output */
+/** For Mac use sysctlbyname calls to find system info */
 bool SystemInformationImplementation::ParseSysCtl()
 {
-  // Extract the arguments from the command line
-  kwsys_stl::vector<const char*> args;
-  args.push_back("sysctl");
-  args.push_back("-a");
-  args.push_back(0);
+#if defined(__APPLE__)
+  int err = 0;
+  uint64_t value = 0;
+  size_t len = sizeof(value);
+  sysctlbyname("hw.memsize", &value, &len, NULL, 0);
+  this->TotalPhysicalMemory = value/1048576;
 
-  this->SysCtlBuffer = this->RunProcess(args);
-   
   // Parse values for Mac
-  this->TotalPhysicalMemory = atoi(this->ExtractValueFromSysCtl("hw.memsize:").c_str())/(1024*1024);
-  this->TotalVirtualMemory = 0;
   this->AvailablePhysicalMemory = 0;
-  this->AvailableVirtualMemory = 0;
-
-  this->NumberOfPhysicalCPU = atoi(this->ExtractValueFromSysCtl("hw.physicalcpu:").c_str());
-  this->NumberOfLogicalCPU = atoi(this->ExtractValueFromSysCtl("hw.logicalcpu:").c_str());
-  
-  if(this->NumberOfPhysicalCPU!=0)
+  vm_statistics_data_t  vmstat;
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+  if ( host_statistics(mach_host_self(), HOST_VM_INFO, 
+                       (host_info_t) &vmstat, &count) == KERN_SUCCESS )
     {
-    this->NumberOfLogicalCPU /= this->NumberOfPhysicalCPU;
+    err = sysctlbyname("hw.pagesize", &value, &len, NULL, 0);
+    int64_t available_memory = vmstat.free_count * value;
+    this->AvailablePhysicalMemory = available_memory / 1048576;
     }
 
-  this->CPUSpeedInMHz = static_cast<float>(atoi(this->ExtractValueFromSysCtl("hw.cpufrequency:").c_str())); 
-  this->CPUSpeedInMHz /= 1000000;
+#ifdef VM_SWAPUSAGE
+  // Virtual memory.
+  int mib[2] = { CTL_VM, VM_SWAPUSAGE };
+  size_t miblen = sizeof(mib) / sizeof(mib[0]);
+  struct xsw_usage swap;
+  len = sizeof(struct xsw_usage);
+  err = sysctl(mib, miblen, &swap, &len, NULL, 0);
+  if (err == 0)
+    {
+    this->AvailableVirtualMemory = swap.xsu_avail/1048576;
+    this->TotalVirtualMemory = swap.xsu_total/1048576;
+    }
+#else
+   this->AvailableVirtualMemory = 0;
+   this->TotalVirtualMemory = 0;
+#endif
+
+// CPU Info
+  len = sizeof(this->NumberOfPhysicalCPU);
+  sysctlbyname("hw.physicalcpu", &this->NumberOfPhysicalCPU, &len, NULL, 0);
+  sysctlbyname("hw.logicalcpu", &this->NumberOfLogicalCPU, &len, NULL, 0);
+  this->Features.ExtendedFeatures.LogicalProcessorsPerPhysical = 
+    this->LogicalCPUPerPhysicalCPU();
+
+  len = sizeof(value);
+  sysctlbyname("hw.cpufrequency", &value, &len, NULL, 0);
+  this->CPUSpeedInMHz = value / 1048576;
+
 
   // Chip family
-  this->ChipID.Family = atoi(this->ExtractValueFromSysCtl("machdep.cpu.family:").c_str()); 
- 
-  // Chip Vendor
-  strcpy(this->ChipID.Vendor,this->ExtractValueFromSysCtl("machdep.cpu.vendor:").c_str());
-  this->FindManufacturer();
-  
-  // Chip Model
-  this->ChipID.Model = atoi(this->ExtractValueFromSysCtl("machdep.cpu.model:").c_str());
-  this->RetrieveClassicalCPUIdentity();
+  len = sizeof(this->ChipID.Family);
+  //Seems only the intel chips will have this name so if this fails it is
+  //probably a PPC machine
+  err = sysctlbyname("machdep.cpu.family",
+                     &this->ChipID.Family, &len, NULL, 0);
+  if (err != 0) // Go back to names we know but are less descriptive
+    {
+    this->ChipID.Family = 0;
+    char retBuf[32];
+    ::memset(retBuf, 0, 32);
+    len = 32;
+    err = sysctlbyname("hw.machine", &retBuf, &len, NULL, 0); 
+    kwsys_stl::string machineBuf(retBuf);
+    if (machineBuf.find_first_of("Power") != kwsys_stl::string::npos)
+      {
+      strcpy(this->ChipID.Vendor, "IBM");
+      len = 4;
+      err = sysctlbyname("hw.cputype", &this->ChipID.Family, &len, NULL, 0);
+      err = sysctlbyname("hw.cpusubtype", &this->ChipID.Model, &len, NULL, 0);
+      this->FindManufacturer();
+      }
+    }
+  else  // Should be an Intel Chip.
+    {
+    len = sizeof(this->ChipID.Family);
+    err = 
+      sysctlbyname("machdep.cpu.family", &this->ChipID.Family, &len, NULL, 0);
+    
+    char retBuf[128];
+    ::memset(retBuf, 0, 128);
+    len = 128;
+    err = sysctlbyname("machdep.cpu.vendor", retBuf, &len, NULL, 0);
+    // Chip Vendor
+    strcpy(this->ChipID.Vendor,retBuf);
+    this->FindManufacturer();
+    
+    len=CHIPNAME_STRING_LENGTH;
+    err = 
+      sysctlbyname("machdep.cpu.brand_string", 
+                   this->ChipID.ProcessorName, &len, NULL, 0);
 
+    // Chip Model
+    len = sizeof(value);
+    err = sysctlbyname("machdep.cpu.model", &value, &len, NULL, 0);
+    this->ChipID.Model = value;
+    }
   // Cache size
-  this->Features.L1CacheSize = atoi(this->ExtractValueFromSysCtl("hw.l1icachesize:").c_str());  
-  this->Features.L2CacheSize = atoi(this->ExtractValueFromSysCtl("hw.l2cachesize:").c_str());  
-
+  len = sizeof(value);
+  err = sysctlbyname("hw.l1icachesize", &value, &len, NULL, 0);
+  this->Features.L1CacheSize = value;
+  err = sysctlbyname("hw.l2cachesize", &value, &len, NULL, 0);
+  this->Features.L2CacheSize = value;
+  
   return true;
+#else
+  return false;
+#endif
 }
 
 /** Extract a value from sysctl command */
@@ -2902,7 +3021,8 @@ kwsys_stl::string SystemInformationImplementation::ParseValueFromKStat(const cha
 bool SystemInformationImplementation::QuerySolarisInfo()
 {
   // Parse values
-  this->NumberOfPhysicalCPU = atoi(this->ParseValueFromKStat("-n syste_misc -s ncpus").c_str());
+  this->NumberOfPhysicalCPU = static_cast<unsigned int>(
+    atoi(this->ParseValueFromKStat("-n syste_misc -s ncpus").c_str()));
   this->NumberOfLogicalCPU = this->NumberOfPhysicalCPU;
   
   if(this->NumberOfPhysicalCPU!=0)
@@ -2939,6 +3059,75 @@ bool SystemInformationImplementation::QuerySolarisInfo()
   this->AvailablePhysicalMemory = 0;
   this->AvailableVirtualMemory = 0;
 
+  return true;
+}
+
+/** Querying for system information from Haiku OS */
+bool SystemInformationImplementation::QueryHaikuInfo()
+{
+#if defined(__HAIKU__)
+
+  system_info info;
+  get_system_info(&info);
+  
+  this->NumberOfPhysicalCPU = info.cpu_count;
+  this->CPUSpeedInMHz = info.cpu_clock_speed / 1000000.0F;
+
+  // Physical Memory
+  this->TotalPhysicalMemory = (info.max_pages * B_PAGE_SIZE) / (1024 * 1024) ;
+  this->AvailablePhysicalMemory = this->TotalPhysicalMemory - 
+    ((info.used_pages * B_PAGE_SIZE) / (1024 * 1024));
+
+  
+  // NOTE: get_system_info_etc is currently a private call so just set to 0
+  // until it becomes public
+  this->TotalVirtualMemory = 0;
+  this->AvailableVirtualMemory = 0;
+
+  // Retrieve cpuid_info union for cpu 0
+  cpuid_info cpu_info;
+  get_cpuid(&cpu_info, 0, 0);
+
+  // Chip Vendor
+  // Use a temporary buffer so that we can add NULL termination to the string
+  char vbuf[13];
+  strncpy(vbuf, cpu_info.eax_0.vendor_id, 12);
+  vbuf[12] = '\0';
+  strcpy(this->ChipID.Vendor,vbuf);
+
+  this->FindManufacturer();
+
+  // Retrieve cpuid_info union for cpu 0 this time using a register value of 1
+  get_cpuid(&cpu_info, 1, 0);
+
+  this->NumberOfLogicalCPU = cpu_info.eax_1.logical_cpus;
+
+  // Chip type
+  this->ChipID.Type = cpu_info.eax_1.type;
+
+  // Chip family
+  this->ChipID.Family = cpu_info.eax_1.family; 
+  
+  // Chip Model
+  this->ChipID.Model = cpu_info.eax_1.model;
+
+  // Chip Revision
+  this->ChipID.Revision = cpu_info.eax_1.stepping;
+
+  // Chip Extended Family
+  this->ChipID.ExtendedFamily = cpu_info.eax_1.extended_family;
+
+  // Chip Extended Model
+  this->ChipID.ExtendedModel = cpu_info.eax_1.extended_model;
+
+  // Get ChipID.ProcessorName from other information already gathered
+  this->RetrieveClassicalCPUIdentity();
+
+  // Cache size
+  this->Features.L1CacheSize = 0;
+  this->Features.L2CacheSize = 0;
+
+#endif
   return true;
 }
 

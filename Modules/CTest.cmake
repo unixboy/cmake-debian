@@ -9,6 +9,19 @@
 # The BUILD_TESTING option is created by the CTest module to determine
 # whether testing support should be enabled.  The default is ON.
 
+#=============================================================================
+# Copyright 2005-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 OPTION(BUILD_TESTING "Build the testing tree." ON)
 
 # function to turn generator name into a version string
@@ -63,36 +76,11 @@ IF(BUILD_TESTING)
   IF(EXISTS "${PROJECT_SOURCE_DIR}/DartConfig.cmake")
     INCLUDE("${PROJECT_SOURCE_DIR}/DartConfig.cmake")
   ELSE(EXISTS "${PROJECT_SOURCE_DIR}/DartConfig.cmake")
-
     # Dashboard is opened for submissions for a 24 hour period starting at
     # the specified NIGHTLY_START_TIME. Time is specified in 24 hour format.
     SET_IF_NOT_SET (NIGHTLY_START_TIME "00:00:00 EDT")
     SET_IF_NOT_SET(DROP_METHOD "http")
-
-    # Dart server to submit results (used by client)
-    # There should be an option to specify submit method, but I will leave it
-    # commented until we decide what to do with it.
-    # SET(DROP_METHOD "http" CACHE STRING "Set the CTest submit method. Valid options are http and ftp")
-    IF(DROP_METHOD MATCHES http)
-      SET_IF_NOT_SET (DROP_SITE "public.kitware.com")
-      SET_IF_NOT_SET (DROP_LOCATION "/cgi-bin/HTTPUploadDartFile.cgi")
-    ELSE(DROP_METHOD MATCHES http)
-      SET_IF_NOT_SET (DROP_SITE "public.kitware.com")
-      SET_IF_NOT_SET (DROP_LOCATION "/incoming")
-      SET_IF_NOT_SET (DROP_SITE_USER "anonymous")
-      SET_IF_NOT_SET (DROP_SITE_PASSWORD "random@someplace.com")
-      SET_IF_NOT_SET (DROP_SITE_MODE "active")
-    ENDIF(DROP_METHOD MATCHES http)
-    SET_IF_NOT_SET (TRIGGER_SITE "http://${DROP_SITE}/cgi-bin/Submit-Random-TestingResults.cgi")
     SET_IF_NOT_SET (COMPRESS_SUBMISSION ON)
-
-    # Dart server configuration 
-    SET (ROLLUP_URL "http://${DROP_SITE}/cgi-bin/random-rollup-dashboard.sh")
-    #SET (CVS_WEB_URL "")
-    #SET (CVS_WEB_CVSROOT "")
-
-    #SET (USE_DOXYGEN "Off")
-    #SET (DOXYGEN_URL "" )
   ENDIF(EXISTS "${PROJECT_SOURCE_DIR}/DartConfig.cmake")
   SET_IF_NOT_SET (NIGHTLY_START_TIME "00:00:00 EDT")
 
@@ -104,6 +92,8 @@ IF(BUILD_TESTING)
   SET(CVS_UPDATE_OPTIONS "-d -A -P" CACHE STRING 
     "Options passed to the cvs update command.")
   FIND_PROGRAM(SVNCOMMAND svn)
+  FIND_PROGRAM(BZRCOMMAND bzr)
+  FIND_PROGRAM(HGCOMMAND hg)
 
   IF(NOT UPDATE_TYPE)
     IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CVS")
@@ -111,6 +101,14 @@ IF(BUILD_TESTING)
     ELSE(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CVS")
       IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn")
         SET(UPDATE_TYPE svn)
+      ELSE(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn")
+        IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.bzr")
+          SET(UPDATE_TYPE bzr)
+        ELSE(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.bzr")
+          IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.hg")
+            SET(UPDATE_TYPE hg)
+          ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.hg")
+        ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.bzr")
       ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn")
     ENDIF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CVS")
   ENDIF(NOT UPDATE_TYPE)
@@ -122,15 +120,26 @@ IF(BUILD_TESTING)
     ENDIF(NOT __CTEST_UPDATE_TYPE_COMPLAINED)
   ENDIF(NOT UPDATE_TYPE)
 
-  IF(UPDATE_TYPE MATCHES "[Cc][Vv][Ss]")
+  STRING(TOLOWER "${UPDATE_TYPE}" _update_type)
+  IF("${_update_type}" STREQUAL "cvs")
     SET(UPDATE_COMMAND "${CVSCOMMAND}")
     SET(UPDATE_OPTIONS "${CVS_UPDATE_OPTIONS}")
-  ELSE(UPDATE_TYPE MATCHES "[Cc][Vv][Ss]")
-    IF(UPDATE_TYPE MATCHES "[Ss][Vv][Nn]")
+  ELSE("${_update_type}" STREQUAL "cvs")
+    IF("${_update_type}" STREQUAL "svn")
       SET(UPDATE_COMMAND "${SVNCOMMAND}")
       SET(UPDATE_OPTIONS "${SVN_UPDATE_OPTIONS}")
-    ENDIF(UPDATE_TYPE MATCHES "[Ss][Vv][Nn]")
-  ENDIF(UPDATE_TYPE MATCHES "[Cc][Vv][Ss]")
+    ELSE("${_update_type}" STREQUAL "svn")
+      IF("${_update_type}" STREQUAL "bzr")
+        SET(UPDATE_COMMAND "${BZRCOMMAND}")
+        SET(UPDATE_OPTIONS "${BZR_UPDATE_OPTIONS}")
+      ELSE("${_update_type}" STREQUAL "bzr")
+        IF("${_update_type}" STREQUAL "hg")
+          SET(UPDATE_COMMAND "${HGCOMMAND}")
+          SET(UPDATE_OPTIONS "${HG_UPDATE_OPTIONS}")
+        ENDIF("${_update_type}" STREQUAL "hg")
+      ENDIF("${_update_type}" STREQUAL "bzr")
+    ENDIF("${_update_type}" STREQUAL "svn")
+  ENDIF("${_update_type}" STREQUAL "cvs")
 
   SET(DART_TESTING_TIMEOUT 1500 CACHE STRING 
     "Maximum time allowed before CTest will kill the test.")
@@ -140,6 +149,12 @@ IF(BUILD_TESTING)
     PATHS
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Rational Software\\Purify\\Setup;InstallFolder]"
     DOC "Path to the memory checking command, used for memory error detection."
+    )
+  FIND_PROGRAM(SLURM_SBATCH_COMMAND sbatch DOC
+    "Path to the SLURM sbatch executable"
+    )
+  FIND_PROGRAM(SLURM_SRUN_COMMAND srun DOC
+    "Path to the SLURM srun executable"
     )
   SET(MEMORYCHECK_SUPPRESSIONS_FILE "" CACHE FILEPATH 
     "File that contains suppressions for the memory checker")
@@ -190,17 +205,34 @@ IF(BUILD_TESTING)
   # set the build command
   BUILD_COMMAND(MAKECOMMAND ${MAKEPROGRAM} )
 
+  IF(NOT "${CMAKE_GENERATOR}" MATCHES "Make")
+    SET(CTEST_USE_LAUNCHERS 0)
+  ENDIF(NOT "${CMAKE_GENERATOR}" MATCHES "Make")
+  IF(CTEST_USE_LAUNCHERS)
+    SET(CTEST_LAUNCH_COMPILE "\"${CMAKE_CTEST_COMMAND}\" --launch --target-name <TARGET_NAME> --build-dir <CMAKE_CURRENT_BINARY_DIR> --output <OBJECT> --source <SOURCE> --language <LANGUAGE> --")
+    SET(CTEST_LAUNCH_LINK    "\"${CMAKE_CTEST_COMMAND}\" --launch --target-name <TARGET_NAME> --build-dir <CMAKE_CURRENT_BINARY_DIR> --output <TARGET> --target-type <TARGET_TYPE> --language <LANGUAGE> --")
+    SET(CTEST_LAUNCH_CUSTOM  "\"${CMAKE_CTEST_COMMAND}\" --launch --target-name <TARGET_NAME> --build-dir <CMAKE_CURRENT_BINARY_DIR> --output <OUTPUT> --")
+    SET_PROPERTY(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CTEST_LAUNCH_COMPILE}")
+    SET_PROPERTY(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CTEST_LAUNCH_LINK}")
+    SET_PROPERTY(GLOBAL PROPERTY RULE_LAUNCH_CUSTOM "${CTEST_LAUNCH_CUSTOM}")
+  ENDIF(CTEST_USE_LAUNCHERS)
+
   MARK_AS_ADVANCED(
     COVERAGE_COMMAND
     CVSCOMMAND
     SVNCOMMAND
+    BZRCOMMAND
+    HGCOMMAND
     CVS_UPDATE_OPTIONS
     SVN_UPDATE_OPTIONS
+    BZR_UPDATE_OPTIONS
     MAKECOMMAND 
     MEMORYCHECK_COMMAND
     MEMORYCHECK_SUPPRESSIONS_FILE
     PURIFYCOMMAND
     SCPCOMMAND
+    SLURM_SBATCH_COMMAND
+    SLURM_SRUN_COMMAND
     SITE 
     )
   #  BUILDNAME 

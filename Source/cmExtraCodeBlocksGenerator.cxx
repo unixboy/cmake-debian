@@ -1,21 +1,15 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2004-2009 Kitware, Inc.
+  Copyright 2004 Alexander Neundorf (neundorf@kde.org)
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExtraCodeBlocksGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:55:59 $
-  Version:   $Revision: 1.18.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  Copyright (c) 2004 Alexander Neundorf neundorf@kde.org, All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
-
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmExtraCodeBlocksGenerator.h"
 #include "cmGlobalUnixMakefileGenerator3.h"
 #include "cmLocalUnixMakefileGenerator3.h"
@@ -61,8 +55,8 @@ cmExtraCodeBlocksGenerator::cmExtraCodeBlocksGenerator()
 {
 #if defined(_WIN32)
   this->SupportedGlobalGenerators.push_back("MinGW Makefiles");
+  this->SupportedGlobalGenerators.push_back("NMake Makefiles");
 // disable until somebody actually tests it:
-//  this->SupportedGlobalGenerators.push_back("NMake Makefiles");
 //  this->SupportedGlobalGenerators.push_back("MSYS Makefiles");
 #endif
   this->SupportedGlobalGenerators.push_back("Unix Makefiles");
@@ -110,6 +104,146 @@ void cmExtraCodeBlocksGenerator::CreateProjectFile(
 }
 
 
+/* Tree is used to create a "Virtual Folder" in CodeBlocks, in which all
+ CMake files this project depends on will be put. This means additionally
+ to the "Sources" and "Headers" virtual folders of CodeBlocks, there will
+ now also be a "CMake Files" virtual folder. 
+ Patch by Daniel Teske <daniel.teske AT nokia.com> (which use C::B project
+ files in QtCreator).*/
+struct Tree
+{
+  std::string path; //only one component of the path
+  std::vector<Tree> folders;
+  std::vector<std::string> files;
+  void InsertPath(const std::vector<std::string>& splitted, 
+                  std::vector<std::string>::size_type start, 
+                  const std::string& fileName);
+  void BuildVirtualFolder(std::string& virtualFolders) const;
+  void BuildVirtualFolderImpl(std::string& virtualFolders, 
+                              const std::string& prefix) const;
+  void BuildUnit(std::string& unitString, const std::string& fsPath) const;
+  void BuildUnitImpl(std::string& unitString, 
+                     const std::string& virtualFolderPath, 
+                     const std::string& fsPath) const;
+};
+
+
+void Tree::InsertPath(const std::vector<std::string>& splitted, 
+                      std::vector<std::string>::size_type start, 
+                      const std::string& fileName)
+{
+  if (start == splitted.size()) 
+    {
+    files.push_back(fileName);
+    return;
+    }
+  for (std::vector<Tree>::iterator
+       it = folders.begin();
+       it != folders.end();
+       ++it)
+    {
+    if ((*it).path == splitted[start])
+      {
+      if (start + 1 <  splitted.size())
+        {
+        it->InsertPath(splitted, start + 1, fileName);
+        return;
+        }
+      else
+        {
+        // last part of splitted
+        it->files.push_back(fileName);
+        return;
+        }
+      }
+    }
+  // Not found in folders, thus insert
+  Tree newFolder;
+  newFolder.path = splitted[start];
+  if (start + 1 <  splitted.size())
+    {
+    newFolder.InsertPath(splitted, start + 1, fileName);
+    folders.push_back(newFolder);
+    return;
+    }
+  else
+    {
+    // last part of splitted
+    newFolder.files.push_back(fileName);
+    folders.push_back(newFolder);
+    return;
+    }
+}
+
+
+void Tree::BuildVirtualFolder(std::string& virtualFolders) const
+{
+  virtualFolders += "<Option virtualFolders=\"CMake Files\\;";
+  for (std::vector<Tree>::const_iterator it = folders.begin();
+     it != folders.end();
+     ++it)
+    {
+    it->BuildVirtualFolderImpl(virtualFolders, "");
+    }
+  virtualFolders += "\" />";
+}
+
+
+void Tree::BuildVirtualFolderImpl(std::string& virtualFolders,
+                                  const std::string& prefix) const
+{
+  virtualFolders += "CMake Files\\" + prefix +  path + "\\;";
+  for (std::vector<Tree>::const_iterator it = folders.begin();
+     it != folders.end();
+     ++it)
+    {
+    it->BuildVirtualFolderImpl(virtualFolders, prefix + path + "\\");
+    }
+}
+
+
+void Tree::BuildUnit(std::string& unitString, const std::string& fsPath) const
+{
+  for (std::vector<std::string>::const_iterator it = files.begin();
+       it != files.end();
+       ++it)
+    {
+    unitString += "      <Unit filename=\"" + fsPath + *it + "\">\n";
+    unitString += "          <Option virtualFolder=\"CMake Files\\\" />\n";
+    unitString += "      </Unit>\n";
+    }
+  for (std::vector<Tree>::const_iterator it = folders.begin();
+     it != folders.end();
+     ++it)
+    {
+    it->BuildUnitImpl(unitString, "", fsPath);
+    }
+}
+
+
+void Tree::BuildUnitImpl(std::string& unitString,
+                         const std::string& virtualFolderPath,
+                         const std::string& fsPath) const
+{
+  for (std::vector<std::string>::const_iterator it = files.begin();
+       it != files.end();
+       ++it)
+    {
+    unitString += "      <Unit filename=\"" +fsPath+path+ "/" + *it + "\">\n";
+    unitString += "          <Option virtualFolder=\"CMake Files\\"
+               + virtualFolderPath + path + "\\\" />\n";
+    unitString += "      </Unit>\n";
+    }
+  for (std::vector<Tree>::const_iterator it = folders.begin();
+     it != folders.end();
+     ++it)
+    {
+    it->BuildUnitImpl(unitString,
+                      virtualFolderPath + path + "\\", fsPath + path + "/");
+    }
+}
+
+
 void cmExtraCodeBlocksGenerator
   ::CreateNewProjectFile(const std::vector<cmLocalGenerator*>& lgs,
                          const std::string& filename)
@@ -120,6 +254,54 @@ void cmExtraCodeBlocksGenerator
     {
     return;
     }
+
+  Tree tree;
+
+  // build tree of virtual folders
+  for (std::map<cmStdString, std::vector<cmLocalGenerator*> >::const_iterator
+          it = this->GlobalGenerator->GetProjectMap().begin();
+         it != this->GlobalGenerator->GetProjectMap().end();
+         ++it)
+    {
+      // Convert
+      std::vector<std::string> listFiles =
+              it->second[0]->GetMakefile()->GetListFiles();
+
+      for (std::vector<std::string>::const_iterator jt = listFiles.begin();
+           jt != listFiles.end();
+           ++jt)
+         {
+         const std::string &relative =
+                 cmSystemTools::RelativePath(
+                         it->second[0]->GetMakefile()->GetHomeDirectory(),
+                         jt->c_str());
+         std::vector<std::string> splitted;
+         cmSystemTools::SplitPath(relative.c_str(), splitted, false);
+         // Split filename from path
+         std::string fileName = *(splitted.end()-1);
+         splitted.erase(splitted.end() - 1, splitted.end());
+
+         // We don't want paths with ".." in them
+         // reasons are that we don't want files outside the project
+         // TODO: the path should be normalized first though
+         // We don't want paths with CMakeFiles in them
+         // or do we?
+         // In speedcrunch those where purely internal
+         if (splitted.size() >= 1
+             && relative.find("..") == std::string::npos
+             && relative.find("CMakeFiles") == std::string::npos)
+           {
+           tree.InsertPath(splitted, 1, fileName);
+           }
+         }
+    }
+
+  // Now build a virtual tree string
+  std::string virtualFolders;  
+  tree.BuildVirtualFolder(virtualFolders);
+  // And one for <Unit>
+  std::string unitFiles;
+  tree.BuildUnit(unitFiles, std::string(mf->GetHomeDirectory()) + "/");
 
   // figure out the compiler
   std::string compiler = this->GetCBCompilerId(mf);
@@ -132,16 +314,8 @@ void cmExtraCodeBlocksGenerator
         "      <Option title=\"" << mf->GetProjectName()<<"\" />\n"
         "      <Option makefile_is_custom=\"1\" />\n"
         "      <Option compiler=\"" << compiler << "\" />\n"
+        "      "<<virtualFolders<<"\n"
         "      <Build>\n";
-
-  bool installTargetCreated = false;
-  bool installStripTargetCreated = false;
-  bool testTargetCreated = false;
-  bool experimentalTargetCreated = false;
-  bool nightlyTargetCreated = false;
-  bool packageTargetCreated = false;
-  bool packageSourceTargetCreated = false;
-  bool rebuildCacheTargetCreated = false;
 
   this->AppendTarget(fout, "all", 0, make.c_str(), mf, compiler.c_str());
 
@@ -157,51 +331,46 @@ void cmExtraCodeBlocksGenerator
       {
         switch(ti->second.GetType())
         {
-          case cmTarget::UTILITY:
           case cmTarget::GLOBAL_TARGET:
-            // only add these targets once
-            if ((ti->first=="install") && (installTargetCreated==false)) 
+            {
+            bool insertTarget = false;
+            // Only add the global targets from CMAKE_BINARY_DIR, 
+            // not from the subdirs
+            if (strcmp(makefile->GetStartOutputDirectory(), 
+                       makefile->GetHomeOutputDirectory())==0)
               {
-              installTargetCreated=true;
+              insertTarget = true;
+              // only add the "edit_cache" target if it's not ccmake, because
+              // this will not work within the IDE
+              if (ti->first == "edit_cache")
+                {
+                if (strstr(makefile->GetRequiredDefinition
+                                       ("CMAKE_EDIT_COMMAND"), "ccmake")!=NULL)
+                  {
+                  insertTarget = false;
+                  }
+                }
               }
-            else if ((ti->first=="install/strip") 
-                      && (installStripTargetCreated==false)) 
+            if (insertTarget)
               {
-              installStripTargetCreated=true;
+              this->AppendTarget(fout, ti->first.c_str(), 0, 
+                               make.c_str(), makefile, compiler.c_str());
               }
-            else if ((ti->first=="test") && (testTargetCreated==false)) 
-              {
-              testTargetCreated=true;
-              }
-            else if ((ti->first=="Experimental") 
-                      && (experimentalTargetCreated==false)) 
-              {
-              experimentalTargetCreated=true;
-              }
-            else if ((ti->first=="Nightly") && (nightlyTargetCreated==false)) 
-              {
-              nightlyTargetCreated=true;
-              }
-            else if ((ti->first=="package") && (packageTargetCreated==false)) 
-              {
-              packageTargetCreated=true;
-              }
-            else if ((ti->first=="package_source") 
-                      && (packageSourceTargetCreated==false)) 
-              {
-              packageSourceTargetCreated=true;
-              }
-            else if ((ti->first=="rebuild_cache") 
-                      && (rebuildCacheTargetCreated==false)) 
-              {
-              rebuildCacheTargetCreated=true;
-              }
-            else
+            }
+            break;
+          case cmTarget::UTILITY:
+            // Add all utility targets, except the Nightly/Continuous/
+            // Experimental-"sub"targets as e.g. NightlyStart
+            if (((ti->first.find("Nightly")==0)   &&(ti->first!="Nightly"))
+             || ((ti->first.find("Continuous")==0)&&(ti->first!="Continuous"))
+             || ((ti->first.find("Experimental")==0) 
+                                               && (ti->first!="Experimental")))
               {
               break;
               }
+
             this->AppendTarget(fout, ti->first.c_str(), 0, 
-                               make.c_str(), makefile, compiler.c_str());
+                                 make.c_str(), makefile, compiler.c_str());
             break;
           case cmTarget::EXECUTABLE:
           case cmTarget::STATIC_LIBRARY:
@@ -340,10 +509,13 @@ void cmExtraCodeBlocksGenerator
        sit=otherFiles.begin();
        sit!=otherFiles.end();
        ++sit)
-  {
+    {
     fout<<"      <Unit filename=\""<< sit->c_str() <<"\">\n"
-        "      </Unit>\n";
-  }
+          "      </Unit>\n";
+    }
+
+  // Add CMakeLists.txt
+  fout<<unitFiles;
 
   fout<<"   </Project>\n"
         "</CodeBlocks_project_file>\n";
@@ -366,10 +538,32 @@ void cmExtraCodeBlocksGenerator::AppendTarget(cmGeneratedFileStream& fout,
   if (target!=0)
     {
     int cbTargetType = this->GetCBTargetType(target);
-    fout<<"         <Option output=\"" << target->GetLocation(0) 
+    std::string workingDir = makefile->GetStartOutputDirectory();
+    if ( target->GetType()==cmTarget::EXECUTABLE)
+      {
+      // Determine the directory where the executable target is created, and
+      // set the working directory to this dir.
+      const char* runtimeOutputDir = makefile->GetDefinition(
+                                             "CMAKE_RUNTIME_OUTPUT_DIRECTORY");
+      if (runtimeOutputDir != 0)
+        {
+        workingDir = runtimeOutputDir;
+        }
+      else
+        {
+        const char* executableOutputDir = makefile->GetDefinition(
+                                                     "EXECUTABLE_OUTPUT_PATH");
+        if (executableOutputDir != 0)
+          {
+          workingDir = executableOutputDir;
+          }
+        }
+      }
+
+    const char* buildType = makefile->GetDefinition("CMAKE_BUILD_TYPE");
+    fout<<"         <Option output=\"" << target->GetLocation(buildType)
                             << "\" prefix_auto=\"0\" extension_auto=\"0\" />\n"
-          "         <Option working_dir=\"" 
-                            << makefile->GetStartOutputDirectory() << "\" />\n"
+          "         <Option working_dir=\"" << workingDir << "\" />\n"
           "         <Option object_output=\"./\" />\n"
           "         <Option type=\"" << cbTargetType << "\" />\n"
           "         <Option compiler=\"" << compiler << "\" />\n"
@@ -428,7 +622,7 @@ std::string cmExtraCodeBlocksGenerator::GetCBCompilerId(const cmMakefile* mf)
   std::string compiler = "gcc";
   if (compilerId == "MSVC")
     {
-    compiler = "msvc";
+    compiler = "msvc8";
     }
   else if (compilerId == "Borland")
     {

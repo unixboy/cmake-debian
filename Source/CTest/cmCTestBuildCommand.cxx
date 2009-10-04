@@ -1,23 +1,19 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCTestBuildCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-09-17 14:40:57 $
-  Version:   $Revision: 1.18 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmCTestBuildCommand.h"
 
 #include "cmCTest.h"
 #include "cmCTestGenericHandler.h"
+#include "cmCTestBuildHandler.h"
 #include "cmake.h"
 #include "cmGlobalGenerator.h"
 
@@ -26,6 +22,10 @@
 cmCTestBuildCommand::cmCTestBuildCommand()
 {
   this->GlobalGenerator = 0;
+  this->Arguments[ctb_NUMBER_ERRORS] = "NUMBER_ERRORS";
+  this->Arguments[ctb_NUMBER_WARNINGS] = "NUMBER_WARNINGS"; 
+  this->Arguments[ctb_LAST] = 0;
+  this->Last = ctb_LAST;
 }
 
 //----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ cmCTestGenericHandler* cmCTestBuildCommand::InitializeHandler()
     this->SetError("internal CTest error. Cannot instantiate build handler");
     return 0;
     }
-
+  this->Handler =  (cmCTestBuildHandler*)handler;
   const char* ctestBuildCommand
     = this->Makefile->GetDefinition("CTEST_BUILD_COMMAND");
   if ( ctestBuildCommand && *ctestBuildCommand )
@@ -128,7 +128,34 @@ cmCTestGenericHandler* cmCTestBuildCommand::InitializeHandler()
       }
     }
 
+  if(const char* useLaunchers =
+     this->Makefile->GetDefinition("CTEST_USE_LAUNCHERS"))
+    {
+    this->CTest->SetCTestConfiguration("UseLaunchers", useLaunchers);
+    }
+
   return handler;
 }
 
 
+bool cmCTestBuildCommand::InitialPass(std::vector<std::string> const& args,
+                                      cmExecutionStatus &status)
+{
+  bool ret =  cmCTestHandlerCommand::InitialPass(args, status);
+  if ( this->Values[ctb_NUMBER_ERRORS] && *this->Values[ctb_NUMBER_ERRORS])
+    {  
+    cmOStringStream str;
+    str << this->Handler->GetTotalErrors();
+    this->Makefile->AddDefinition(
+      this->Values[ctb_NUMBER_ERRORS], str.str().c_str());
+    }
+  if ( this->Values[ctb_NUMBER_WARNINGS]
+       && *this->Values[ctb_NUMBER_WARNINGS])
+    {
+    cmOStringStream str;
+    str << this->Handler->GetTotalWarnings();
+    this->Makefile->AddDefinition(
+      this->Values[ctb_NUMBER_WARNINGS], str.str().c_str());
+    }
+  return ret;
+}

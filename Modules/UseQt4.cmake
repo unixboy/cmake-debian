@@ -3,6 +3,18 @@
 # has already been loaded.  See FindQt.cmake for information on
 # how to load Qt 4 into your CMake project.
 
+#=============================================================================
+# Copyright 2005-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 SET_PROPERTY(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS_DEBUG QT_DEBUG)
@@ -43,7 +55,7 @@ ENDIF (QT_USE_QT3SUPPORT)
 SET(QT_QT3SUPPORT_MODULE_DEPENDS QTGUI QTSQL QTXML QTNETWORK QTCORE)
 SET(QT_QTSVG_MODULE_DEPENDS QTGUI QTXML QTCORE)
 SET(QT_QTUITOOLS_MODULE_DEPENDS QTGUI QTXML QTCORE)
-SET(QT_QTHELP_MODULE_DEPENDS QTGUI QTSQL QTXML QTCORE)
+SET(QT_QTHELP_MODULE_DEPENDS QTGUI QTSQL QTXML QTNETWORK QTCORE)
 IF(QT_QTDBUS_FOUND)
   SET(QT_PHONON_MODULE_DEPENDS QTGUI QTDBUS QTCORE)
 ELSE(QT_QTDBUS_FOUND)
@@ -53,12 +65,13 @@ SET(QT_QTDBUS_MODULE_DEPENDS QTXML QTCORE)
 SET(QT_QTXMLPATTERNS_MODULE_DEPENDS QTNETWORK QTCORE)
 SET(QT_QAXCONTAINER_MODULE_DEPENDS QTGUI QTCORE)
 SET(QT_QAXSERVER_MODULE_DEPENDS QTGUI QTCORE)
+SET(QT_QTSCRIPTTOOLS_MODULE_DEPENDS QTGUI QTCORE)
 
 # Qt modules  (in order of dependence)
 FOREACH(module QT3SUPPORT QTOPENGL QTASSISTANT QTDESIGNER QTMOTIF QTNSPLUGIN
                QAXSERVER QAXCONTAINER QTSCRIPT QTSVG QTUITOOLS QTHELP 
-               QTWEBKIT PHONON QTGUI QTTEST QTDBUS QTXML QTSQL QTXMLPATTERNS 
-               QTNETWORK QTCORE)
+               QTWEBKIT PHONON QTSCRIPTTOOLS QTGUI QTTEST QTDBUS QTXML QTSQL 
+               QTXMLPATTERNS QTNETWORK QTCORE)
 
   IF (QT_USE_${module} OR QT_USE_${module}_DEPENDS)
     IF (QT_${module}_FOUND)

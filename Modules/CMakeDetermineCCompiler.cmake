@@ -1,4 +1,17 @@
 
+#=============================================================================
+# Copyright 2002-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 # determine the compiler to use for C programs
 # NOTE, a generator may set CMAKE_C_COMPILER before
 # loading this file to force a compiler.
@@ -107,6 +120,9 @@ IF(NOT CMAKE_C_COMPILER_ID_RUN)
   SET(CMAKE_C_COMPILER_ID_TEST_FLAGS
     # Try compiling to an object file only.
     "-c"
+
+    # Try enabling ANSI mode on HP.
+    "-Aa"
     )
 
   # Try to identify the compiler.

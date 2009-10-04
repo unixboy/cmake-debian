@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCTestUpdateCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006-07-11 19:58:07 $
-  Version:   $Revision: 1.15 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmCTestUpdateCommand.h"
 
 #include "cmCTest.h"
@@ -48,6 +43,18 @@ cmCTestGenericHandler* cmCTestUpdateCommand::InitializeHandler()
     "SVNCommand", "CTEST_SVN_COMMAND");
   this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
     "SVNUpdateOptions", "CTEST_SVN_UPDATE_OPTIONS");
+  this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
+    "BZRCommand", "CTEST_BZR_COMMAND");
+  this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
+    "BZRUpdateOptions", "CTEST_BZR_UPDATE_OPTIONS");
+  this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
+    "GITCommand", "CTEST_GIT_COMMAND");
+  this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
+    "GITUpdateOptions", "CTEST_GIT_UPDATE_OPTIONS");
+  this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
+    "HGCommand", "CTEST_HG_COMMAND");
+  this->CTest->SetCTestConfigurationFromCMakeVariable(this->Makefile,
+    "HGUpdateOptions", "CTEST_HG_UPDATE_OPTIONS");
 
   const char* initialCheckoutCommand
     = this->Makefile->GetDefinition("CTEST_CHECKOUT_COMMAND");

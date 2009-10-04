@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallTargetGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-12-02 12:07:39 $
-  Version:   $Revision: 1.62.2.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmInstallTargetGenerator.h"
 
 #include "cmComputeLinkInformation.h"
@@ -33,6 +28,7 @@ cmInstallTargetGenerator
   cmInstallGenerator(dest, configurations, component), Target(&t),
   ImportLibrary(implib), FilePermissions(file_permissions), Optional(optional)
 {
+  this->ActionsPerConfig = true;
   this->NamelinkMode = NamelinkModeNone;
   this->Target->SetHaveInstallRule(true);
 }
@@ -57,64 +53,8 @@ void cmInstallTargetGenerator::GenerateScript(std::ostream& os)
     cmSystemTools::Message(msg.str().c_str(), "Warning");
     }
 
-  // Compute the build tree directory from which to copy the target.
-  std::string& fromDir = this->FromDir;
-  if(this->Target->NeedRelinkBeforeInstall())
-    {
-    fromDir = this->Target->GetMakefile()->GetStartOutputDirectory();
-    fromDir += cmake::GetCMakeFilesDirectory();
-    fromDir += "/CMakeRelink.dir/";
-    }
-  else
-    {
-    fromDir = this->Target->GetDirectory(0, this->ImportLibrary);
-    fromDir += "/";
-    }
-
   // Perform the main install script generation.
   this->cmInstallGenerator::GenerateScript(os);
-}
-
-//----------------------------------------------------------------------------
-void cmInstallTargetGenerator::GenerateScriptConfigs(std::ostream& os,
-                                                     Indent const& indent)
-{
-  if(this->ConfigurationTypes->empty())
-    {
-    // In a single-configuration generator, only the install rule's
-    // configuration test is important.  If that passes, the target is
-    // installed regardless of for what configuration it was built.
-    this->cmInstallGenerator::GenerateScriptConfigs(os, indent);
-    }
-  else
-    {
-    // In a multi-configuration generator, a separate rule is produced
-    // in a block for each configuration that is built.  However, the
-    // list of configurations is restricted to those for which this
-    // install rule applies.
-    for(std::vector<std::string>::const_iterator i =
-          this->ConfigurationTypes->begin();
-        i != this->ConfigurationTypes->end(); ++i)
-      {
-      const char* config = i->c_str();
-      if(this->InstallsForConfig(config))
-        {
-        // Generate a per-configuration block.
-        std::string config_test = this->CreateConfigTest(config);
-        os << indent << "IF(" << config_test << ")\n";
-        this->GenerateScriptForConfig(os, config, indent.Next());
-        os << indent << "ENDIF(" << config_test << ")\n";
-        }
-      }
-    }
-}
-
-//----------------------------------------------------------------------------
-void cmInstallTargetGenerator::GenerateScriptActions(std::ostream& os,
-                                                     Indent const& indent)
-{
-  // This is reached for single-configuration generators only.
-  this->GenerateScriptForConfig(os, this->ConfigurationName, indent);
 }
 
 //----------------------------------------------------------------------------
@@ -122,10 +62,19 @@ void cmInstallTargetGenerator::GenerateScriptForConfig(std::ostream& os,
                                                        const char* config,
                                                        Indent const& indent)
 {
-  // Compute the per-configuration directory containing the files.
-  std::string fromDirConfig = this->FromDir;
-  this->Target->GetMakefile()->GetLocalGenerator()->GetGlobalGenerator()
-    ->AppendDirectoryForConfig("", config, "/", fromDirConfig);
+  // Compute the build tree directory from which to copy the target.
+  std::string fromDirConfig;
+  if(this->Target->NeedRelinkBeforeInstall(config))
+    {
+    fromDirConfig = this->Target->GetMakefile()->GetStartOutputDirectory();
+    fromDirConfig += cmake::GetCMakeFilesDirectory();
+    fromDirConfig += "/CMakeRelink.dir/";
+    }
+  else
+    {
+    fromDirConfig = this->Target->GetDirectory(config, this->ImportLibrary);
+    fromDirConfig += "/";
+    }
 
   // Compute the full path to the main installed file for this target.
   NameType nameType = this->ImportLibrary? NameImplib : NameNormal;
@@ -352,10 +301,9 @@ void cmInstallTargetGenerator::GenerateScriptForConfig(std::ostream& os,
   // Write code to install the target file.
   const char* no_dir_permissions = 0;
   const char* no_rename = 0;
-  const char* no_properties = 0;
   bool optional = this->Optional || this->ImportLibrary;
   this->AddInstallRule(os, type, files,
-                       optional, no_properties,
+                       optional,
                        this->FilePermissions.c_str(), no_dir_permissions,
                        no_rename, literal_args.c_str(),
                        indent);
@@ -576,7 +524,7 @@ cmInstallTargetGenerator
                     const char* config, std::string const& toDestDirPath)
 {
   // Skip the chrpath if the target does not need it.
-  if(this->ImportLibrary || !this->Target->IsChrpathUsed())
+  if(this->ImportLibrary || !this->Target->IsChrpathUsed(config))
     {
     return;
     }
@@ -607,7 +555,7 @@ cmInstallTargetGenerator
                       const char* config, std::string const& toDestDirPath)
 {
   // Skip the chrpath if the target does not need it.
-  if(this->ImportLibrary || !this->Target->IsChrpathUsed())
+  if(this->ImportLibrary || !this->Target->IsChrpathUsed(config))
     {
     return;
     }

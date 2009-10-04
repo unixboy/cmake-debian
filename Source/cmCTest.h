@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCTest.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-03 13:57:41 $
-  Version:   $Revision: 1.100 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef cmCTest_h
 #define cmCTest_h
@@ -27,6 +22,7 @@ class cmMakefile;
 class cmCTestGenericHandler;
 class cmGeneratedFileStream;
 class cmCTestCommand;
+class cmCTestScriptHandler;
 
 #define cmCTestLog(ctSelf, logType, msg) \
   do { \
@@ -48,7 +44,46 @@ class cmCTestCommand;
 
 class cmCTest
 {
+  friend class cmCTestRunTest;
+  friend class cmCTestMultiProcessHandler;
 public:
+  /** Enumerate parts of the testing and submission process.  */
+  enum Part
+  {
+    PartStart,
+    PartUpdate,
+    PartConfigure,
+    PartBuild,
+    PartTest,
+    PartCoverage,
+    PartMemCheck,
+    PartSubmit,
+    PartNotes,
+    PartExtraFiles,
+    PartCount // Update names in constructor when adding a part
+  };
+
+  /** Representation of one part.  */
+  struct PartInfo
+  {
+    PartInfo(): Enabled(false) {}
+
+    void SetName(const char* name) { this->Name = name; }
+    const char* GetName() const { return this->Name.c_str(); }
+
+    void Enable() { this->Enabled = true; }
+    operator bool() const { return this->Enabled; }
+
+    std::vector<std::string> SubmitFiles;
+  private:
+    bool Enabled;
+    std::string Name;
+  };
+
+  /** Get a testing part id from its string name.  Returns PartCount
+      if the string does not name a valid part.  */
+  Part GetPartFromName(const char* name);
+
   typedef std::vector<cmStdString> VectorOfStrings;
   typedef std::set<cmStdString> SetOfStrings;
 
@@ -95,12 +130,15 @@ public:
   std::string const& GetConfigType();
   double GetTimeOut() { return this->TimeOut; }
   void SetTimeOut(double t) { this->TimeOut = t; }
+  // how many test to run at the same time
+  int GetParallelLevel() { return this->ParallelLevel; }
+  void SetParallelLevel(int);
 
   /**
    * Check if CTest file exists
    */
   bool CTestFileExists(const std::string& filename);
-  bool AddIfExists(SetOfStrings& files, const char* file);
+  bool AddIfExists(Part part, const char* file);
 
   /**
    * Set the cmake test
@@ -150,13 +188,15 @@ public:
                       cmGeneratedFileStream& stream,
                       bool compress = false);
 
-  ///! Convert string to something that is XML safe
-  static std::string MakeXMLSafe(const std::string&);
-
   ///! Should we only show what we would do?
   bool GetShowOnly();
 
-   /**
+
+  ///! The max output width
+  int GetMaxTestNameWidth() const;
+  void SetMaxTestNameWidth(int w) { this->MaxTestNameWidth = w;}
+
+  /**
    * Run a single executable command and put the stdout and stderr
    * in output.
    *
@@ -181,7 +221,7 @@ public:
     int* retVal = 0, const char* dir = 0, double timeout = 0.0);
 
   //! Start CTest XML output file
-  void StartXML(std::ostream& ostr);
+  void StartXML(std::ostream& ostr, bool append);
 
   //! End CTest XML output file
   void EndXML(std::ostream& ostr);
@@ -230,9 +270,12 @@ public:
   void SetProduceXML(bool v);
 
   //! Run command specialized for tests. Returns process status and retVal is
-  // return value or exception.
+  // return value or exception. If environment is non-null, it is used to set
+  // environment variables prior to running the test. After running the test,
+  // environment variables are restored to their previous values.
   int RunTest(std::vector<const char*> args, std::string* output, int *retVal,
-    std::ostream* logfile, double testTimeOut);
+    std::ostream* logfile, double testTimeOut,
+    std::vector<std::string>* environment);
 
   /**
    * Execute handler and return its result. If the handler fails, it returns
@@ -254,6 +297,9 @@ public:
 
   //! Make string safe to be send as an URL
   static std::string MakeURLSafe(const std::string&);
+
+  /** Decode a URL to the original string.  */
+  static std::string DecodeURL(const std::string&);
 
   //! Should ctect configuration be updated. When using new style ctest
   // script, this should be true.
@@ -297,8 +343,10 @@ public:
   int GetDartVersion() { return this->DartVersion; }
 
   //! Add file to be submitted
-  void AddSubmitFile(const char* name);
-  SetOfStrings* GetSubmitFiles() { return &this->SubmitFiles; }
+  void AddSubmitFile(Part part, const char* name);
+  std::vector<std::string> const& GetSubmitFiles(Part part)
+    { return this->Parts[part].SubmitFiles; }
+  void ClearSubmitFiles(Part part) { this->Parts[part].SubmitFiles.clear(); }
 
   //! Read the custom configuration files and apply them to the current ctest
   int ReadCustomConfigurationFileTree(const char* dir, cmMakefile* mf);
@@ -310,11 +358,29 @@ public:
   void SetSpecificTrack(const char* track);
   const char* GetSpecificTrack();
 
+  void SetFailover(bool failover) { this->Failover = failover; }
+  bool GetFailover() { return this->Failover; }
+
+  void SetBatchJobs(bool batch = true) { this->BatchJobs = batch; }
+  bool GetBatchJobs() { return this->BatchJobs; }
+
+  bool GetVerbose() { return this->Verbose;}
+  bool GetExtraVerbose() { return this->ExtraVerbose;}
+
+  /** Direct process output to given streams.  */
+  void SetStreams(std::ostream* out, std::ostream* err)
+    { this->StreamOut = out; this->StreamErr = err; }
+  void AddSiteProperties(std::ostream& );
+  bool GetLabelSummary() { return this->LabelSummary;}
 private:
   std::string ConfigType;
   bool Verbose;
   bool ExtraVerbose;
   bool ProduceXML;
+  bool LabelSummary;
+
+  bool Failover;
+  bool BatchJobs;
 
   bool ForceNewCTestProcess;
 
@@ -328,28 +394,19 @@ private:
 
   bool ShowOnly;
 
-  enum {
-    FIRST_TEST     = 0,
-    UPDATE_TEST    = 1,
-    START_TEST     = 2,
-    CONFIGURE_TEST = 3,
-    BUILD_TEST     = 4,
-    TEST_TEST      = 5,
-    COVERAGE_TEST  = 6,
-    MEMCHECK_TEST  = 7,
-    SUBMIT_TEST    = 8,
-    NOTES_TEST     = 9,
-    ALL_TEST       = 10,
-    LAST_TEST      = 11
-  };
-
   //! Map of configuration properties
   typedef std::map<cmStdString, cmStdString> CTestConfigurationMap;
 
   std::string             CTestConfigFile;
+  // TODO: The ctest configuration should be a hierarchy of
+  // configuration option sources: command-line, script, ini file.
+  // Then the ini file can get re-loaded whenever it changes without
+  // affecting any higher-precedence settings.
   CTestConfigurationMap CTestConfiguration;
   CTestConfigurationMap CTestConfigurationOverwrites;
-  int                     Tests[LAST_TEST];
+  PartInfo                Parts[PartCount];
+  typedef std::map<cmStdString, Part> PartMapType;
+  PartMapType             PartMap;
 
   std::string             CurrentTag;
   bool                    TomorrowTag;
@@ -358,6 +415,10 @@ private:
   std::string             SpecificTrack;
 
   double                  TimeOut;
+
+  int                     MaxTestNameWidth;
+
+  int                     ParallelLevel;
 
   int                     CompatibilityMode;
 
@@ -374,6 +435,10 @@ private:
   bool                     ShortDateFormat;
 
   bool                     CompressXMLFiles;
+
+  void InitStreams();
+  std::ostream* StreamOut;
+  std::ostream* StreamErr;
 
   void BlockTestErrorDiagnostics();
 
@@ -404,6 +469,9 @@ private:
   bool CheckArgument(const std::string& arg, const char* varg1,
     const char* varg2 = 0);
 
+  //! Output errors from a test
+  void OutputTestErrors(std::vector<char> const &process_output);
+
   bool                      SuppressUpdatingCTestConfiguration;
 
   bool Debug;
@@ -412,13 +480,14 @@ private:
 
   int  DartVersion;
 
-  std::set<cmStdString> SubmitFiles;
   std::vector<cmStdString> InitialCommandLineArguments;
 
   int SubmitIndex;
 
   cmGeneratedFileStream* OutputLogFile;
   int OutputLogFileLastTag;
+
+  bool OutputTestOutputOnTestFailure;
 };
 
 class cmCTestLogWrite

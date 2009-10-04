@@ -1,9 +1,89 @@
-# CPack script for creating RPM package
+# - The builtin (binary) CPack RPM generator (Unix only)
+# CPackRPM may be used to create RPM package using CPack.
+# CPackRPM is a CPack generator thus it uses the CPACK_XXX variables
+# used by CPack : http://www.cmake.org/Wiki/CMake:CPackConfiguration
+#
+# However CPackRPM has specific features which are controlled by
+# the specifics CPACK_RPM_XXX variables.You'll find a detailed usage on 
+# the wiki: 
+#  http://www.cmake.org/Wiki/CMake:CPackPackageGenerators#RPM_.28Unix_Only.29
+# However as a handy reminder here comes the list of specific variables:
+#
+#  CPACK_RPM_PACKAGE_SUMMARY 
+#     Mandatory : YES
+#     Default   : CPACK_PACKAGE_DESCRIPTION
+#     The RPM package summary
+#  CPACK_RPM_PACKAGE_NAME
+#     Mandatory : YES
+#     Default   : CPACK_PACKAGE_NAME
+#     The RPM package name
+#  CPACK_RPM_PACKAGE_VERSION
+#     Mandatory : YES
+#     Default   : CPACK_PACKAGE_VERSION
+#     The RPM package version
+#  CPACK_RPM_PACKAGE_ARCHITECTURE
+#     Mandatory : NO
+#     Default   : -
+#     The RPM package architecture. This may be set to "noarch" if you 
+#     know you are building a noarch package.
+#  CPACK_RPM_PACKAGE_RELEASE
+#     Mandatory : YES
+#     Default   : 1
+#     The RPM package release. This is the numbering of the RPM package 
+#     itself, i.e. the version of the packaging and not the version of the 
+#     content (see CPACK_RPM_PACKAGE_VERSION). One may change the default 
+#     value if the previous packaging was buggy and/or you want to put here
+#     a fancy Linux distro specific numbering.
+#  CPACK_RPM_PACKAGE_LICENSE
+#     Mandatory : YES
+#     Default   : "unknown"
+#     The RPM package license policy.
+#  CPACK_RPM_PACKAGE_GROUP
+#     Mandatory : YES
+#     Default   : "unknown"
+#     The RPM package group.
+#  CPACK_RPM_PACKAGE_VENDOR 
+#     Mandatory : YES
+#     Default   : CPACK_PACKAGE_VENDOR if set or"unknown"
+#     The RPM package group.
+#  CPACK_RPM_PACKAGE_DESCRIPTION
+#     Mandatory : YES
+#     Default   : CPACK_PACKAGE_DESCRIPTION_FILE if set or "no package description available"
+#  CPACK_RPM_PACKAGE_REQUIRES
+#     Mandatory : NO
+#     Default   : -
+#     May be used to set RPM dependencies. 
+#  CPACK_RPM_SPEC_INSTALL_POST
+#     Mandatory : NO
+#     Default   : -
+#     May be used to set an RPM post-install command inside the spec file. 
+#     For example setting it to "/bin/true" may be used to prevent 
+#     rpmbuild to strip binaries.
+#  CPACK_RPM_SPEC_MORE_DEFINE
+#     Mandatory : NO
+#     Default   : -
+#     May be used to add any %define lines to the generated spec file.
+#  CPACK_RPM_PACKAGE_DEBUG
+#     Mandatory : NO
+#     Default   : -
+#     May be set when invoking cpack in order to trace debug informations 
+#     during CPack RPM run. For example you may launch CPack like this 
+#     cpack -D CPACK_RPM_PACKAGE_DEBUG=1 -G RPM
+
+#=============================================================================
+# Copyright 2007-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distributed this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 # Author: Eric Noulard with the help of Alexander Neundorf.
-# All variables used by CPackRPM begins with CPACK_RPM_ prefix
-#
-# Here comes the list of used variables:
-#
 
 IF(CMAKE_BINARY_DIR)
   MESSAGE(FATAL_ERROR "CPackRPM.cmake may only be used by CPack internally.")
@@ -17,10 +97,30 @@ ENDIF(NOT UNIX)
 # it may be a simple (symbolic) link to rpmb command.
 FIND_PROGRAM(RPMBUILD_EXECUTABLE rpmbuild)
 
+# Check version of the rpmbuild tool this would be easier to 
+# track bugs with users and CPackRPM debug mode.
+# We may use RPM version in order to check for available version dependent features 
+IF(RPMBUILD_EXECUTABLE)
+  execute_process(COMMAND ${RPMBUILD_EXECUTABLE} --version
+                  OUTPUT_VARIABLE _TMP_VERSION
+                  ERROR_QUIET
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  string(REGEX REPLACE "^.*\ " ""   
+         RPMBUILD_EXECUTABLE_VERSION
+         ${_TMP_VERSION})     
+  IF(CPACK_RPM_PACKAGE_DEBUG)
+    MESSAGE("CPackRPM:Debug: rpmbuild version is <${RPMBUILD_EXECUTABLE_VERSION}>")
+  ENDIF(CPACK_RPM_PACKAGE_DEBUG)  
+ENDIF(RPMBUILD_EXECUTABLE)
+
 IF(NOT RPMBUILD_EXECUTABLE)
   MESSAGE(FATAL_ERROR "RPM package requires rpmbuild executable")
 ENDIF(NOT RPMBUILD_EXECUTABLE)
 
+# We may use RPM version in the future in order
+# to shut down warning about space in buildtree 
+# some recent RPM version should support space in different places.
+# not checked [yet].
 IF(CPACK_TOPLEVEL_DIRECTORY MATCHES ".* .*")
   MESSAGE(FATAL_ERROR "${RPMBUILD_EXECUTABLE} can't handle paths with spaces, use a build directory without spaces for building RPMs.")
 ENDIF(CPACK_TOPLEVEL_DIRECTORY MATCHES ".* .*")
@@ -211,7 +311,7 @@ Vendor:         ${CPACK_RPM_PACKAGE_VENDOR}
 ${TMP_RPM_REQUIRES}
 ${TMP_RPM_BUILDARCH}
 
-#%define prefix ${CMAKE_INSTALL_PREFIX}
+#p define prefix ${CMAKE_INSTALL_PREFIX}
 %define _rpmdir ${CPACK_RPM_DIRECTORY}
 %define _rpmfilename ${CPACK_RPM_FILE_NAME}
 %define _unpackaged_files_terminate_build 0
@@ -226,18 +326,18 @@ ${CPACK_RPM_PACKAGE_DESCRIPTION}
 # generated by CMake RPM generator
 # we skip the _prepn _build and _install
 # steps because CPack does that for us
-#%prep
+#p prep
 
-#%build
+#p build
   
-#%install
+#p install
 
 %clean
 
 %files
 %defattr(-,root,root,-)
-#%dir %{prefix}
-#%{prefix}/*
+#p dir %{prefix}
+#p {prefix}/*
 /*
 
 %changelog
@@ -255,10 +355,12 @@ ENDIF(CPACK_RPM_USER_BINARY_SPECFILE)
 IF(RPMBUILD_EXECUTABLE)
   # Now call rpmbuild using the SPECFILE
   EXECUTE_PROCESS(
-    COMMAND "${RPMBUILD_EXECUTABLE}" -bb "${CPACK_RPM_BINARY_SPECFILE}"
+    COMMAND "${RPMBUILD_EXECUTABLE}" -bb 
+            --buildroot "${CPACK_RPM_DIRECTORY}/${CPACK_PACKAGE_FILE_NAME}" 
+            "${CPACK_RPM_BINARY_SPECFILE}"
     WORKING_DIRECTORY "${CPACK_TOPLEVEL_DIRECTORY}/${CPACK_PACKAGE_FILE_NAME}"
     ERROR_FILE "${CPACK_TOPLEVEL_DIRECTORY}/rpmbuild.err"
-    OUTPUT_FILE "${CPACK_TOPLEVEL_DIRECTORY}/rpmbuild.out")
+    OUTPUT_FILE "${CPACK_TOPLEVEL_DIRECTORY}/rpmbuild.out")  
   IF(CPACK_RPM_PACKAGE_DEBUG)
     MESSAGE("CPackRPM:Debug: You may consult rpmbuild logs in: ")
     MESSAGE("CPackRPM:Debug:    - ${CPACK_TOPLEVEL_DIRECTORY}/rpmbuild.err")

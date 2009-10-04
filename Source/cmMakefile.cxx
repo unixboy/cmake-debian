@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMakefile.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:41 $
-  Version:   $Revision: 1.463.2.14 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmMakefile.h"
 #include "cmVersion.h"
 #include "cmCommand.h"
@@ -32,6 +27,8 @@
 #  include "cmVariableWatch.h"
 #endif
 #include "cmInstallGenerator.h"
+#include "cmTestGenerator.h"
+#include "cmDefinitions.h"
 #include "cmake.h"
 #include <stdlib.h> // required for atoi
 
@@ -39,12 +36,19 @@
 
 #include <cmsys/auto_ptr.hxx>
 
+#include <stack>
 #include <ctype.h> // for isspace
 
-// default is not to be building executables
-cmMakefile::cmMakefile()
+class cmMakefile::Internals
 {
-  this->DefinitionStack.push_back(DefinitionMap());
+public:
+  std::stack<cmDefinitions, std::list<cmDefinitions> > VarStack;
+};
+
+// default is not to be building executables
+cmMakefile::cmMakefile(): Internal(new Internals)
+{
+  this->Internal->VarStack.push(cmDefinitions());
 
   // Setup the default include file regular expression (match everything).
   this->IncludeFileRegularExpression = "^.*$";
@@ -79,24 +83,15 @@ cmMakefile::cmMakefile()
   this->DefineFlags = " ";
   this->LocalGenerator = 0;
 
-#if defined(CMAKE_BUILD_WITH_CMAKE)
-  this->AddSourceGroup("", "^.*$");
-  this->AddSourceGroup
-    ("Source Files",
-     "\\.(C|M|c|c\\+\\+|cc|cpp|cxx|f|F|f90|for|fpp"
-     "|ftn|m|mm|rc|def|r|odl|idl|hpj|bat)$");
-  this->AddSourceGroup("Header Files",
-                       "\\.(h|hh|h\\+\\+|hm|hpp|hxx|in|txx|inl)$");
-  this->AddSourceGroup("CMake Rules", "\\.rule$");
-  this->AddSourceGroup("Resources", "\\.plist$");
-#endif
   this->AddDefaultDefinitions();
   this->Initialize();
   this->PreOrder = false;
 }
 
-cmMakefile::cmMakefile(const cmMakefile& mf)
+cmMakefile::cmMakefile(const cmMakefile& mf): Internal(new Internals)
 {
+  this->Internal->VarStack.push(mf.Internal->VarStack.top().Closure());
+
   this->Prefix = mf.Prefix;
   this->AuxSourceDirectories = mf.AuxSourceDirectories;
   this->cmStartDirectory = mf.cmStartDirectory;
@@ -115,6 +110,7 @@ cmMakefile::cmMakefile(const cmMakefile& mf)
   this->OutputFiles = mf.OutputFiles;
   this->LinkLibraries = mf.LinkLibraries;
   this->InstallGenerators = mf.InstallGenerators;
+  this->TestGenerators = mf.TestGenerators;
   this->IncludeFileRegularExpression = mf.IncludeFileRegularExpression;
   this->ComplainFileRegularExpression = mf.ComplainFileRegularExpression;
   this->SourceFileExtensions = mf.SourceFileExtensions;
@@ -126,13 +122,11 @@ cmMakefile::cmMakefile(const cmMakefile& mf)
   this->SourceGroups = mf.SourceGroups;
 #endif
 
-  this->DefinitionStack.push_back(mf.DefinitionStack.back());
   this->LocalGenerator = mf.LocalGenerator;
   this->FunctionBlockers = mf.FunctionBlockers;
   this->DataMap = mf.DataMap;
   this->MacrosMap = mf.MacrosMap;
   this->SubDirectoryOrder = mf.SubDirectoryOrder;
-  this->TemporaryDefinitionKey = mf.TemporaryDefinitionKey;
   this->Properties = mf.Properties;
   this->PreOrder = mf.PreOrder;
   this->ListFileStack = mf.ListFileStack;
@@ -180,15 +174,21 @@ cmMakefile::~cmMakefile()
     {
     delete *i;
     }
+  for(std::vector<cmTestGenerator*>::iterator
+        i = this->TestGenerators.begin();
+      i != this->TestGenerators.end(); ++i)
+    {
+    delete *i;
+    }
   for(std::vector<cmSourceFile*>::iterator i = this->SourceFiles.begin();
       i != this->SourceFiles.end(); ++i)
     {
     delete *i;
     }
-  for(std::vector<cmTest*>::iterator i = this->Tests.begin();
+  for(std::map<cmStdString, cmTest*>::iterator i = this->Tests.begin();
       i != this->Tests.end(); ++i)
     {
-    delete *i;
+    delete i->second;
     }
   for(std::vector<cmTarget*>::iterator
         i = this->ImportedTargetsOwned.begin();
@@ -410,7 +410,7 @@ bool cmMakefile::ExecuteCommand(const cmListFileFunction& lff,
           cmSystemTools::SetFatalErrorOccured();
           }
         }
-      else
+      else if(pcmd->HasFinalPass())
         {
         // use the command
         this->UsedCommands.push_back(pcmd.release());
@@ -747,6 +747,20 @@ void cmMakefile::AddCommand(cmCommand* wg)
 void cmMakefile::SetLocalGenerator(cmLocalGenerator* lg)
 {
   this->LocalGenerator = lg;
+  // the source groups need to access the global generator
+  // so don't create them until the lg is set
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  this->AddSourceGroup("", "^.*$");
+  this->AddSourceGroup
+    ("Source Files",
+     "\\.(C|M|c|c\\+\\+|cc|cpp|cxx|f|f90|for|fpp"
+     "|ftn|m|mm|rc|def|r|odl|idl|hpj|bat)$");
+  this->AddSourceGroup("Header Files",
+                       "\\.(h|hh|h\\+\\+|hm|hpp|hxx|in|txx|inl)$");
+  this->AddSourceGroup("CMake Rules", "\\.rule$");
+  this->AddSourceGroup("Resources", "\\.plist$");
+#endif
+
 }
 
 bool cmMakefile::NeedBackwardsCompatibility(unsigned int major,
@@ -889,7 +903,6 @@ cmMakefile::AddCustomCommandToOutput(const std::vector<std::string>& outputs,
     // Construct a rule file associated with the first output produced.
     std::string outName = outputs[0];
     outName += ".rule";
-
     // Check if the rule file already exists.
     file = this->GetSource(outName.c_str());
     if(file && file->GetCustomCommand() && !replace)
@@ -1208,10 +1221,11 @@ bool cmMakefile::ParseDefineFlag(std::string const& def, bool remove)
     return false;
     }
 
-  // VS6 IDE does not support definition values with spaces.
+  // VS6 IDE does not support definition values with spaces in
+  // combination with '"', '$', or ';'.
   if((strcmp(this->LocalGenerator->GetGlobalGenerator()->GetName(),
              "Visual Studio 6") == 0) &&
-     (def.find(" ") != def.npos))
+     (def.find(" ") != def.npos && def.find_first_of("\"$;") != def.npos))
     {
     return false;
     }
@@ -1409,8 +1423,8 @@ void cmMakefile::InitializeFromParent()
 {
   cmMakefile *parent = this->LocalGenerator->GetParent()->GetMakefile();
 
-  // copy the definitions
-  this->DefinitionStack.front() = parent->DefinitionStack.back();
+  // Initialize definitions with the closure of the parent scope.
+  this->Internal->VarStack.top() = parent->Internal->VarStack.top().Closure();
 
   // copy include paths
   this->IncludeDirectories = parent->IncludeDirectories;
@@ -1520,33 +1534,9 @@ void cmMakefile::AddSubDirectory(const char* srcPath, const char *binPath,
                                  bool excludeFromAll, bool preorder,
                                  bool immediate)
 {
-  std::vector<cmLocalGenerator *>& children =
-    this->LocalGenerator->GetChildren();
-  // has this directory already been added? If so error
-  unsigned int i;
-  for (i = 0; i < children.size(); ++i)
-    {
-    if (srcPath == children[i]->GetMakefile()->GetStartDirectory())
-      {
-      cmSystemTools::Error
-        ("Attempt to add subdirectory multiple times for directory.\n",
-         srcPath);
-      return;
-      }
-    }
-
   // Make sure the binary directory is unique.
-  cmGlobalGenerator* gg = this->LocalGenerator->GetGlobalGenerator();
-  if(!gg->BinaryDirectoryIsNew(binPath))
+  if(!this->EnforceUniqueDir(srcPath, binPath))
     {
-    cmOStringStream e;
-    e << "The binary directory\n"
-      << "  " << binPath << "\n"
-      << "is already used to build another source directory, so it cannot "
-      << "be used to build source directory\n"
-      << "  " << srcPath << "\n"
-      << "Specify a unique binary directory name.";
-    this->IssueMessage(cmake::FATAL_ERROR, e.str());
     return;
     }
 
@@ -1638,19 +1628,69 @@ void cmMakefile::AddDefinition(const char* name, const char* value)
     }
 #endif
 
-  this->TemporaryDefinitionKey = name;
-  this->DefinitionStack.back()[this->TemporaryDefinitionKey] = value;
+  this->Internal->VarStack.top().Set(name, value);
 
 #ifdef CMAKE_BUILD_WITH_CMAKE
   cmVariableWatch* vv = this->GetVariableWatch();
   if ( vv )
     {
-    vv->VariableAccessed(this->TemporaryDefinitionKey,
+    vv->VariableAccessed(name,
                          cmVariableWatch::VARIABLE_MODIFIED_ACCESS,
                          value,
                          this);
     }
 #endif
+}
+
+//----------------------------------------------------------------------------
+void cmMakefile::UseCacheDefinition(cmCacheManager::CacheIterator const& it)
+{
+  // Check for a local definition that might hide the cache value.
+  const char* name = it.GetName();
+  const char* def = this->Internal->VarStack.top().Get(name);
+  if(!def)
+    {
+    return;
+    }
+
+  // If the visible value will change then check policy CMP0015.
+  const char* cache = it.GetValue();
+  if(strcmp(def, cache) != 0)
+    {
+    cmOStringStream e;
+    switch (this->GetPolicyStatus(cmPolicies::CMP0015))
+      {
+      case cmPolicies::WARN:
+        e << "Local variable \"" << name << "\" is set to\n"
+          << "  " << def << "\n"
+          << "but the CACHE entry of the same name is set to\n"
+          << "  " << cache << "\n"
+          << "The local variable is hiding the cache value."
+          << "\n"
+          << this->GetPolicies()->GetPolicyWarning(cmPolicies::CMP0015);
+        this->IssueMessage(cmake::AUTHOR_WARNING, e.str());
+      case cmPolicies::OLD:
+        // OLD behavior is to leave local definition.
+        return;
+      case cmPolicies::REQUIRED_IF_USED:
+      case cmPolicies::REQUIRED_ALWAYS:
+        e << "Local variable \"" << name << "\" is set to\n"
+          << "  " << def << "\n"
+          << "but the CACHE entry of the same name is set to\n"
+          << "  " << cache << "\n"
+          << "This command is removing the local variable to expose "
+          << "the cache value."
+          << "\n"
+          << this->GetPolicies()->GetRequiredPolicyError(cmPolicies::CMP0015);
+        this->IssueMessage(cmake::FATAL_ERROR, e.str());
+      case cmPolicies::NEW:
+        // NEW behavior is to remove local definition (done below).
+        break;
+      }
+    }
+
+  // Remove the local definition to make the cache value visible.
+  this->RemoveDefinition(name);
 }
 
 
@@ -1694,26 +1734,13 @@ void cmMakefile::AddCacheDefinition(const char* name, const char* value,
     }
   this->GetCacheManager()->AddCacheEntry(name, val, doc, type);
   // if there was a definition then remove it
-  this->DefinitionStack.back().erase( DefinitionMap::key_type(name));
+  this->Internal->VarStack.top().Set(name, 0);
 }
 
 
 void cmMakefile::AddDefinition(const char* name, bool value)
 {
-  if(value)
-    {
-    this->DefinitionStack.back()
-      .erase( DefinitionMap::key_type(name));
-    this->DefinitionStack.back()
-      .insert(DefinitionMap::value_type(name, "ON"));
-    }
-  else
-    {
-    this->DefinitionStack.back()
-      .erase( DefinitionMap::key_type(name));
-    this->DefinitionStack.back()
-      .insert(DefinitionMap::value_type(name, "OFF"));
-    }
+  this->Internal->VarStack.top().Set(name, value? "ON" : "OFF");
 #ifdef CMAKE_BUILD_WITH_CMAKE
   cmVariableWatch* vv = this->GetVariableWatch();
   if ( vv )
@@ -1724,26 +1751,9 @@ void cmMakefile::AddDefinition(const char* name, bool value)
 #endif
 }
 
-
-void cmMakefile::AddCacheDefinition(const char* name,
-                                    bool value,
-                                    const char* doc)
-{
-  bool val = value;
-  cmCacheManager::CacheIterator it =
-    this->GetCacheManager()->GetCacheIterator(name);
-  if(!it.IsAtEnd() && (it.GetType() == cmCacheManager::UNINITIALIZED) &&
-     it.Initialized())
-    {
-    val = it.GetValueAsBool();
-    }
-  this->GetCacheManager()->AddCacheEntry(name, val, doc);
-  this->AddDefinition(name, val);
-}
-
 void cmMakefile::RemoveDefinition(const char* name)
 {
-  this->DefinitionStack.back().erase(DefinitionMap::key_type(name));
+  this->Internal->VarStack.top().Set(name, 0);
 #ifdef CMAKE_BUILD_WITH_CMAKE
   cmVariableWatch* vv = this->GetVariableWatch();
   if ( vv )
@@ -1957,10 +1967,25 @@ void cmMakefile::AddSourceGroup(const std::vector<std::string>& name,
     }
 
   // build the whole source group path
+  const char* fullname = sg->GetFullName();
+  cmGlobalGenerator* gg = this->LocalGenerator->GetGlobalGenerator();
+  if(strlen(fullname))
+    {
+    std::string guidName = "SG_Filter_";
+    guidName += fullname;
+    gg->CreateGUID(guidName.c_str());
+    }
   for(++i; i<=lastElement; ++i)
     {
-    sg->AddChild(cmSourceGroup(name[i].c_str(), 0));
+    sg->AddChild(cmSourceGroup(name[i].c_str(), 0, sg->GetFullName()));
     sg = sg->lookupChild(name[i].c_str());
+    fullname = sg->GetFullName();
+    if(strlen(fullname))
+      {
+      std::string guidName = "SG_Filter_";
+      guidName += fullname;
+      gg->CreateGUID(guidName.c_str());
+      }
     }
 
   sg->SetGroupRegex(regex);
@@ -2025,6 +2050,15 @@ bool cmMakefile::IsSet(const char* name) const
   return true;
 }
 
+bool cmMakefile::PlatformIs64Bit() const
+{
+  if(const char* sizeof_dptr = this->GetDefinition("CMAKE_SIZEOF_VOID_P"))
+    {
+    return atoi(sizeof_dptr) == 8;
+    }
+  return false;
+}
+
 bool cmMakefile::CanIWriteThisFile(const char* fileName)
 {
   if ( !this->IsOn("CMAKE_DISABLE_SOURCE_CHANGES") )
@@ -2070,14 +2104,8 @@ const char* cmMakefile::GetRequiredDefinition(const char* name) const
 
 bool cmMakefile::IsDefinitionSet(const char* name) const
 {
-  const char* def = 0;
-  DefinitionMap::const_iterator pos = 
-    this->DefinitionStack.back().find(name);
-  if(pos != this->DefinitionStack.back().end())
-    {
-    def = (*pos).second.c_str();
-    }
-  else
+  const char* def = this->Internal->VarStack.top().Get(name);
+  if(!def)
     {
     def = this->GetCacheManager()->GetCacheValue(name);
     }
@@ -2104,14 +2132,8 @@ const char* cmMakefile::GetDefinition(const char* name) const
       RecordPropertyAccess(name,cmProperty::VARIABLE);
     }
 #endif
-  const char* def = 0;
-  DefinitionMap::const_iterator pos = 
-    this->DefinitionStack.back().find(name);
-  if(pos != this->DefinitionStack.back().end())
-    {
-    def = (*pos).second.c_str();
-    }
-  else
+  const char* def = this->Internal->VarStack.top().Get(name);
+  if(!def)
     {
     def = this->GetCacheManager()->GetCacheValue(name);
     }
@@ -2127,11 +2149,9 @@ const char* cmMakefile::GetDefinition(const char* name) const
     else
       {
       // are unknown access allowed
-      DefinitionMap::const_iterator pos2 =
-        this->DefinitionStack.back()
-        .find("CMAKE_ALLOW_UNKNOWN_VARIABLE_READ_ACCESS");
-      if (pos2 != this->DefinitionStack.back().end() &&
-          cmSystemTools::IsOn((*pos2).second.c_str()))
+      const char* allow = this->Internal->VarStack.top()
+        .Get("CMAKE_ALLOW_UNKNOWN_VARIABLE_READ_ACCESS");
+      if(cmSystemTools::IsOn(allow))
         {
         vv->VariableAccessed(name,
           cmVariableWatch::ALLOWED_UNKNOWN_VARIABLE_READ_ACCESS, def, this);
@@ -2160,29 +2180,24 @@ const char* cmMakefile::GetSafeDefinition(const char* def) const
 std::vector<std::string> cmMakefile
 ::GetDefinitions(int cacheonly /* = 0 */) const
 {
-  std::map<cmStdString, int> definitions;
+  std::set<cmStdString> definitions;
   if ( !cacheonly )
     {
-    DefinitionMap::const_iterator it;
-    for ( it = this->DefinitionStack.back().begin();
-          it != this->DefinitionStack.back().end(); it ++ )
-      {
-      definitions[it->first] = 1;
-      }
+    definitions = this->Internal->VarStack.top().ClosureKeys();
     }
   cmCacheManager::CacheIterator cit =
     this->GetCacheManager()->GetCacheIterator();
   for ( cit.Begin(); !cit.IsAtEnd(); cit.Next() )
     {
-    definitions[cit.GetName()] = 1;
+    definitions.insert(cit.GetName());
     }
 
   std::vector<std::string> res;
 
-  std::map<cmStdString, int>::iterator fit;
+  std::set<cmStdString>::iterator fit;
   for ( fit = definitions.begin(); fit != definitions.end(); fit ++ )
     {
-    res.push_back(fit->first);
+    res.push_back(*fit);
     }
   return res;
 }
@@ -2715,7 +2730,8 @@ void cmMakefile::EnableLanguage(std::vector<std::string> const &  lang,
                                bool optional)
 {
   this->AddDefinition("CMAKE_CFG_INTDIR",
-  this->LocalGenerator->GetGlobalGenerator()->GetCMakeCFGInitDirectory());
+                      this->LocalGenerator->GetGlobalGenerator()
+                      ->GetCMakeCFGInitDirectory());
   this->LocalGenerator->GetGlobalGenerator()->EnableLanguage(lang, this, 
                                                              optional);
 }
@@ -2735,6 +2751,7 @@ void cmMakefile::ExpandSourceListArguments(
 
 int cmMakefile::TryCompile(const char *srcdir, const char *bindir,
                            const char *projectName, const char *targetName,
+                           bool fast,
                            const std::vector<std::string> *cmakeArgs,
                            std::string *output)
 {
@@ -2815,6 +2832,7 @@ int cmMakefile::TryCompile(const char *srcdir, const char *bindir,
     this->LocalGenerator->GetGlobalGenerator()->TryCompile(srcdir,bindir,
                                                            projectName,
                                                            targetName,
+                                                           fast,
                                                            output,
                                                            this);
 
@@ -3176,6 +3194,10 @@ const char *cmMakefile::GetProperty(const char* prop)
 const char *cmMakefile::GetProperty(const char* prop,
                                     cmProperty::ScopeType scope)
 {
+  if(!prop)
+    {
+    return 0;
+    }
   // watch for specific properties
   static std::string output;
   output = "";
@@ -3315,38 +3337,25 @@ cmTest* cmMakefile::CreateTest(const char* testName)
     {
     return test;
     }
-  test = new cmTest;
+  test = new cmTest(this);
   test->SetName(testName);
-  test->SetMakefile(this);
-  this->Tests.push_back(test);
+  this->Tests[testName] = test;
   return test;
 }
 
+//----------------------------------------------------------------------------
 cmTest* cmMakefile::GetTest(const char* testName) const
 {
-  if ( !testName )
+  if(testName)
     {
-    return 0;
-    }
-  std::vector<cmTest*>::const_iterator it;
-  for ( it = this->Tests.begin(); it != this->Tests.end(); ++ it )
-    {
-    if ( strcmp((*it)->GetName(), testName) == 0 )
+    std::map<cmStdString, cmTest*>::const_iterator
+      mi = this->Tests.find(testName);
+    if(mi != this->Tests.end())
       {
-      return *it;
+      return mi->second;
       }
     }
   return 0;
-}
-
-const std::vector<cmTest*> *cmMakefile::GetTests() const
-{
-  return &this->Tests;
-}
-
-std::vector<cmTest*> *cmMakefile::GetTests()
-{
-  return &this->Tests;
 }
 
 std::string cmMakefile::GetListFileStack()
@@ -3377,19 +3386,13 @@ std::string cmMakefile::GetListFileStack()
 
 void cmMakefile::PushScope()
 {
-  // Get the index of the next stack entry.
-  std::vector<DefinitionMap>::size_type index = this->DefinitionStack.size();
-
-  // Allocate a new stack entry.
-  this->DefinitionStack.push_back(DefinitionMap());
-
-  // Copy the previous top to the new top.
-  this->DefinitionStack[index] = this->DefinitionStack[index-1];
+  cmDefinitions* parent = &this->Internal->VarStack.top();
+  this->Internal->VarStack.push(cmDefinitions(parent));
 }
 
 void cmMakefile::PopScope()
 {
-  this->DefinitionStack.pop_back();
+  this->Internal->VarStack.pop();
 }
 
 void cmMakefile::RaiseScope(const char *var, const char *varDef)
@@ -3399,33 +3402,22 @@ void cmMakefile::RaiseScope(const char *var, const char *varDef)
     return;
     }
 
-  // multiple scopes in this directory?
-  if (this->DefinitionStack.size() > 1)
+  cmDefinitions& cur = this->Internal->VarStack.top();
+  if(cmDefinitions* up = cur.GetParent())
     {
-    if(varDef)
-      {
-      this->DefinitionStack[this->DefinitionStack.size()-2][var] = varDef;
-      }
-    else
-      {
-      this->DefinitionStack[this->DefinitionStack.size()-2].erase(var);
-      }
+    // First localize the definition in the current scope.
+    cur.Get(var);
+
+    // Now update the definition in the parent scope.
+    up->Set(var, varDef);
     }
-  // otherwise do the parent (if one exists)
-  else if (this->LocalGenerator->GetParent())
+  else if(cmMakefile* parent =
+          this->LocalGenerator->GetParent()->GetMakefile())
     {
-    cmMakefile *parent = this->LocalGenerator->GetParent()->GetMakefile();
-    if (parent)
-      {
-      if(varDef)
-        {
-        parent->AddDefinition(var,varDef);
-        }
-      else
-        {
-        parent->RemoveDefinition(var);
-        }
-      }
+    // Update the definition in the parent directory top scope.  This
+    // directory's scope was initialized by the closure of the parent
+    // scope, so we do not need to localize the definition first.
+    parent->Internal->VarStack.top().Set(var, varDef);
     }
 }
 
@@ -3463,7 +3455,8 @@ void cmMakefile::DefineProperties(cmake *cm)
   cm->DefineProperty
     ("COMPILE_DEFINITIONS", cmProperty::DIRECTORY,
      "Preprocessor definitions for compiling a directory's sources.",
-     "The COMPILE_DEFINITIONS property may be set to a list of preprocessor "
+     "The COMPILE_DEFINITIONS property may be set to a "
+     "semicolon-separated list of preprocessor "
      "definitions using the syntax VAR or VAR=value.  Function-style "
      "definitions are not supported.  CMake will automatically escape "
      "the value correctly for the native build system (note that CMake "
@@ -3579,6 +3572,25 @@ void cmMakefile::DefineProperties(cmake *cm)
      "This read-only property specifies the list of directories given "
      "so far to the link_directories command.  "
      "It is intended for debugging purposes.", false);
+
+  cm->DefineProperty
+    ("RULE_LAUNCH_COMPILE", cmProperty::DIRECTORY,
+     "Specify a launcher for compile rules.",
+     "See the global property of the same name for details.  "
+     "This overrides the global property for a directory.",
+     true);
+  cm->DefineProperty
+    ("RULE_LAUNCH_LINK", cmProperty::DIRECTORY,
+     "Specify a launcher for link rules.",
+     "See the global property of the same name for details.  "
+     "This overrides the global property for a directory.",
+     true);
+  cm->DefineProperty
+    ("RULE_LAUNCH_CUSTOM", cmProperty::DIRECTORY,
+     "Specify a launcher for custom rules.",
+     "See the global property of the same name for details.  "
+     "This overrides the global property for a directory.",
+     true);
 }
 
 //----------------------------------------------------------------------------
@@ -3697,6 +3709,54 @@ bool cmMakefile::EnforceUniqueName(std::string const& name, std::string& msg,
       }
     }
   return true;
+}
+
+//----------------------------------------------------------------------------
+bool cmMakefile::EnforceUniqueDir(const char* srcPath, const char* binPath)
+{
+  // Make sure the binary directory is unique.
+  cmGlobalGenerator* gg = this->LocalGenerator->GetGlobalGenerator();
+  if(gg->BinaryDirectoryIsNew(binPath))
+    {
+    return true;
+    }
+  cmOStringStream e;
+  switch (this->GetPolicyStatus(cmPolicies::CMP0013))
+    {
+    case cmPolicies::WARN:
+      // Print the warning.
+      e << this->GetPolicies()->GetPolicyWarning(cmPolicies::CMP0013)
+        << "\n"
+        << "The binary directory\n"
+        << "  " << binPath << "\n"
+        << "is already used to build a source directory.  "
+        << "This command uses it to build source directory\n"
+        << "  " << srcPath << "\n"
+        << "which can generate conflicting build files.  "
+        << "CMake does not support this use case but it used "
+        << "to work accidentally and is being allowed for "
+        << "compatibility.";
+      this->IssueMessage(cmake::AUTHOR_WARNING, e.str());
+    case cmPolicies::OLD:
+      // OLD behavior does not warn.
+      return true;
+    case cmPolicies::REQUIRED_IF_USED:
+    case cmPolicies::REQUIRED_ALWAYS:
+      e << this->GetPolicies()->GetRequiredPolicyError(cmPolicies::CMP0013)
+        << "\n";
+    case cmPolicies::NEW:
+      // NEW behavior prints the error.
+      e << "The binary directory\n"
+        << "  " << binPath << "\n"
+        << "is already used to build a source directory.  "
+        << "It cannot be used to build source directory\n"
+        << "  " << srcPath << "\n"
+        << "Specify a unique binary directory name.";
+      this->IssueMessage(cmake::FATAL_ERROR, e.str());
+      break;
+    }
+
+  return false;
 }
 
 //----------------------------------------------------------------------------

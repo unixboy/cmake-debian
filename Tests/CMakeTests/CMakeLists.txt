@@ -15,12 +15,28 @@ AddCMakeTest(Include "")
 AddCMakeTest(FindBase "")
 AddCMakeTest(Toolchain "")
 AddCMakeTest(GetFilenameComponentRealpath "")
+AddCMakeTest(Version "")
+AddCMakeTest(Message "")
+AddCMakeTest(File "")
+AddCMakeTest(ConfigureFile "")
+AddCMakeTest(SeparateArguments "")
+AddCMakeTest(ImplicitLinkInfo "")
+AddCMakeTest(ModuleNotices "")
 
-# Not ready for Unix testing yet. Coming "soon"...
+SET(GetPrerequisites_PreArgs
+  "-DCTEST_CONFIGURATION_TYPE:STRING=\\\${CTEST_CONFIGURATION_TYPE}"
+  )
+AddCMakeTest(GetPrerequisites "${GetPrerequisites_PreArgs}")
+
+# Run CheckSourceTree as the very last test in the CMake/CTest/CPack test
+# suite. It detects if any changes have been made to the CMake source tree
+# by any previous configure, build or test steps.
 #
-IF(WIN32 OR APPLE)
-  SET(GetPrerequisites_PreArgs
-    "-DCTEST_CONFIGURATION_TYPE:STRING=\\\${CTEST_CONFIGURATION_TYPE}"
+if(do_cvs_tests)
+  set(CheckSourceTree_PreArgs
+    "-DCMake_BINARY_DIR:PATH=${CMake_BINARY_DIR}"
+    "-DCMake_SOURCE_DIR:PATH=${CMake_SOURCE_DIR}"
+    "-DCVS_EXECUTABLE:STRING=${CVS_EXECUTABLE}"
     )
-  AddCMakeTest(GetPrerequisites "${GetPrerequisites_PreArgs}")
-ENDIF(WIN32 OR APPLE)
+  AddCMakeTest(CheckSourceTree "${CheckSourceTree_PreArgs}")
+endif(do_cvs_tests)

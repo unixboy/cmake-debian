@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSourceFile.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:47 $
-  Version:   $Revision: 1.47.2.6 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSourceFile.h"
 
 #include "cmGlobalGenerator.h"
@@ -395,7 +390,8 @@ void cmSourceFile::DefineProperties(cmake *cm)
   cm->DefineProperty
     ("COMPILE_DEFINITIONS", cmProperty::SOURCE_FILE,
      "Preprocessor definitions for compiling a source file.",
-     "The COMPILE_DEFINITIONS property may be set to a list of preprocessor "
+     "The COMPILE_DEFINITIONS property may be set to a "
+     "semicolon-separated list of preprocessor "
      "definitions using the syntax VAR or VAR=value.  Function-style "
      "definitions are not supported.  CMake will automatically escape "
      "the value correctly for the native build system (note that CMake "
@@ -456,6 +452,13 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "file will be the same as that of the source file. Normally "
      "the output file extension is computed based on the language "
      "of the source file, for example .cxx will go to a .o extension.");
+
+  cm->DefineProperty
+    ("LABELS", cmProperty::SOURCE_FILE,
+     "Specify a list of text labels associated with a source file.",
+     "This property has meaning only when the source file is listed in "
+     "a target whose LABELS property is also set.  "
+     "No other semantics are currently specified.");
 
   cm->DefineProperty
     ("LANGUAGE", cmProperty::SOURCE_FILE, 
