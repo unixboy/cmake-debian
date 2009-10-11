@@ -43,7 +43,6 @@ Package: cmake-curses-gui
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, cmake (= ${binary:Version})
 Replaces: cmake (<= 2.6.2-1)
-Provides: cmake-gui
 Description: Curses based user interface for CMake (ccmake)
  CMake is used to control the software compilation process using simple
  platform and compiler independent configuration files. CMake generates native

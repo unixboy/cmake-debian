@@ -19,6 +19,7 @@ cmake (2.8.0~rc3-0r1) UNRELEASED; urgency=low
     --print-installation-architecture.
   * Fix lintian override cmake-data: extra-license-file.
   * Remove obsolete README.Debian.
+  * cmake-curses-gui should not provide cmake-gui.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
 
