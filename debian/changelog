@@ -1,16 +1,16 @@
-cmake (2.8.0~rc2-0r3) UNRELEASED; urgency=low
+cmake (2.8.0~rc3-0r1) UNRELEASED; urgency=low
 
   * New upstream development release.
     - ctest no longer segfaults on such a invalid input (Closes: #528530).
-  * Update patches:
+  * Drop all patches:
     - FindQt4.cmake2.6.diff - remove, no longer needed as original bug has been
       fixed since 2.6;
-    - FindQt3.cmake.diff - refresh, add DEP-3 headers;
+    - FindQt3.cmake.diff - remove, merged upstream;
     - findmpeg2-addpath.diff - remove, bug fixed upstream (in other way);
-    - kfreebsd-Platform.diff - refresh, add DEP-3 headers;
-    - executables-dont-need-fpic.diff - refresh, app DEP-3 headers;
+    - kfreebsd-Platform.diff - remove, merged upstream;
+    - executables-dont-need-fpic.diff - remove, merged upstream;
     - manpage_friendly_docs.diff - remove, merged upstream;
-    - fix_bashisms.diff - add DEP-3 headers;
+    - fix_bashisms.diff - remove, merged upstream;
     - FindPerlLibs.cmake-perl-5.10.diff - remove, fixed upstream differently;
     - FindJNI.cmake-more-arches.diff - remove, was taken from upstream;
     - FindVTK.cmake-vtk-5.4.diff - remove, was taken from upstream.
@@ -18,12 +18,6 @@ cmake (2.8.0~rc2-0r3) UNRELEASED; urgency=low
   * Call dpkg with --print-architecture rather than obsolete 
     --print-installation-architecture.
   * Fix lintian override cmake-data: extra-license-file.
-  * Readd manpage_friendly_docs.diff with fixes for new manual page formatting
-    problems.
-  * Add desktop-remove-deprecated.diff - remove deprecated Enconding field from
-    CMake.desktop.
-  * Add scripts-and-permissions.diff - fixes a couple issues with scripts
-    from Modules/ and Templates/ (thanks to lintian).
   * Remove obsolete README.Debian.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
