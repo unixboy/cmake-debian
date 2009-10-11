@@ -1,4 +1,4 @@
-cmake (2.8.0~rc3-0r1) UNRELEASED; urgency=low
+cmake (2.8.0~rc3-1) experimental; urgency=low
 
   * New upstream development release.
     - ctest no longer segfaults on such a invalid input (Closes: #528530).
@@ -21,7 +21,7 @@ cmake (2.8.0~rc3-0r1) UNRELEASED; urgency=low
   * Remove obsolete README.Debian.
   * cmake-curses-gui should not provide cmake-gui.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sun, 04 Oct 2009 10:31:17 +0300
+ -- Modestas Vainius <modestas@vainius.eu>  Sun, 11 Oct 2009 15:09:42 +0300
 
 cmake (2.6.4-3) unstable; urgency=low
 
