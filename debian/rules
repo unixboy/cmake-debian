@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-include /usr/share/quilt/quilt.make
-
 # The next line will cause Dart to be used if it is installed...
 #USE_DARTP:=$(shell if [ -d /usr/share/Dart ]; then echo true; fi )
 USE_DARTP:=
@@ -54,7 +52,7 @@ build-stamp: configure-stamp
 	cd Build && $(MAKE) $(if $(USE_DARTP),Experimental && $(MAKE) ExperimentalSubmit)
 	touch $@
 
-clean: unpatch
+clean:
 	dh_testdir
 	dh_testroot
 	rm -rf build-stamp configure-stamp $(BUILD_FLAGS_FILE)
