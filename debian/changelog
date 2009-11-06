@@ -6,6 +6,7 @@ cmake (2.8.0~rc5-1) UNRELEASED; urgency=low
   * Switch to dpkg-source format 3.0 (quilt):
     - drop build dependency on quilt;
     - drop quilt.make snippet include from debian/rules.
+  * Build with CMAKE_USE_RELATIVE_PATHS=ON.
 
  -- Modestas Vainius <modestas@vainius.eu>  Fri, 06 Nov 2009 22:09:00 +0200
 

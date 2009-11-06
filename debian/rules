@@ -22,6 +22,7 @@ endif
 $(BUILD_FLAGS_FILE):
 	touch $@
 	echo 'set(CMAKE_SKIP_RPATH YES CACHE BOOL "Skip rpath" FORCE)'          >> $@
+	echo 'set(CMAKE_USE_RELATIVE_PATHS YES CACHE BOOL "Use relative paths" FORCE)' >> $@
 	echo 'set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Verbose build" FORCE)'  >> $@
 	echo 'set(CMAKE_C_FLAGS "$(CFLAGS)" CACHE STRING "C flags" FORCE)'      >> $@
 	echo 'set(CMAKE_CXX_FLAGS "$(CFLAGS)" CACHE STRING "C++ flags" FORCE)'  >> $@
