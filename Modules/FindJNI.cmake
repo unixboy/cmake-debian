@@ -67,11 +67,14 @@ SET(JAVA_AWT_LIBRARY_DIRECTORIES
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.3;JavaHome]/lib"
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\${java_install_version};JavaHome]/lib"
   )
+
+FILE(TO_CMAKE_PATH "$ENV{JAVA_HOME}" _JAVA_HOME)
+
 JAVA_APPEND_LIBRARY_DIRECTORIES(JAVA_AWT_LIBRARY_DIRECTORIES
-  $ENV{JAVA_HOME}/jre/lib/{libarch}
-  $ENV{JAVA_HOME}/jre/lib
-  $ENV{JAVA_HOME}/lib
-  $ENV{JAVA_HOME}
+  ${_JAVA_HOME}/jre/lib/{libarch}
+  ${_JAVA_HOME}/jre/lib
+  ${_JAVA_HOME}/lib
+  ${_JAVA_HOME}
   /usr/lib
   /usr/local/lib
   /usr/lib/jvm/java/lib
@@ -106,7 +109,7 @@ SET(JAVA_AWT_INCLUDE_DIRECTORIES
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.4;JavaHome]/include"
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.3;JavaHome]/include"
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\${java_install_version};JavaHome]/include"
-  $ENV{JAVA_HOME}/include
+  ${_JAVA_HOME}/include
   /usr/include 
   /usr/local/include
   /usr/lib/java/include
@@ -192,14 +195,14 @@ FIND_PATH(JAVA_INCLUDE_PATH jni.h
 )
 
 FIND_PATH(JAVA_INCLUDE_PATH2 jni_md.h 
-  ${JAVA_AWT_INCLUDE_DIRECTORIES}
+  ${JAVA_INCLUDE_PATH}
   ${JAVA_INCLUDE_PATH}/win32
   ${JAVA_INCLUDE_PATH}/linux
   ${JAVA_INCLUDE_PATH}/freebsd
+  ${JAVA_INCLUDE_PATH}/solaris
 )
 
 FIND_PATH(JAVA_AWT_INCLUDE_PATH jawt.h
-  ${JAVA_AWT_INCLUDE_DIRECTORIES}
   ${JAVA_INCLUDE_PATH}
 )
 
