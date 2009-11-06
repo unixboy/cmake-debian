@@ -1,3 +1,11 @@
+cmake (2.8.0~rc5-1) UNRELEASED; urgency=low
+
+  * New upstream development release.
+    - FindJNI.cmake does no longer get confused about multiple JVM installs
+      (Closes: #553151).
+
+ -- Modestas Vainius <modestas@vainius.eu>  Fri, 06 Nov 2009 22:09:00 +0200
+
 cmake (2.8.0~rc3-1) experimental; urgency=low
 
   * New upstream development release.
