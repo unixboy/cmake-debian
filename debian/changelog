@@ -5,6 +5,8 @@ cmake (2.8.0~rc6-0r1) UNRELEASED; urgency=low
     - bump debhelper build depends to 7.3;
     - also drop unused Dart handling in the process;
     - enable test suite.
+  * Add myself as Maintainer, A. Maitland Bottoms as Uploader (with
+    permission).
 
  -- Modestas Vainius <modestas@vainius.eu>  Tue, 10 Nov 2009 20:25:36 +0200
 
