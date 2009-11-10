@@ -1,3 +1,9 @@
+cmake (2.8.0~rc6-0r1) UNRELEASED; urgency=low
+
+  * New upstream development release.
+
+ -- Modestas Vainius <modestas@vainius.eu>  Tue, 10 Nov 2009 20:25:36 +0200
+
 cmake (2.8.0~rc5-1) experimental; urgency=low
 
   * New upstream development release.
