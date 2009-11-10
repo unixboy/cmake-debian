@@ -1,22 +1,10 @@
 #!/usr/bin/make -f
 
-# The next line will cause Dart to be used if it is installed...
-#USE_DARTP:=$(shell if [ -d /usr/share/Dart ]; then echo true; fi )
-USE_DARTP:=
-
-DARCH      := $(shell dpkg --print-architecture)
-CFLAGS     := -Wall -g $(if $(findstring noopt,$(DEB_BUILD_OPTIONS)),-O0,-O2)
-BUILD_FLAGS_FILE := build-flags.cmake
+BUILD_FLAGS_FILE = build-flags.cmake
 
 # Hack for parisc64 to close bug #133696
 ifeq ($(shell arch),parisc64)
 CFLAGS += -ffunction-sections
-endif
-
-ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-MAKEFLAGS += -j$(NUMJOBS)
-CONFIGURE_PARALLEL += --parallel=$(NUMJOBS)
 endif
 
 $(BUILD_FLAGS_FILE):
@@ -33,67 +21,17 @@ $(BUILD_FLAGS_FILE):
 #	echo 'set(TARGET_SOVERSION CACHE STRING "" FORCE)'                     >> $@
 #	echo 'set(BUILD_DOCUMENTATION ON CACHE BOOL "" FORCE)'                 >> $@
 #	echo 'set(BUILD_DOXYGEN ON CACHE BOOL "" FORCE)'                       >> $@
-	$(if $(USE_DARTP),echo 'set(DART_ROOT /usr/share/Dart CACHE STRING "" FORCE)'              >> $@)
-	$(if $(USE_DARTP),echo 'set(BUILDNAME "cmake_2.2.3-1_$(DARCH).deb" CACHE STRING "" FORCE)' >> $@)
 
-configure: configure-stamp
-configure-stamp: $(QUILT_STAMPFN) $(BUILD_FLAGS_FILE)
-	dh_testdir
-	# pre-load the cache to avoid setting rpath:
+override_dh_auto_configure: $(BUILD_FLAGS_FILE)
 	rm -rf Build && mkdir -p Build
-	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
+	+cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
 	                         --init=../$(BUILD_FLAGS_FILE) --system-libs $(CONFIGURE_PARALLEL)
-	chmod -x ChangeLog.manual
-	chmod -x Modules/*.cmake  Modules/*.cmake.in Modules/*.cxx Modules/Platform/*
-	touch $@
 
-build: build-stamp
-build-stamp: configure-stamp
-	dh_testdir
-	cd Build && $(MAKE) $(if $(USE_DARTP),Experimental && $(MAKE) ExperimentalSubmit)
-	touch $@
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f $(BUILD_FLAGS_FILE)
 
-clean:
-	dh_testdir
-	dh_testroot
-	rm -rf build-stamp configure-stamp $(BUILD_FLAGS_FILE)
-	rm -rf Build
-	dh_clean
+%:
+	dh --builddirectory=Build $@
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-	# Add here commands to install the package into debian/cmake.
-	cd Build && $(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
-	#cp Docs/cmake-indent.vim debian/cmake/usr/share/vim/addons/indent/cmake.vim
-	#cp Docs/cmake-syntax.vim debian/cmake/usr/share/vim/addons/syntax/cmake.vim
-
-binary-arch: export DH_OPTIONS=-a
-binary-indep: export DH_OPTIONS=-i
-binary-arch binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_install
-	dh_installdocs
-	dh_installexamples
-	dh_installmenu
-	dh_installemacsen
-	dh_installcron
-	dh_installman
-	dh_installinfo
-	dh_installchangelogs ChangeLog.manual
-	dh_lintian
-	dh_link
-	dh_strip
-	dh_compress -XCMake.pdf
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+.PHONY: override_dh_auto_configure override_dh_auto_clean

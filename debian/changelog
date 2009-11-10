@@ -1,6 +1,10 @@
 cmake (2.8.0~rc6-0r1) UNRELEASED; urgency=low
 
   * New upstream development release.
+  * Switch debian/rules to use dh v7:
+    - bump debhelper build depends to 7.3;
+    - also drop unused Dart handling in the process;
+    - enable test suite.
 
  -- Modestas Vainius <modestas@vainius.eu>  Tue, 10 Nov 2009 20:25:36 +0200
 
