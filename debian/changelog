@@ -1,6 +1,7 @@
 cmake (2.8.0-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Disable test suite for now.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sat, 14 Nov 2009 01:57:51 +0200
 
