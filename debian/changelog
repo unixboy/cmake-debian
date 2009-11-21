@@ -1,8 +1,8 @@
-cmake (2.8.0-2~pre1) UNRELEASED; urgency=low
+cmake (2.8.0-2) experimental; urgency=low
 
   * Reenable test suite.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sat, 21 Nov 2009 16:26:31 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 00:38:54 +0200
 
 cmake (2.8.0-1) unstable; urgency=low
 
