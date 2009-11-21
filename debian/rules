@@ -34,6 +34,4 @@ override_dh_auto_clean:
 %:
 	dh --builddirectory=Build $@
 
-.PHONY: override_dh_auto_test
-
 .PHONY: override_dh_auto_configure override_dh_auto_clean
