@@ -1,0 +1,17 @@
+From: Modestas Vainius <modestas@vainius.eu>
+Subject: increase time out for BootstrapTest to 2 hours
+ Default time out of 25 minutes (1500 seconds) is not enough on slow
+ and embedded systems (e.g. armel, s390).
+Bug: http://public.kitware.com/Bug/view.php?id=9950
+Forwarded: not-needed
+
+--- a/Tests/CMakeLists.txt
++++ b/Tests/CMakeLists.txt
+@@ -1372,6 +1372,7 @@
+       --build-noclean
+       --build-makeprogram ${CMake_SOURCE_DIR}/bootstrap
+       --build-generator "${CMAKE_TEST_GENERATOR}"
++      --test-timeout 7200
+       --test-command 
+       ${CMake_BINARY_DIR}/Tests/BootstrapTest/Bootstrap.cmk/cmake)
+     LIST(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/BootstrapTest")

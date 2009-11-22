@@ -3,6 +3,8 @@ cmake (2.8.0-3) UNRELEASED; urgency=low
   * Set HOME to current build directory when running test suite. This should
     fix failures of kwsys.testRegistry and FindPackageTest tests on the
     buildds.
+  * Increase timeout of BootstrapTest to 2 hours so it no longer times out
+    on s390 or armel (patch bootstraptest_increase_timeout.diff).
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 20:05:59 +0200
 
