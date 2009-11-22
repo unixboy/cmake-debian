@@ -1,4 +1,4 @@
-cmake (2.8.0-3) UNRELEASED; urgency=low
+cmake (2.8.0-3) UNRELEASED; urgency=medium
 
   * Set HOME to current build directory when running test suite. This should
     fix failures of kwsys.testRegistry and FindPackageTest tests on the
@@ -8,6 +8,7 @@ cmake (2.8.0-3) UNRELEASED; urgency=low
   * Fix GNU.cmake file used on Hurd. Thanks to Pino Toscano for the patch.
   * Build with g++-4.4 on hppa. May solve FTBFS (segfault likely due to
     miscompilation) reported in #556653.
+  * Urgency medium due to likely RC bug fix (#556653).
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 20:05:59 +0200
 
