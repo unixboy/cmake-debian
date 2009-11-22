@@ -1,4 +1,4 @@
-cmake (2.8.0-3) UNRELEASED; urgency=medium
+cmake (2.8.0-3) unstable; urgency=medium
 
   * Set HOME to current build directory when running test suite. This should
     fix failures of kwsys.testRegistry and FindPackageTest tests on the
@@ -10,7 +10,7 @@ cmake (2.8.0-3) UNRELEASED; urgency=medium
     miscompilation) reported in #556653.
   * Urgency medium due to likely RC bug fix (#556653).
 
- -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 20:05:59 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 20:49:29 +0200
 
 cmake (2.8.0-2) experimental; urgency=low
 
