@@ -5,6 +5,7 @@ cmake (2.8.0-3) UNRELEASED; urgency=low
     buildds.
   * Increase timeout of BootstrapTest to 2 hours so it no longer times out
     on s390 or armel (patch bootstraptest_increase_timeout.diff).
+  * Fix GNU.cmake file used on Hurd. Thanks to Pino Toscano for the patch.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 20:05:59 +0200
 
