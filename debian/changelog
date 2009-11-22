@@ -6,6 +6,8 @@ cmake (2.8.0-3) UNRELEASED; urgency=low
   * Increase timeout of BootstrapTest to 2 hours so it no longer times out
     on s390 or armel (patch bootstraptest_increase_timeout.diff).
   * Fix GNU.cmake file used on Hurd. Thanks to Pino Toscano for the patch.
+  * Build with g++-4.4 on hppa. May solve FTBFS (segfault likely due to
+    miscompilation) reported in #556653.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 22 Nov 2009 20:05:59 +0200
 

@@ -7,6 +7,12 @@ ifeq ($(shell arch),parisc64)
 CFLAGS += -ffunction-sections
 endif
 
+# Build with gcc 4.4 on hppa
+ifeq ($(shell dpkg-architecture -qDEB_HOST_ARCH),hppa)
+export CC=gcc-4.4
+export CXX=g++-4.4
+endif
+
 $(BUILD_FLAGS_FILE):
 	touch $@
 	echo 'set(CMAKE_SKIP_RPATH YES CACHE BOOL "Skip rpath" FORCE)'          >> $@
