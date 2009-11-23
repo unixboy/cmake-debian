@@ -1,3 +1,8 @@
+cmake (2.8.0-4) UNRELEASED; urgency=low
+
+
+ -- Modestas Vainius <modestas@vainius.eu>  Mon, 23 Nov 2009 19:44:53 +0200
+
 cmake (2.8.0-3) unstable; urgency=medium
 
   * Set HOME to current build directory when running test suite. This should
