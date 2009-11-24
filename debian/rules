@@ -2,11 +2,6 @@
 
 BUILD_FLAGS_FILE = build-flags.cmake
 
-# Hack for parisc64 to close bug #133696
-ifeq ($(shell arch),parisc64)
-CFLAGS += -ffunction-sections
-endif
-
 $(BUILD_FLAGS_FILE):
 	touch $@
 	echo 'set(CMAKE_SKIP_RPATH YES CACHE BOOL "Skip rpath" FORCE)'          >> $@
