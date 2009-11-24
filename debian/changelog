@@ -1,6 +1,6 @@
 cmake (2.8.0-4) UNRELEASED; urgency=low
 
-  * Update bootstraptest_increase_timeout.diff with upstream version. My
+  * Replace bootstraptest_increase_timeout.diff with upstream version. My
     previous patch didn't work.
   * Revert previous "Build with g++-4.4 on hppa" change. It was not needed, build
     with default compiler on hppa.
