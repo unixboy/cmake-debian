@@ -1,4 +1,4 @@
-cmake (2.8.0-4) UNRELEASED; urgency=medium
+cmake (2.8.0-4) unstable; urgency=medium
 
   * Replace bootstraptest_increase_timeout.diff with upstream version. My
     previous patch didn't work.
@@ -8,7 +8,7 @@ cmake (2.8.0-4) UNRELEASED; urgency=medium
     switch to dh v7 anyway.
   * It should build on hppa now (Closes: #556653). So urgency=medium.
 
- -- Modestas Vainius <modestas@vainius.eu>  Mon, 23 Nov 2009 19:44:53 +0200
+ -- Modestas Vainius <modestas@vainius.eu>  Wed, 25 Nov 2009 11:37:34 +0200
 
 cmake (2.8.0-3) unstable; urgency=medium
 
