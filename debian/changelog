@@ -1,4 +1,4 @@
-cmake (2.8.0-4) UNRELEASED; urgency=low
+cmake (2.8.0-4) UNRELEASED; urgency=medium
 
   * Replace bootstraptest_increase_timeout.diff with upstream version. My
     previous patch didn't work.
@@ -6,6 +6,7 @@ cmake (2.8.0-4) UNRELEASED; urgency=low
     with default compiler on hppa.
   * Remove obsolete hack for parisc64 from debian/rules. It didn't work after
     switch to dh v7 anyway.
+  * It should build on hppa now (Closes: #556653). So urgency=medium.
 
  -- Modestas Vainius <modestas@vainius.eu>  Mon, 23 Nov 2009 19:44:53 +0200
 
