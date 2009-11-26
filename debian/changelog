@@ -1,5 +1,7 @@
 cmake (2.8.0-5) unstable; urgency=low
 
+  * Skip the unpredictably long and rather pointless BootstrapTest
+    (Closes: #558001).
 
  -- Modestas Vainius <modestas@vainius.eu>  Thu, 26 Nov 2009 14:20:46 +0200
 

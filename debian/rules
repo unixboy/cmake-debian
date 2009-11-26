@@ -9,6 +9,7 @@ $(BUILD_FLAGS_FILE):
 	echo 'set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Verbose build" FORCE)'  >> $@
 	echo 'set(CMAKE_C_FLAGS "$(CFLAGS)" CACHE STRING "C flags" FORCE)'      >> $@
 	echo 'set(CMAKE_CXX_FLAGS "$(CFLAGS)" CACHE STRING "C++ flags" FORCE)'  >> $@
+	echo 'set(CMAKE_SKIP_BOOTSTRAP_TEST ON CACHE BOOL "Skip BootstrapTest" FORCE)' >> $@
 #	echo 'set(BUILD_WXDialog ON CACHE STRING "Build WXDialog" FORCE)'      >> $@
 	echo 'set(BUILD_CursesDialog TRUE CACHE BOOL "Build curses GUI" FORCE)' >> $@
 	echo 'set(BUILD_QtDialog TRUE CACHE BOOL "Build Qt4 GUI" FORCE)'        >> $@
