@@ -1,5 +1,6 @@
 cmake (2.8.0-6) UNRELEASED; urgency=low
 
+  * Remove DMUA entry from debian/control. No longer needed.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 06 Dec 2009 21:39:01 +0200
 

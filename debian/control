@@ -3,7 +3,6 @@ Section: devel
 Priority: optional
 Maintainer: Modestas Vainius <modestas@vainius.eu>
 Uploaders: A. Maitland Bottoms <bottoms@debian.org>
-DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 7.3), libcurl4-gnutls-dev, libxmlrpc-c3-dev, libexpat1-dev, zlib1g-dev,
  libncurses5-dev, libqt4-dev (>= 4.4.0)
 Standards-Version: 3.8.3
