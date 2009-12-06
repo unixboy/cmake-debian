@@ -1,3 +1,8 @@
+cmake (2.8.0-6) UNRELEASED; urgency=low
+
+
+ -- Modestas Vainius <modestas@vainius.eu>  Sun, 06 Dec 2009 21:39:01 +0200
+
 cmake (2.8.0-5) unstable; urgency=low
 
   * Skip the unpredictably long and rather pointless BootstrapTest
