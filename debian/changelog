@@ -1,5 +1,6 @@
-cmake (2.8.0-6) UNRELEASED; urgency=low
+cmake (2.8.1-0r1) UNRELEASED; urgency=low
 
+  * New upstream release.
   * Remove DMUA entry from debian/control. No longer needed.
   * Enable building in parallel (--parallel).
 
