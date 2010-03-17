@@ -10,6 +10,7 @@ cmake (2.8.1-0r1) UNRELEASED; urgency=low
     otherwise valid Simple_Mingw_Linux2Win test when ccache is enabled.
   * Update install files.
   * Update Standards-Version to 3.8.4: no changes needed.
+  * Change my email address to modax@debian.org.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 06 Dec 2009 21:39:01 +0200
 
