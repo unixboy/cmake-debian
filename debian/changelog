@@ -6,6 +6,8 @@ cmake (2.8.1-0r1) UNRELEASED; urgency=low
   * Update debian/patches:
     - drop bootstraptest_increase_timeout.diff - merged upstream;
     - hurd_platform.diff - adapt to upstream changes.
+  * Forcefully set MINGW_CC_LINUX2WIN_EXECUTABLE to empty value. It breaks
+    otherwise valid Simple_Mingw_Linux2Win test when ccache is enabled.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 06 Dec 2009 21:39:01 +0200
 

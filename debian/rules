@@ -13,6 +13,7 @@ $(BUILD_FLAGS_FILE):
 #	echo 'set(BUILD_WXDialog ON CACHE STRING "Build WXDialog" FORCE)'      >> $@
 	echo 'set(BUILD_CursesDialog TRUE CACHE BOOL "Build curses GUI" FORCE)' >> $@
 	echo 'set(BUILD_QtDialog TRUE CACHE BOOL "Build Qt4 GUI" FORCE)'        >> $@
+	echo 'set(MINGW_CC_LINUX2WIN_EXECUTABLE "" CACHE FILEPATH "Never detect mingw" FORCE)' >> $@
 #	echo 'set(TARGET_VERSION CACHE STRING ""FORCE)'                        >> $@
 #	echo 'set(TARGET_SOVERSION CACHE STRING "" FORCE)'                     >> $@
 #	echo 'set(BUILD_DOCUMENTATION ON CACHE BOOL "" FORCE)'                 >> $@
