@@ -1,4 +1,4 @@
-cmake (2.8.1-0r1) UNRELEASED; urgency=low
+cmake (2.8.1-1) unstable; urgency=low
 
   * New upstream release.
   * Remove DMUA entry from debian/control. No longer needed.
@@ -12,7 +12,7 @@ cmake (2.8.1-0r1) UNRELEASED; urgency=low
   * Update Standards-Version to 3.8.4: no changes needed.
   * Change my email address to modax@debian.org.
 
- -- Modestas Vainius <modestas@vainius.eu>  Sun, 06 Dec 2009 21:39:01 +0200
+ -- Modestas Vainius <modax@debian.org>  Wed, 17 Mar 2010 17:51:38 +0200
 
 cmake (2.8.0-5) unstable; urgency=low
 
