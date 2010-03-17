@@ -20,7 +20,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: setup.h,v 1.3 2009-06-10 15:49:23 king Exp $
+ * $Id$
  ***************************************************************************/
 
 #ifdef HTTP_ONLY

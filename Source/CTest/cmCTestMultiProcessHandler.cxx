@@ -43,8 +43,11 @@ cmCTestMultiProcessHandler::SetTests(TestMap& tests,
     this->TestRunningMap[i->first] = false;
     this->TestFinishMap[i->first] = false;
     }
-  this->ReadCostData();
-  this->CreateTestCostList();
+  if(!this->CTest->GetShowOnly())
+    {
+    this->ReadCostData();
+    this->CreateTestCostList();
+    }
 }
 
   // Set the max number of tests that can be run at the same time.
@@ -102,6 +105,7 @@ void cmCTestMultiProcessHandler::StartTestProcess(int test)
     this->RunningCount -= GetProcessorsUsed(test);
     testRun->EndTest(this->Completed, this->Total, false);
     this->Failed->push_back(this->Properties[test]->Name);
+    delete testRun;
     }
   cmSystemTools::ChangeDirectory(current_dir.c_str());
 }
@@ -321,7 +325,7 @@ void cmCTestMultiProcessHandler::WriteCostData(int index, float cost)
   std::string fname = this->CTest->GetBinaryDir()
     + "/Testing/Temporary/CTestCostData.txt";
   std::fstream fout;
-  fout.open(fname.c_str(), std::ios::app);
+  fout.open(fname.c_str(), std::ios::out | std::ios::app);
   fout << index << " " << cost << "\n";
   fout.close();
 }
@@ -412,12 +416,9 @@ void cmCTestMultiProcessHandler::CheckResume()
       fin.close();
       }
     }
-  else
+  else if(cmSystemTools::FileExists(fname.c_str(), true))
     {
-    if(cmSystemTools::FileExists(fname.c_str(), true))
-      {
-      cmSystemTools::RemoveFile(fname.c_str());
-      }
+    cmSystemTools::RemoveFile(fname.c_str());
     }
 }
 
