@@ -1,9 +1,9 @@
-cmake (2.8.1-2) UNRELEASED; urgency=low
+cmake (2.8.1-2) unstable; urgency=low
 
   * Add kFreeBSD_fixes.diff patch to fix FTBFS on kfreebsd-* (failure of the
     CTestTestTimeout test).
 
- -- Modestas Vainius <modax@debian.org>  Thu, 18 Mar 2010 01:42:20 +0200
+ -- Modestas Vainius <modax@debian.org>  Thu, 18 Mar 2010 01:45:08 +0200
 
 cmake (2.8.1-1) unstable; urgency=low
 
