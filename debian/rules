@@ -31,6 +31,6 @@ override_dh_auto_clean:
 	rm -f $(BUILD_FLAGS_FILE)
 
 %:
-	dh --builddirectory=Build $@
+	dh --parallel --builddirectory=Build $@
 
 .PHONY: override_dh_auto_configure override_dh_auto_clean
