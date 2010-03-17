@@ -99,4 +99,4 @@ INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(RTI DEFAULT_MSG
   RTI_LIBRARY RTI_INCLUDE_DIR)
 
-# $Id: FindRTI.cmake,v 1.4.2.1 2009-10-01 21:20:32 hoffman Exp $
+# $Id$

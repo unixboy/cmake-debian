@@ -1761,7 +1761,7 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
           ostr.str().c_str(),
           &cpackCommandLines, depends, 0);
       }
-    std::string cmd;
+    std::string cmd = cmakeCommand;
     cpackCommandLines.erase(cpackCommandLines.begin(),
       cpackCommandLines.end());
     singleLine.erase(singleLine.begin(), singleLine.end());
@@ -1782,18 +1782,9 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
     if(mf->GetDefinition("CMake_BINARY_DIR"))
       {
       // We are building CMake itself.  We cannot use the original
-      // executable to install over itself.
-      cmd = mf->GetDefinition("EXECUTABLE_OUTPUT_PATH");
-      if(cmakeCfgIntDir && *cmakeCfgIntDir && cmakeCfgIntDir[0] != '.')
-        {
-        cmd += "/";
-        cmd += cmakeCfgIntDir;
-        }
-      cmd += "/cmake";
-      }
-    else
-      {
-      cmd = cmakeCommand;
+      // executable to install over itself.  The generator will
+      // automatically convert this name to the build-time location.
+      cmd = "cmake";
       }
     singleLine.push_back(cmd.c_str());
     if ( cmakeCfgIntDir && *cmakeCfgIntDir && cmakeCfgIntDir[0] != '.' )
@@ -2077,20 +2068,27 @@ void cmGlobalGenerator::CheckRuleHashes()
   std::string pfile = home;
   pfile += this->GetCMakeInstance()->GetCMakeFilesDirectory();
   pfile += "/CMakeRuleHashes.txt";
+  this->CheckRuleHashes(pfile, home);
+  this->WriteRuleHashes(pfile);
+#endif
+}
 
+//----------------------------------------------------------------------------
+void cmGlobalGenerator::CheckRuleHashes(std::string const& pfile,
+                                        std::string const& home)
+{
 #if defined(_WIN32) || defined(__CYGWIN__)
   std::ifstream fin(pfile.c_str(), std::ios::in | std::ios::binary);
 #else
   std::ifstream fin(pfile.c_str(), std::ios::in);
 #endif
-  bool goodStream = true;
   if(!fin)
     {
-    goodStream = false;
+    return;
     }
   std::string line;
   std::string fname;
-  while(goodStream && cmSystemTools::GetLineFromStream(fin, line))
+  while(cmSystemTools::GetLineFromStream(fin, line))
     {
     // Line format is a 32-byte hex string followed by a space
     // followed by a file name (with no escaping).
@@ -2136,7 +2134,11 @@ void cmGlobalGenerator::CheckRuleHashes()
         }
       }
     }
+}
 
+//----------------------------------------------------------------------------
+void cmGlobalGenerator::WriteRuleHashes(std::string const& pfile)
+{
   // Now generate a new persistence file with the current hashes.
   if(this->RuleHashes.empty())
     {
@@ -2153,7 +2155,6 @@ void cmGlobalGenerator::CheckRuleHashes()
       fout << " " << rhi->first << "\n";
       }
     }
-#endif
 }
 
 //----------------------------------------------------------------------------

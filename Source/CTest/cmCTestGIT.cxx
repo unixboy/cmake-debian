@@ -19,6 +19,8 @@
 #include <cmsys/ios/sstream>
 #include <cmsys/Process.h>
 
+#include <sys/types.h>
+#include <time.h>
 #include <ctype.h>
 
 //----------------------------------------------------------------------------
@@ -336,16 +338,28 @@ private:
       Person author;
       this->ParsePerson(this->Line.c_str()+7, author);
       this->Rev.Author = author.Name;
-      char buf[1024];
+
+      // Convert the time to a human-readable format that is also easy
+      // to machine-parse: "CCYY-MM-DD hh:mm:ss".
+      time_t seconds = static_cast<time_t>(author.Time);
+      struct tm* t = gmtime(&seconds);
+      char dt[1024];
+      sprintf(dt, "%04d-%02d-%02d %02d:%02d:%02d",
+              t->tm_year+1900, t->tm_mon+1, t->tm_mday,
+              t->tm_hour, t->tm_min, t->tm_sec);
+      this->Rev.Date = dt;
+
+      // Add the time-zone field "+zone" or "-zone".
+      char tz[32];
       if(author.TimeZone >= 0)
         {
-        sprintf(buf, "%lu +%04ld", author.Time, author.TimeZone);
+        sprintf(tz, " +%04ld", author.TimeZone);
         }
       else
         {
-        sprintf(buf, "%lu -%04ld", author.Time, -author.TimeZone);
+        sprintf(tz, " -%04ld", -author.TimeZone);
         }
-      this->Rev.Date = buf;
+      this->Rev.Date += tz;
       }
     }
 
@@ -395,10 +409,16 @@ void cmCTestGIT::LoadRevisions()
 //----------------------------------------------------------------------------
 void cmCTestGIT::LoadModifications()
 {
-  // Use 'git diff-index' to get modified files.
   const char* git = this->CommandLineTool.c_str();
-  const char* git_diff_index[] = {git, "diff-index", "-z", "HEAD", 0};
 
+  // Use 'git update-index' to refresh the index w.r.t. the work tree.
+  const char* git_update_index[] = {git, "update-index", "--refresh", 0};
+  OutputLogger ui_out(this->Log, "ui-out> ");
+  OutputLogger ui_err(this->Log, "ui-err> ");
+  this->RunChild(git_update_index, &ui_out, &ui_err);
+
+  // Use 'git diff-index' to get modified files.
+  const char* git_diff_index[] = {git, "diff-index", "-z", "HEAD", 0};
   DiffParser out(this, "di-out> ");
   OutputLogger err(this->Log, "di-err> ");
   this->RunChild(git_diff_index, &out, &err);

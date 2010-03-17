@@ -62,9 +62,6 @@ IF(NOT CMAKE_Fortran_COMPILER)
     #  The order is 95 or newer compilers first, then 90, 
     #  then 77 or older compilers, gnu is always last in the group,
     #  so if you paid for a compiler it is picked by default.
-    # NOTE for testing purposes this list is DUPLICATED in
-    # CMake/Source/CMakeLists.txt, IF YOU CHANGE THIS LIST,
-    # PLEASE UPDATE THAT FILE AS WELL!
     SET(CMAKE_Fortran_COMPILER_LIST
       ifort ifc efc f95 pgf95 lf95 xlf95 fort gfortran gfortran-4 g95 f90
       pgf90 xlf90 epcf90 fort77 frt pgf77 xlf fl32 af77 g77 f77
@@ -164,6 +161,11 @@ IF(NOT CMAKE_Fortran_COMPILER_ID_RUN)
     # Intel on windows does not preprocess by default.
     "-fpp"
     )
+
+  # Table of per-vendor compiler id flags with expected output.
+  LIST(APPEND CMAKE_Fortran_COMPILER_ID_VENDORS Compaq)
+  SET(CMAKE_Fortran_COMPILER_ID_VENDOR_FLAGS_Compaq "-what")
+  SET(CMAKE_Fortran_COMPILER_ID_VENDOR_REGEX_Compaq "Compaq Visual Fortran")
 
   # Try to identify the compiler.
   SET(CMAKE_Fortran_COMPILER_ID)

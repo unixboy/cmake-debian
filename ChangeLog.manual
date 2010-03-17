@@ -1,3 +1,92 @@
+Changes in CMake 2.8.1
+- Fix failing test on cygwin
+- Add a new serach path for MPICH2
+
+Changes in CMake 2.8.1 RC 5
+- Fix FindQt4 to work with OpenGL on the mac
+- Add .git .bzr and .hg to the list of default CPack ignore directories.
+
+Changes in CMake 2.8.1 RC 4
+- CTest: Do not hide test GUI windows (fixes 2.8.0 regression)
+- Documentation: Clarify CMAKE_MODULE_PATH variable
+- FindQt4: Add support for QtDeclartive module
+- FortranCInterface: Fix PathScale detection
+- Suppress GNU flag -fPIC on Windows (fixes 2.8.1-rc1 regression)
+
+Changes in CMake 2.8.1 RC 3
+- Add CMAKE_XCODE_ATTRIBUTE_<attr> interface to set compiler (#9125)
+- Fix Eclipse files for targets in subdirectories (#9978)
+- Fix custom command rule hashes to avoid extra rebuilds
+- Print non-make generator name in initial compiler test
+
+Changes in CMake 2.8.1 RC 2
+- CPack: Avoid deleting long PATH values with NSIS (#10257)
+- CTest: Fix and test cost-based test scheduler
+- CTest: Fix and test git updates for case of out-dated index
+- CTest: Fix regression caused by fix for (#2336) in rc1
+- CTest: Setup command-line dashboard support with Git
+- FindCUDA: Improve docs, use -rpath on Apple, fix dependency scanning
+- Fix OS X deployment-target and sysroot defaults (#9959,#9898,#10155)
+- Recognize the Compaq Fortran compiler
+
+Changes in CMake 2.8.1 RC 1
+- Add "NMake Makefiles JOM" generator
+- Add PathScale compiler support
+- Add per-configuration OUTPUT_DIRECTORY properties
+- Add per-target OSX_ARCHITECTURES property
+- check_type_size(): Handle mixed-size universal binaries
+- CPack: Document Mac generators
+- CPack: Improve RPM spec files
+- Create CMAKE_FORCE_Fortran_COMPILER for cross-compiling
+- CTest: Add --http1.0 command-line option
+- CTest: Add --timeout command-line option
+- CTest: Do not munge UTF-8 output in XML files
+- CTest: Document CTEST_USE_LAUNCHERS option
+- CTest: Fix killing of whole test process trees
+- CTest: Handle failure of running invalid executables
+- CTest: Honor the -C arg to ctest (#2336)
+- CTest: Improve host system introspection
+- CTest: Optionally randomize test order (--schedule-random)
+- CTest: Skip tests with unsatisfied REQUIRED_FILES test property
+- CTest: Submit arbitrary results with ATTACHED_FILES test property
+- ctest_build(): Enhance signature
+- ctest_start(): Add APPEND option
+- ctest_start(): Move CTEST_CHECKOUT_COMMAND from ctest_update
+- ctest_update(): Submit global tree revision in Update.xml
+- Cygwin: Do not export all symbols from DLLs (#10122)
+- Cygwin: Name DLLs with SOVERSION, not VERSION (#10122)
+- Detect 32/64-bit Windows with Intel compiler
+- Eclipse generator enhancements
+- ExternalProject: Add TIMEOUT parameter
+- FindCUDA: Respect CUDA version differences
+- FindCURL: Find import libraries on Windows
+- FindDCMTK: Look in more places
+- FindGTest: Handle spaces better (#10065)
+- FindGTK2: Look in fink locations on Mac OS X
+- FindHDF5: Follow find-module API conventions
+- FindJava: Support for versioned find
+- FindJNI: Honor find_package() REQUIRED and QUIET options
+- FindMPI: Improve Windows support
+- FindOpenSSL: Fix MinGW support
+- FindPythonLibs: Look in config for static library
+- FindQt4: Misc enhancements, sync with KDE vesion
+- FindRuby: Fix version convention on Windows
+- FindX11: Improve documentation
+- Fortran: Detect address size (#10119)
+- FortranCInterface: Honor user flags
+- Improve VS 2010 beta2 support
+- link_directories(): Treat relative paths consistently (CMP0015)
+- Modernize FindLibXslt and FindLibXml.cmake
+- Refactor platform info to simplify adding new compilers
+- Support cross-compiling versioned DLLs
+- UseQt4: Provide dependencies only for static Qt (#10021)
+- Address issues:
+  #2336, #3571, #5041, #7541, #8725, #9011, #9042, #9054, #9163,
+  #9171, #9450, #9697, #9764, #9782, #9792, #9862, #9894, #9913,
+  #9916, #9917, #9918, #9949, #9965, #9970, #9982, #9985, #10003,
+  #10014, #10021, #10032, #10055, #10060, #10065, #10114, #10119,
+  #10122, #10126, #10136.
+
 Changes in CMake 2.8.0 Release
 - CPack: Honor CPACK_NSIS_DISPLAY_NAME (fixes regression)
 
