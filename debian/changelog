@@ -3,6 +3,9 @@ cmake (2.8.1-0r1) UNRELEASED; urgency=low
   * New upstream release.
   * Remove DMUA entry from debian/control. No longer needed.
   * Enable building in parallel (--parallel).
+  * Update debian/patches:
+    - drop bootstraptest_increase_timeout.diff - merged upstream;
+    - hurd_platform.diff - adapt to upstream changes.
 
  -- Modestas Vainius <modestas@vainius.eu>  Sun, 06 Dec 2009 21:39:01 +0200
 
