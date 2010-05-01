@@ -1,2 +1,3 @@
 hurd_platform.diff
 kFreeBSD_fixes.diff
+FindJNI_fix_libarch_determination.diff
