@@ -1,11 +1,12 @@
 From: Modestas Vainius <modax@debian.org>
-Subject: Fix libarch determination based on openjdk 1.6.0_18 code
- OpenJDK build system has been rewritten sometime between 1.6.0_16 and 1.6.0_18
- and now it features improved JRE_ARCH_DIR determination. This patch rewrites
- ${_java_libarch} determination code in FindJNI.cmake accordingly (it is not a
- straight port though because OpenJDK build system bases its decisions on GNU
- triplet now which is not available for cmake). As a side effect, this should
- fix invalid ${_java_libarch} determination on armel and mipsel.
+Subject: Fix libarch determination based on openjdk 1.6.0_18 + icedtea code
+ This new version is based on the openjdk 1.6.0_18 + icedtea patches:
+   - acinclude.m4 (JRE_ARCH_DIR)
+   - openjdk/jdk/make/common/shared/Platform.gmk (libarch)
+  This should fix libarch determination on armel and mipsel, add support for
+  hppa and sh. However, it would be more reliable to base this guess on the
+  first part of the GNU config.guess platform triplet but it is generally not
+  available for cmake yet.
 Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=544674
 Bug: http://public.kitware.com/Bug/view.php?id=9611
 Origin: vendor
@@ -13,7 +14,7 @@ Forwarded: no
 
 --- a/Modules/FindJNI.cmake
 +++ b/Modules/FindJNI.cmake
-@@ -29,24 +29,40 @@
+@@ -29,24 +29,42 @@
  # Expand {libarch} occurences to java_libarch subdirectory(-ies) and set ${_var}
  MACRO(java_append_library_directories _var)
      # Determine java arch-specific library subdir
@@ -35,9 +36,9 @@ Forwarded: no
 -    ELSE(CMAKE_SYSTEM_NAME MATCHES "Linux")
 -        SET(_java_libarch "i386" "amd64" "ppc") # previous default
 -    ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-+    # Based on acinclude.m4 (JRE_ARCH_DIR) as of openjdk 1.6.0_18
-+    # and kaffe as of 1.1.8 which uses the first part of the
-+    # GNU config.guess platform triplet.
++    # Mostly based on openjdk/jdk/make/common/shared/Platform.gmk as of openjdk
++    # 1.6.0_18 + icedtea patches. However, it would be much better to base the
++    # guess on the first part of the GNU config.guess platform triplet.
 +    IF(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 +        SET(_java_libarch "amd64")
 +    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
@@ -48,23 +49,25 @@ Forwarded: no
 +        SET(_java_libarch "arm")
 +    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^mips")
 +        IF(CMAKE_CROSSCOMPILING)
-+            SET(_java_libarch "mips" "mipsel")
++            SET(_java_libarch "mips" "mipsel" "mipseb")
 +        ELSE(CMAKE_CROSSCOMPILING)
 +            INCLUDE(TestBigEndian)
 +            TEST_BIG_ENDIAN(_java_bigendian)
 +            IF(_java_bigendian)
-+                SET(_java_libarch "mips")
++                SET(_java_libarch "mips" "mipseb")
 +            ELSE(_java_bigendian)
 +                SET(_java_libarch "mipsel")
 +            ENDIF(_java_bigendian)
 +        ENDIF(CMAKE_CROSSCOMPILING)
-+    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^ppc64")
++    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64")
 +        SET(_java_libarch "ppc64")
-+    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^ppc")
++    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)")
 +        SET(_java_libarch "ppc")
 +    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sparc")
 +        SET(_java_libarch "sparc" "sparcv9")
-+    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sh.*-.*-.*$")
++    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^(parisc|hppa)")
++        SET(_java_libarch "parisc" "parisc64")
++    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sh")
 +        SET(_java_libarch "sh")
 +    ELSE(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 +        SET(_java_libarch ${CMAKE_SYSTEM_PROCESSOR})
