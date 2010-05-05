@@ -1,4 +1,4 @@
 hurd_platform.diff
-kFreeBSD_fixes.diff
+kFreeBSD_Hurd_fixes.diff
 FindGTK2_pangommconfig.diff
 FindJNI_fix_libarch_determination.diff
