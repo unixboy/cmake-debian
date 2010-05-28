@@ -67,7 +67,7 @@ Last-Update: 2010-05-17
 +        SET(_java_libarch "${CMAKE_SYSTEM_PROCESSOR}" "s390" "s390x")
 +    ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "^sh")
 +        SET(_java_libarch "sh")
-+    ELSEIF("${CMAKE_SYSTEM_PROCESSOR}")
++    ELSE(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 +        SET(_java_libarch "${CMAKE_SYSTEM_PROCESSOR}")
 +    ENDIF(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 +
