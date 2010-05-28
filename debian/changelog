@@ -6,8 +6,8 @@ cmake (2.8.1-5) UNRELEASED; urgency=low
   [ Modestas Vainius ]
   * Add procps to Build-Depends and cmake Depends. cmake sometimes uses ps
     binary.
-  * FindJNI patch: avoid using trick bits of cmake IF() command syntax.
-    This should fix FindJNI on architectures which do not need special
+  * Fix FindJNI patch (again): avoid using tricky bits of cmake IF() command
+    syntax. This should fix FindJNI on architectures which do not need special
     CMAKE_SYSTEM_PROCESSOR handling (e.g. ia64).
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 27 May 2010 00:56:35 +0200
