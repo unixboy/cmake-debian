@@ -12,3 +12,5 @@ configure        crlf=input
 *.dsw           -crlf
 *.sln           -crlf
 *.vcproj        -crlf
+
+debian/changelog merge=dpkg-mergechangelogs
