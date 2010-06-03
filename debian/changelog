@@ -1,10 +1,11 @@
 cmake (2.8.1-6) UNRELEASED; urgency=low
 
-  * debian/patches/FindPython_fix_#580503.diff: Added. (Closes: #580503)
+  * debian/patches/debian/patches/FindPython_fix_#569321_and_#580503.diff:
+    Added. (Closes: #569321, #580503)
   * debian/cmake-data.NEWS: Document the changes of the new patch, so nobody
     gets surprised.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 15:20:02 +0200
+ -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 16:25:20 +0200
 
 cmake (2.8.1-5) unstable; urgency=low
 
