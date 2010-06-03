@@ -3,3 +3,4 @@ kFreeBSD_Hurd_fixes.diff
 FindGTK2_pangommconfig.diff
 FindJNI_fix_libarch_determination.diff
 cpack_installed_size.diff
+FindPython_fix_#580503.diff
