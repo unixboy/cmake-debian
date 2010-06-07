@@ -8,13 +8,13 @@ Description: Make the Python CMake scripts more versatile in version handling.
  Parts of this patch were sent upstream (the "request a specific version" part).
  The part for requesting a specific version was written by Didier Raboud
  <didier@raboud.com>.
-Last-Update: 2010-06-03
+Last-Update: 2010-06-07
 Origin: vendor
 Forwarded: yes
 
 --- a/Modules/FindPythonInterp.cmake
 +++ b/Modules/FindPythonInterp.cmake
-@@ -19,19 +19,30 @@
+@@ -19,19 +19,35 @@
  # (To distributed this file outside of CMake, substitute the full
  #  License text for the above reference.)
  
@@ -36,17 +36,22 @@ Forwarded: yes
 +# Didier Raboud <didier@raboud.com> and Jakub Wilk <jwilk@debian.org> to fix the
 +# following bugs: #569321 and #580503.
 +# For further information please see the Debian.NEWS file for cmake-data.
-+IF(CMAKE_PYTHON_VERSION)
-+  SET(CMAKE_PYTHON_VERSIONS ${CMAKE_PYTHON_VERSION})
-+ELSE(CMAKE_PYTHON_VERSION)
-+  IF(NO_DEBIAN_PY_DEFAULT)
-+    SET(CMAKE_PYTHON_VERSIONS 2.6 2.5 2.4 2.3 2.2 2.1 2.0 1.6 1.5)
-+  ELSE(NO_DEBIAN_PY_DEFAULT)
++IF(CMAKE_USE_PYTHON_VERSION)
++  SET(CMAKE_PYTHON_VERSIONS ${CMAKE_USE_PYTHON_VERSION})
++ELSE(CMAKE_USE_PYTHON_VERSION)
++  SET(CMAKE_PYTHON_VERSIONS 2.6 2.5 2.4 2.3 2.2 2.1 2.0 1.6 1.5)
++
++  FIND_PROGRAM(PYVERSIONS_EXE
++    NAMES pyversions
++    )
++  IF(PYVERSIONS_EXE)
 +    EXECUTE_PROCESS(COMMAND pyversions -dv
-+      OUTPUT_VARIABLE _CMAKE_PYTHON_VERSIONS)
-+    STRING(REPLACE "\n" "" CMAKE_PYTHON_VERSIONS ${_CMAKE_PYTHON_VERSIONS})
-+  ENDIF(NO_DEBIAN_PY_DEFAULT)
-+ENDIF(CMAKE_PYTHON_VERSION)
++      OUTPUT_VARIABLE _CMAKE_PYTHON_VERSIONS
++      OUTPUT_STRIP_TRAILING_WHITESPACE)
++    LIST(INSERT CMAKE_PYTHON_VERSIONS 0 ${_CMAKE_PYTHON_VERSIONS})
++    LIST(REMOVE_DUPLICATES CMAKE_PYTHON_VERSIONS)
++  ENDIF(PYVERSIONS_EXE)
++ENDIF(CMAKE_USE_PYTHON_VERSION)
 +
 +FOREACH(_CURRENT_VERSION ${CMAKE_PYTHON_VERSIONS})
 +  FIND_PROGRAM(PYTHON_EXECUTABLE
@@ -60,7 +65,7 @@ Forwarded: yes
  # all listed variables are TRUE
 --- a/Modules/FindPythonLibs.cmake
 +++ b/Modules/FindPythonLibs.cmake
-@@ -27,7 +27,24 @@ INCLUDE(CMakeFindFrameworks)
+@@ -27,7 +27,29 @@ INCLUDE(CMakeFindFrameworks)
  # Search for the python framework on Apple.
  CMAKE_FIND_FRAMEWORKS(Python)
  
@@ -70,17 +75,22 @@ Forwarded: yes
 +# Didier Raboud <didier@raboud.com> and Jakub Wilk <jwilk@debian.org> to fix the
 +# following bugs: #569321 and #580503.
 +# For further information please see the Debian.NEWS file for cmake-data.
-+IF(CMAKE_PYTHON_VERSION)
-+  SET(CMAKE_PYTHON_VERSIONS ${CMAKE_PYTHON_VERSION})
-+ELSE(CMAKE_PYTHON_VERSION)
-+  IF(NO_DEBIAN_PY_DEFAULT)
-+    SET(CMAKE_PYTHON_VERSIONS 2.6 2.5 2.4 2.3 2.2 2.1 2.0 1.6 1.5)
-+  ELSE(NO_DEBIAN_PY_DEFAULT)
++IF(CMAKE_USE_PYTHON_VERSION)
++  SET(CMAKE_PYTHON_VERSIONS ${CMAKE_USE_PYTHON_VERSION})
++ELSE(CMAKE_USE_PYTHON_VERSION)
++  SET(CMAKE_PYTHON_VERSIONS 2.6 2.5 2.4 2.3 2.2 2.1 2.0 1.6 1.5)
++
++  FIND_PROGRAM(PYVERSIONS_EXE
++    NAMES pyversions
++    )
++  IF(PYVERSIONS_EXE)
 +    EXECUTE_PROCESS(COMMAND pyversions -dv
-+      OUTPUT_VARIABLE _CMAKE_PYTHON_VERSIONS)
-+    STRING(REPLACE "\n" "" CMAKE_PYTHON_VERSIONS ${_CMAKE_PYTHON_VERSIONS})
-+  ENDIF(NO_DEBIAN_PY_DEFAULT)
-+ENDIF(CMAKE_PYTHON_VERSION)
++      OUTPUT_VARIABLE _CMAKE_PYTHON_VERSIONS
++      OUTPUT_STRIP_TRAILING_WHITESPACE)
++    LIST(INSERT CMAKE_PYTHON_VERSIONS 0 ${_CMAKE_PYTHON_VERSIONS})
++    LIST(REMOVE_DUPLICATES CMAKE_PYTHON_VERSIONS)
++  ENDIF(PYVERSIONS_EXE)
++ENDIF(CMAKE_USE_PYTHON_VERSION)
 +
 +FOREACH(_CURRENT_VERSION ${CMAKE_PYTHON_VERSIONS})
    STRING(REPLACE "." "" _CURRENT_VERSION_NO_DOTS ${_CURRENT_VERSION})
