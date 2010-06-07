@@ -2,15 +2,15 @@ From: Kai Wasserbäch <debian@carbon-project.org>
 Description: Make the Python CMake scripts more versatile in version handling.
  The FindPython{Interp,Libs}.cmake scripts need to cater for a set version or,
  failing that, in Debian, set the default version for Python in Debian.
+ As a last resort we still try a list of hardcoded values.
  .
  This patch addresses both issues. (Closes: #569321, #580503)
  .
- Parts of this patch were sent upstream (the "request a specific version" part).
- The part for requesting a specific version was written by Didier Raboud
- <didier@raboud.com>.
+ Parts of this patch were based on Didier Raboud's <didier@raboud.com> patch for
+ #569321.
 Last-Update: 2010-06-07
 Origin: vendor
-Forwarded: yes
+Forwarded: http://public.kitware.com/Bug/view.php?id=10279
 
 --- a/Modules/FindPythonInterp.cmake
 +++ b/Modules/FindPythonInterp.cmake
