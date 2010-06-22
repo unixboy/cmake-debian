@@ -1,6 +1,7 @@
 cmake (2.8.2~rc3-1) UNRELEASED; urgency=low
 
-  * New upstream release.
+  * New upstream release:
+    - Detects Clang compiler (Closes: #560693).
 
   [ Kai Wasserbäch ]
   * debian/patches/debian/patches/FindPython_fix_#569321_and_#580503.diff:
