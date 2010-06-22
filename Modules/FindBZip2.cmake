@@ -4,7 +4,6 @@
 #  BZIP2_FOUND - system has BZip2
 #  BZIP2_INCLUDE_DIR - the BZip2 include directory
 #  BZIP2_LIBRARIES - Link these to use BZip2
-#  BZIP2_DEFINITIONS - Compiler switches required for using BZip2
 #  BZIP2_NEED_PREFIX - this is set if the functions are prefixed with BZ2_
 
 #=============================================================================
@@ -20,10 +19,6 @@
 #=============================================================================
 # (To distributed this file outside of CMake, substitute the full
 #  License text for the above reference.)
-
-IF (BZIP2_INCLUDE_DIR AND BZIP2_LIBRARIES)
-    SET(BZip2_FIND_QUIETLY TRUE)
-ENDIF (BZIP2_INCLUDE_DIR AND BZIP2_LIBRARIES)
 
 FIND_PATH(BZIP2_INCLUDE_DIR bzlib.h )
 

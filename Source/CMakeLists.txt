@@ -111,6 +111,7 @@ ENDIF(CMAKE_USE_ELF_PARSER)
 # Sources for CMakeLib
 #
 SET(SRCS
+  cmStandardIncludes.cxx
   cmBootstrapCommands.cxx
   cmCacheManager.cxx
   cmCacheManager.h
@@ -330,10 +331,10 @@ ENDIF (WIN32)
 
 # create a library used by the command line and the GUI
 ADD_LIBRARY(CMakeLib ${SRCS})
-TARGET_LINK_LIBRARIES(CMakeLib cmsys
+TARGET_LINK_LIBRARIES(CMakeLib cmsys 
   ${CMAKE_EXPAT_LIBRARIES} ${CMAKE_ZLIB_LIBRARIES}
   ${CMAKE_TAR_LIBRARIES} ${CMAKE_COMPRESS_LIBRARIES}
-  ${CMAKE_CURL_LIBRARIES})
+  ${CMAKE_CURL_LIBRARIES} )
 
 # On Apple we need Carbon
 IF(APPLE)
@@ -366,6 +367,7 @@ SET(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestConfigureHandler.cxx
   CTest/cmCTestCoverageCommand.cxx
   CTest/cmCTestCoverageHandler.cxx
+  CTest/cmParsePHPCoverage.cxx
   CTest/cmCTestEmptyBinaryDirectoryCommand.cxx
   CTest/cmCTestGenericHandler.cxx
   CTest/cmCTestHandlerCommand.cxx
@@ -410,6 +412,7 @@ TARGET_LINK_LIBRARIES(CTestLib CMakeLib ${CMAKE_CURL_LIBRARIES} ${CMAKE_XMLRPC_L
 # Sources for CPack
 #
 SET(CPACK_SRCS
+  CPack/cmCPackArchiveGenerator.cxx
   CPack/cmCPackComponentGroup.cxx
   CPack/cmCPackGeneratorFactory.cxx
   CPack/cmCPackGenerator.cxx
@@ -501,4 +504,3 @@ IF(APPLE)
 ENDIF(APPLE)
 
 INSTALL_FILES(${CMAKE_DATA_DIR}/include cmCPluginAPI.h)
-

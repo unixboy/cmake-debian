@@ -18,11 +18,13 @@
 #ifdef __QNX__
 # include <malloc.h> /* for malloc/free on QNX */
 #endif
-
+#include <cmsys/Glob.hxx>
 #include <cmsys/RegularExpression.hxx>
 #include <cmsys/Directory.hxx>
 #include <cmsys/System.h>
 #if defined(CMAKE_BUILD_WITH_CMAKE)
+#include <cmlibarchive/libarchive/archive.h>
+#include <cmlibarchive/libarchive/archive_entry.h>
 # include <cmsys/Terminal.h>
 #endif
 #include <cmsys/stl/algorithm>
@@ -45,9 +47,8 @@
 #endif
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
-#  include <libtar/libtar.h>
+#  include <memory> // auto_ptr
 #  include <fcntl.h>
-#  include <cm_zlib.h>
 #  include <cmsys/MD5.h>
 #endif
 
@@ -1713,166 +1714,147 @@ bool cmSystemTools::IsPathToFramework(const char* path)
   return false;
 }
 
-#if defined(CMAKE_BUILD_WITH_CMAKE)
-struct cmSystemToolsGZStruct
-{
-  gzFile GZFile;
-};
-
-extern "C" {
-  int cmSystemToolsGZStructOpen(void* call_data, const char *pathname, 
-                                int oflags, mode_t mode);
-  int cmSystemToolsGZStructClose(void* call_data);
-  ssize_t cmSystemToolsGZStructRead(void* call_data, void* buf, size_t count);
-  ssize_t cmSystemToolsGZStructWrite(void* call_data, const void* buf, 
-                                     size_t count);
-}
-
-int cmSystemToolsGZStructOpen(void* call_data, const char *pathname, 
-                              int oflags, mode_t mode)
-{
-  const char *gzoflags;
-  int fd;
-
-  cmSystemToolsGZStruct* gzf = static_cast<cmSystemToolsGZStruct*>(call_data);
-
-  switch (oflags & O_ACCMODE)
-  {
-  case O_WRONLY:
-    gzoflags = "wb";
-    break;
-  case O_RDONLY:
-    gzoflags = "rb";
-    break;
-  default:
-  case O_RDWR:
-    errno = EINVAL;
-    return -1;
-  }
-
-  fd = open(pathname, oflags, mode);
-  if (fd == -1)
-    {
-    return -1;
-    }
-
-// no fchmod on BeOS 5...do pathname instead.
-#if defined(__BEOS__) && !defined(__ZETA__) && !defined(__HAIKU__)
-  if ((oflags & O_CREAT) && chmod(pathname, mode))
-    {
-    return -1;
-    }
-#elif !defined(_WIN32) || defined(__CYGWIN__)
-  if ((oflags & O_CREAT) && fchmod(fd, mode))
-    {
-    return -1;
-    }
-#endif
-
-  gzf->GZFile = gzdopen(fd, gzoflags);
-  if (!gzf->GZFile)
-  {
-    errno = ENOMEM;
-    return -1;
-  }
-
-  return fd;
-}
-
-int cmSystemToolsGZStructClose(void* call_data)
-{
-  cmSystemToolsGZStruct* gzf = static_cast<cmSystemToolsGZStruct*>(call_data);
-  return gzclose(gzf->GZFile);
-}
-
-ssize_t cmSystemToolsGZStructRead(void* call_data, void* buf, size_t count)
-{
-  cmSystemToolsGZStruct* gzf = static_cast<cmSystemToolsGZStruct*>(call_data);
-  return gzread(gzf->GZFile, buf, static_cast<int>(count));
-}
-
-ssize_t cmSystemToolsGZStructWrite(void* call_data, const void* buf,
-                                   size_t count)
-{
-  cmSystemToolsGZStruct* gzf = static_cast<cmSystemToolsGZStruct*>(call_data);
-  return gzwrite(gzf->GZFile, (void*)buf, static_cast<int>(count));
-}
-
-#endif
-
 bool cmSystemTools::CreateTar(const char* outFileName, 
                               const std::vector<cmStdString>& files,
-                              bool gzip, bool verbose)
+                              bool gzip, bool bzip2, bool verbose)
 {
 #if defined(CMAKE_BUILD_WITH_CMAKE)
-  TAR *t;
-  char buf[TAR_MAXPATHLEN];
-  char pathname[TAR_MAXPATHLEN];
-  cmSystemToolsGZStruct gzs;
-
-  tartype_t gztype = {
-    (openfunc_t)cmSystemToolsGZStructOpen,
-    (closefunc_t)cmSystemToolsGZStructClose,
-    (readfunc_t)cmSystemToolsGZStructRead,
-    (writefunc_t)cmSystemToolsGZStructWrite,
-    &gzs
-  };
-
-  // This libtar is not const safe. Make a non-const copy of outFileName
-  char* realName = new char[ strlen(outFileName) + 1 ];
-  strcpy(realName, outFileName);
-  int options = 0;
-  if(verbose)
-    {
-    options |= TAR_VERBOSE;
+  
+  // Create a macro to handle return from libarchive 
+  // functions
+#define CHECK_ARCHIVE_ERROR(res, msg)\
+   if(res != ARCHIVE_OK)\
+    {\
+    cmSystemTools::Error(msg, \
+                         archive_error_string(a));\
+    return false;\
     }
-#ifdef __CYGWIN__
-  options |= TAR_GNU;
-#endif 
-  if (tar_open(&t, realName,
-      (gzip? &gztype : NULL),
-      O_WRONLY | O_CREAT, 0644,
-      options) == -1)
+  
+  std::string cwd = cmSystemTools::GetCurrentWorkingDirectory();
+  // recursively expand all directories in files so that we have a list
+  // of files
+  std::vector<std::string> expandedFiles;
+  for(std::vector<cmStdString>::const_iterator i = files.begin();
+      i != files.end(); ++i)
     {
-    cmSystemTools::Error("Problem with tar_open(): ", strerror(errno));
-    delete [] realName;
-    return false;
-    }
-
-  delete [] realName;
-
-  std::vector<cmStdString>::const_iterator it;
-  for (it = files.begin(); it != files.end(); ++ it )
-    {
-    strncpy(pathname, it->c_str(), sizeof(pathname));
-    pathname[sizeof(pathname)-1] = 0;
-    strncpy(buf, pathname, sizeof(buf));
-    buf[sizeof(buf)-1] = 0;
-    if (tar_append_tree(t, buf, pathname) != 0)
+    if(cmSystemTools::FileIsDirectory(i->c_str()))
       {
-      cmOStringStream ostr;
-      ostr << "Problem with tar_append_tree(\"" << buf << "\", \"" 
-           << pathname << "\"): "
-        << strerror(errno);
-      cmSystemTools::Error(ostr.str().c_str());
-      tar_close(t);
-      return false;
+      cmsys::Glob gl;
+      std::string findExpr = *i; 
+      if ( findExpr[findExpr.size()-1] != '/' )
+        {
+        findExpr +="/";
+        }
+      findExpr += "*";
+      gl.RecurseOn();
+      if ( gl.FindFiles(findExpr) )
+        {
+        std::vector<std::string> dirfiles = gl.GetFiles();
+        std::copy(dirfiles.begin(), dirfiles.end(),
+                  std::back_inserter(expandedFiles));
+        }
+      }
+    else
+      {
+      if(!cmSystemTools::FileIsFullPath(i->c_str()))
+        {
+        std::string fullp = cwd + "/" + *i;
+        expandedFiles.push_back(fullp);
+        }
+      else
+        {
+        expandedFiles.push_back(*i);
+        }
       }
     }
-
-  if (tar_append_eof(t) != 0)
+  int res;
+  // create a new archive
+  struct archive* a = archive_write_new();
+  if(!a)
     {
-    cmSystemTools::Error("Problem with tar_append_eof(): ", strerror(errno));
-    tar_close(t);
+    cmSystemTools::Error("Unable to use create archive");
     return false;
     }
 
-  if (tar_close(t) != 0)
+  if(gzip)
     {
-    cmSystemTools::Error("Problem with tar_close(): ", strerror(errno));
-    return false;
+    res = archive_write_set_compression_gzip(a);
+    CHECK_ARCHIVE_ERROR(res, "Can not set gzip:");
+    } 
+  if(bzip2)
+    {
+    res = archive_write_set_compression_bzip2(a); 
+    CHECK_ARCHIVE_ERROR(res, "Can not set bzip2:");
     }
+  if(!bzip2 && !gzip)
+    { 
+    res = archive_write_set_compression_none(a); 
+    CHECK_ARCHIVE_ERROR(res, "Can not set none:");
+    }
+  res = archive_write_set_format_pax_restricted(a);
+  CHECK_ARCHIVE_ERROR(res, "Can not set tar format:");
+  res = archive_write_open_file(a, outFileName);
+  CHECK_ARCHIVE_ERROR(res, "write open:");
+    // create a new disk struct
+  struct archive* disk = archive_read_disk_new();
+  archive_read_disk_set_standard_lookup(disk);
+  std::vector<std::string>::const_iterator fileIt;
+  for ( fileIt = expandedFiles.begin(); 
+        fileIt != expandedFiles.end(); ++ fileIt )
+    {
+    // create a new entry for each file
+    struct archive_entry *entry = archive_entry_new(); 
+    // Get the relative path to the file
+    std::string rp = cmSystemTools::RelativePath(cwd.c_str(),
+                                                 fileIt->c_str());
+    if(verbose)
+      {
+      std::cout << rp << "\n";
+      }
+    // Set the name of the entry to the file name
+    archive_entry_set_pathname(entry, rp.c_str()); 
+    archive_read_disk_entry_from_file(disk, entry, -1, 0);
+    CHECK_ARCHIVE_ERROR(res, "read disk entry:");
 
+    // write  entry header
+    res = archive_write_header(a, entry);
+    CHECK_ARCHIVE_ERROR(res, "write header: ");
+    if(archive_entry_size(entry) > 0)
+      {
+      // now copy contents of file into archive a
+      FILE* file = fopen(fileIt->c_str(), "rb");
+      if(!file)
+        {
+          cmSystemTools::Error("Problem with fopen(): ",
+                               fileIt->c_str());
+          return false;
+        }
+      char buff[16384];
+      size_t len = fread(buff, 1, sizeof(buff), file);
+      while (len > 0)
+        {
+          size_t wlen = archive_write_data(a, buff, len);
+          if(wlen != len)
+            { 
+              cmOStringStream error;
+              error << "Problem with archive_write_data\n"
+                    << "Tried to write  [" << len << "] bytes.\n"
+                    << "archive_write_data wrote  [" << wlen << "] bytes.\n";
+              cmSystemTools::Error(error.str().c_str(),
+                                   archive_error_string(a)
+                                   );
+              return false;
+            }
+          len = fread(buff, 1, sizeof(buff), file);
+        }
+      // close the file and free the entry
+      fclose(file);
+      }
+    archive_entry_free(entry);
+    }
+  archive_write_close(a);
+  archive_write_finish(a);
+  archive_read_finish(disk);
   return true;
 #else
   (void)outFileName;
@@ -1883,134 +1865,253 @@ bool cmSystemTools::CreateTar(const char* outFileName,
 #endif
 }
 
-bool cmSystemTools::ExtractTar(const char* outFileName, 
-                               const std::vector<cmStdString>& files, 
-                               bool gzip, bool verbose)
-{
-  (void)files;
 #if defined(CMAKE_BUILD_WITH_CMAKE)
-  TAR *t;
-  cmSystemToolsGZStruct gzs;
+namespace{
+#define BSDTAR_FILESIZE_PRINTF  "%lu"
+#define BSDTAR_FILESIZE_TYPE    unsigned long
+  void
+    list_item_verbose(FILE *out, struct archive_entry *entry)
+{
+  char                   tmp[100];
+  size_t                         w;
+  const char            *p;
+  const char            *fmt;
+  time_t                         tim;
+  static time_t          now;
+  size_t u_width = 6;
+  size_t gs_width = 13;
+  
+  /*
+   * We avoid collecting the entire list in memory at once by
+   * listing things as we see them.  However, that also means we can't
+   * just pre-compute the field widths.  Instead, we start with guesses
+   * and just widen them as necessary.  These numbers are completely
+   * arbitrary.
+   */
+  if (!now)
+    {
+    time(&now);
+    }
+  fprintf(out, "%s %d ",
+          archive_entry_strmode(entry),
+          archive_entry_nlink(entry));
+  
+  /* Use uname if it's present, else uid. */
+  p = archive_entry_uname(entry);
+  if ((p == NULL) || (*p == '\0'))
+    {
+    sprintf(tmp, "%lu ",
+            (unsigned long)archive_entry_uid(entry));
+    p = tmp;
+    }
+  w = strlen(p);
+  if (w > u_width)
+    {
+    u_width = w;
+    }
+  fprintf(out, "%-*s ", (int)u_width, p);
+  /* Use gname if it's present, else gid. */
+  p = archive_entry_gname(entry);
+  if (p != NULL && p[0] != '\0')
+    {
+    fprintf(out, "%s", p);
+    w = strlen(p);
+    } 
+  else
+    {
+    sprintf(tmp, "%lu",
+            (unsigned long)archive_entry_gid(entry));
+    w = strlen(tmp);
+    fprintf(out, "%s", tmp);
+    }
+  
+  /*
+   * Print device number or file size, right-aligned so as to make
+   * total width of group and devnum/filesize fields be gs_width.
+   * If gs_width is too small, grow it.
+   */
+  if (archive_entry_filetype(entry) == AE_IFCHR
+      || archive_entry_filetype(entry) == AE_IFBLK) 
+    {
+    sprintf(tmp, "%lu,%lu",
+            (unsigned long)archive_entry_rdevmajor(entry),
+            (unsigned long)archive_entry_rdevminor(entry));
+    }
+  else 
+    {
+    /*
+     * Note the use of platform-dependent macros to format
+     * the filesize here.  We need the format string and the
+     * corresponding type for the cast.
+     */
+    sprintf(tmp, BSDTAR_FILESIZE_PRINTF,
+            (BSDTAR_FILESIZE_TYPE)archive_entry_size(entry));
+    }
+  if (w + strlen(tmp) >= gs_width)
+    {
+    gs_width = w+strlen(tmp)+1;
+    }
+  fprintf(out, "%*s", (int)(gs_width - w), tmp);
 
-  tartype_t gztype = {
-    cmSystemToolsGZStructOpen,
-    cmSystemToolsGZStructClose,
-    cmSystemToolsGZStructRead,
-    cmSystemToolsGZStructWrite,
-    &gzs
-  };
-
-  // This libtar is not const safe. Make a non-const copy of outFileName
-  char* realName = new char[ strlen(outFileName) + 1 ];
-  strcpy(realName, outFileName);
-  if (tar_open(&t, realName,
-      (gzip? &gztype : NULL),
-      O_RDONLY
-#ifdef _WIN32
-      | O_BINARY
+  /* Format the time using 'ls -l' conventions. */
+  tim = archive_entry_mtime(entry);
+#define HALF_YEAR (time_t)365 * 86400 / 2
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  /* Windows' strftime function does not support %e format. */
+#define DAY_FMT  "%d"  
+#else
+#define DAY_FMT  "%e"  /* Day number without leading zeros */
 #endif
-      , 0,
-      (verbose?TAR_VERBOSE:0)
-      | 0) == -1)
+  if (tim < now - HALF_YEAR || tim > now + HALF_YEAR)
     {
-    cmSystemTools::Error("Problem with tar_open(): ", strerror(errno));
-    delete [] realName;
+    fmt = DAY_FMT " %b  %Y";
+    }
+  else
+    {
+    fmt = DAY_FMT " %b %H:%M";
+    }
+  strftime(tmp, sizeof(tmp), fmt, localtime(&tim));
+  fprintf(out, " %s ", tmp);
+  fprintf(out, "%s", archive_entry_pathname(entry));
+
+  /* Extra information for links. */
+  if (archive_entry_hardlink(entry)) /* Hard link */
+    {
+    fprintf(out, " link to %s",
+            archive_entry_hardlink(entry));
+    }
+  else if (archive_entry_symlink(entry)) /* Symbolic link */
+    {
+    fprintf(out, " -> %s", archive_entry_symlink(entry));
+    }
+}
+#ifdef __BORLANDC__
+# pragma warn -8066 /* unreachable code */
+#endif
+  
+int copy_data(struct archive *ar, struct archive *aw)
+{
+  int r;
+  const void *buff;
+  size_t size;
+  off_t offset;
+  
+  for (;;) 
+    {
+    r = archive_read_data_block(ar, &buff, &size, &offset);
+    if (r == ARCHIVE_EOF)
+      {
+      return (ARCHIVE_OK);
+      }
+    if (r != ARCHIVE_OK)
+      {
+      return (r);
+      }
+    r = archive_write_data_block(aw, buff, size, offset);
+    if (r != ARCHIVE_OK) 
+      {
+      cmSystemTools::Message("archive_write_data_block()",
+                             archive_error_string(aw));
+      return (r);
+      }
+    }
+  return r;
+}
+
+bool extract_tar(const char* outFileName, bool verbose, 
+                 bool extract)
+{
+  struct archive* a = archive_read_new();
+  struct archive *ext = archive_write_disk_new();
+  archive_read_support_compression_all(a);
+  archive_read_support_format_all(a);
+  struct archive_entry *entry;
+  int r = archive_read_open_file(a, outFileName, 10240);
+  if(r)
+    { 
+    cmSystemTools::Error("Problem with archive_read_open_file(): ",
+                         archive_error_string(a));
     return false;
     }
-
-  delete [] realName;
-
-  if (tar_extract_all(t, 0) != 0)
-  {
-    cmSystemTools::Error("Problem with tar_extract_all(): ", strerror(errno));
-    return false;
-  }
-
-  if (tar_close(t) != 0)
+  for (;;) 
     {
-    cmSystemTools::Error("Problem with tar_close(): ", strerror(errno));
-    return false;
+    r = archive_read_next_header(a, &entry);
+    if (r == ARCHIVE_EOF)
+      {
+      break;
+      }
+    if (r != ARCHIVE_OK)
+      {
+      cmSystemTools::Error("Problem with archive_read_next_header(): ",
+                           archive_error_string(a));
+      }
+    if (verbose && extract)
+      {
+      cmSystemTools::Stdout("x ");
+      cmSystemTools::Stdout(archive_entry_pathname(entry));
+      }
+    if(verbose && !extract)
+      {
+      list_item_verbose(stdout, entry);
+      }
+    else if(!extract)
+      {
+      cmSystemTools::Stdout(archive_entry_pathname(entry));
+      }
+    if(extract)
+      {
+      r = archive_write_header(ext, entry);
+      if (r != ARCHIVE_OK)
+        {
+        cmSystemTools::Error("Problem with archive_write_header(): ",
+                             archive_error_string(a));
+        cmSystemTools::Error("Curren file:", 
+                             archive_entry_pathname(entry));
+        }
+      else 
+        {
+        copy_data(a, ext);
+        r = archive_write_finish_entry(ext);
+        if (r != ARCHIVE_OK)
+          {
+          cmSystemTools::Error("Problem with archive_write_finish_entry(): ",
+                               archive_error_string(ext));
+          }
+        }
+      }
+    if (verbose || !extract)
+      {
+      cmSystemTools::Stdout("\n");
+      }
     }
+  archive_read_close(a);
+  archive_read_finish(a);
   return true;
+
+}
+}
+#endif 
+
+bool cmSystemTools::ExtractTar(const char* outFileName, 
+                               bool , bool verbose)
+{
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  return extract_tar(outFileName, verbose, true);
 #else
   (void)outFileName;
-  (void)gzip;
   (void)verbose;
   return false;
 #endif
 }
 
 bool cmSystemTools::ListTar(const char* outFileName, 
-                            std::vector<cmStdString>& files, bool gzip,
+                            bool ,
                             bool verbose)
 {
 #if defined(CMAKE_BUILD_WITH_CMAKE)
-  TAR *t;
-  cmSystemToolsGZStruct gzs;
-
-  tartype_t gztype = {
-    cmSystemToolsGZStructOpen,
-    cmSystemToolsGZStructClose,
-    cmSystemToolsGZStructRead,
-    cmSystemToolsGZStructWrite,
-    &gzs
-  };
-
-  // This libtar is not const safe. Make a non-const copy of outFileName
-  char* realName = new char[ strlen(outFileName) + 1 ];
-  strcpy(realName, outFileName);
-  if (tar_open(&t, realName,
-      (gzip? &gztype : NULL),
-      O_RDONLY
-#ifdef _WIN32
-      | O_BINARY
-#endif
-      , 0,
-      (verbose?TAR_VERBOSE:0)
-      | 0) == -1)
-    {
-    cmSystemTools::Error("Problem with tar_open(): ", strerror(errno));
-    delete [] realName;
-    return false;
-    }
-
-  delete [] realName;
-
-  while ((th_read(t)) == 0)
-  {
-    const char* filename = th_get_pathname(t);
-    files.push_back(filename);
-   
-    if ( verbose )
-      {
-      th_print_long_ls(t);
-      }
-    else
-      {
-      std::cout << filename << std::endl;
-      }
-
-#ifdef DEBUG
-    th_print(t);
-#endif
-    if (TH_ISREG(t) && tar_skip_regfile(t) != 0)
-      {
-      cmSystemTools::Error("Problem with tar_skip_regfile(): ", 
-                           strerror(errno));
-      return false;
-      }
-  }
-
-  if (tar_close(t) != 0)
-    {
-    cmSystemTools::Error("Problem with tar_close(): ", strerror(errno));
-    return false;
-    }
-  return true;
+  return extract_tar(outFileName, verbose, false);
 #else
   (void)outFileName;
-  (void)files;
-  (void)gzip;
   (void)verbose;
   return false;
 #endif
@@ -2836,4 +2937,19 @@ bool cmSystemTools::CheckRPath(std::string const& file,
   (void)newRPath;
   return false;
 #endif
+}
+
+//----------------------------------------------------------------------------
+bool cmSystemTools::RepeatedRemoveDirectory(const char* dir)
+{
+  // Windows sometimes locks files temporarily so try a few times.
+  for(int i = 0; i < 10; ++i)
+    {
+    if(cmSystemTools::RemoveADirectory(dir))
+      {
+      return true;
+      }
+    cmSystemTools::Delay(100);
+    }
+  return false;
 }

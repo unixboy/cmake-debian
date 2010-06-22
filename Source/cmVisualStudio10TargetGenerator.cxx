@@ -435,12 +435,16 @@ void cmVisualStudio10TargetGenerator::WriteGroups()
       none.push_back(sf);
       }
     }
+
+  this->AddMissingSourceGroups(groupsUsed, sourceGroups);
+
   // Write out group file
   std::string path =  this->Makefile->GetStartOutputDirectory();
   path += "/";
   path += this->Name;
   path += ".vcxproj.filters";
   cmGeneratedFileStream fout(path.c_str());
+  fout.SetCopyIfDifferent(true);
   char magic[] = {0xEF,0xBB, 0xBF};
   fout.write(magic, 3);
   cmGeneratedFileStream* save = this->BuildFileStream;
@@ -484,9 +488,60 @@ void cmVisualStudio10TargetGenerator::WriteGroups()
   this->WriteString("</Project>\n", 0);
   // restore stream pointer
   this->BuildFileStream = save;
+
+  if (fout.Close())
+    {
+    this->GlobalGenerator->FileReplacedDuringGenerate(path);
+    }
 }
 
-void 
+// Add to groupsUsed empty source groups that have non-empty children.
+void
+cmVisualStudio10TargetGenerator::AddMissingSourceGroups(
+  std::set<cmSourceGroup*>& groupsUsed,
+  const std::vector<cmSourceGroup>& allGroups
+  )
+{
+  for(std::vector<cmSourceGroup>::const_iterator current = allGroups.begin();
+      current != allGroups.end(); ++current)
+    {
+    std::vector<cmSourceGroup> const& children = current->GetGroupChildren();
+    if(children.empty())
+      {
+      continue; // the group is really empty
+      }
+
+    this->AddMissingSourceGroups(groupsUsed, children);
+
+    cmSourceGroup* current_ptr = const_cast<cmSourceGroup*>(&(*current));
+    if(groupsUsed.find(current_ptr) != groupsUsed.end())
+      {
+      continue; // group has already been added to set
+      }
+
+    // check if it least one of the group's descendants is not empty
+    // (at least one child must already have been added)
+    std::vector<cmSourceGroup>::const_iterator child_it = children.begin();
+    while(child_it != children.end())
+      {
+      cmSourceGroup* child_ptr = const_cast<cmSourceGroup*>(&(*child_it));
+      if(groupsUsed.find(child_ptr) != groupsUsed.end())
+        {
+        break; // found a child that was already added => add current group too
+        }
+      child_it++;
+      }
+
+    if(child_it == children.end())
+      {
+      continue; // no descendants have source files => ignore this group
+      }
+
+    groupsUsed.insert(current_ptr);
+    }
+}
+
+void
 cmVisualStudio10TargetGenerator::
 WriteGroupSources(const char* name,
                   std::vector<cmSourceFile*> const& sources,
@@ -854,6 +909,13 @@ OutputLinkIncremental(std::string const& configName)
     flags += " ";
     flags += targetLinkFlags;
     }
+  std::string flagsProp = "LINK_FLAGS_";
+  flagsProp += CONFIG;
+  if(const char* flagsConfig = this->Target->GetProperty(flagsProp.c_str()))
+    {
+    flags += " ";
+    flags += flagsConfig;
+    }
   if(flags.find("INCREMENTAL:NO") != flags.npos)
     {
     incremental = "false";
@@ -1010,22 +1072,27 @@ WriteRCOptions(std::string const& ,
 }
 
 
-void cmVisualStudio10TargetGenerator::WriteLibOptions(std::string const&
-                                                      )
+void
+cmVisualStudio10TargetGenerator::WriteLibOptions(std::string const& config)
 {
   if(this->Target->GetType() != cmTarget::STATIC_LIBRARY)
     {
     return;
     }
-  if(const char* libflags = this->Target
-     ->GetProperty("STATIC_LIBRARY_FLAGS"))
+  const char* libflags = this->Target->GetProperty("STATIC_LIBRARY_FLAGS");
+  std::string flagsConfigVar = "STATIC_LIBRARY_FLAGS_";
+  flagsConfigVar += cmSystemTools::UpperCase(config);
+  const char* libflagsConfig =
+    this->Target->GetProperty(flagsConfigVar.c_str());
+  if(libflags || libflagsConfig)
     {
     this->WriteString("<Lib>\n", 2);
     cmVisualStudioGeneratorOptions
       libOptions(this->LocalGenerator, 10,
                  cmVisualStudioGeneratorOptions::Linker,
                  cmVS10LibFlagTable, 0, this);
-    libOptions.Parse(libflags);  
+    libOptions.Parse(libflags?libflags:"");
+    libOptions.Parse(libflagsConfig?libflagsConfig:"");
     libOptions.OutputAdditionalOptions(*this->BuildFileStream, "      ", "");
     libOptions.OutputFlagMap(*this->BuildFileStream, "      "); 
     this->WriteString("</Lib>\n", 2);
@@ -1092,6 +1159,13 @@ void cmVisualStudio10TargetGenerator::WriteLinkOptions(std::string const&
     {
     flags += " ";
     flags += targetLinkFlags;
+    }
+  std::string flagsProp = "LINK_FLAGS_";
+  flagsProp += CONFIG;
+  if(const char* flagsConfig = this->Target->GetProperty(flagsProp.c_str()))
+    {
+    flags += " ";
+    flags += flagsConfig;
     }
   cmVisualStudioGeneratorOptions
     linkOptions(this->LocalGenerator, 10,

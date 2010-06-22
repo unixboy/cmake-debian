@@ -159,7 +159,7 @@ IF(BUILD_TESTING)
   IF(CTEST_TEST_OSX_ARCH)
     ADD_TEST_MACRO(Architecture Architecture)
     SET_TESTS_PROPERTIES(Architecture PROPERTIES
-      PASS_REGULAR_EXPRESSION "(file is not of required architecture|does not match cputype)")
+      PASS_REGULAR_EXPRESSION "(file is not of required architecture|does not match cputype|not the architecture being linked)")
   ENDIF(CTEST_TEST_OSX_ARCH)
 
   LIST(APPEND TEST_BUILD_DIRS ${CMake_TEST_INSTALL_PREFIX})
@@ -173,6 +173,34 @@ IF(BUILD_TESTING)
   LIST(APPEND TEST_BUILD_DIRS ${CMAKE_BUILD_TEST_BINARY_DIR})
 
   ADD_TEST_MACRO(Module.CheckTypeSize CheckTypeSize)
+
+  ADD_TEST(LinkFlags-prepare
+    ${CMAKE_CTEST_COMMAND} -C \${CTEST_CONFIGURATION_TYPE}
+    --build-and-test
+    "${CMake_SOURCE_DIR}/Tests/LinkFlags"
+    "${CMake_BINARY_DIR}/Tests/LinkFlags"
+    --build-generator ${CMAKE_TEST_GENERATOR}
+    --build-makeprogram ${CMAKE_TEST_MAKEPROGRAM}
+    --build-project LinkFlags
+    --build-target LinkFlags
+    --build-options -DTEST_CONFIG=\${CTEST_CONFIGURATION_TYPE}
+    )
+  LIST(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/LinkFlags")
+
+  MACRO(ADD_LINK_FLAGS_TEST name depends)
+    ADD_TEST(LinkFlags-${name}
+      ${CMAKE_CMAKE_COMMAND} --build "${CMake_BINARY_DIR}/Tests/LinkFlags"
+      --target LinkFlags_${name} --config \${CTEST_CONFIGURATION_TYPE}
+      )
+    SET_TESTS_PROPERTIES(LinkFlags-${name} PROPERTIES
+      PASS_REGULAR_EXPRESSION "BADFLAG" DEPENDS LinkFlags-${depends})
+  ENDMACRO()
+  ADD_LINK_FLAGS_TEST(lib prepare)
+  ADD_LINK_FLAGS_TEST(dll lib)
+  ADD_LINK_FLAGS_TEST(exe dll)
+  ADD_LINK_FLAGS_TEST(lib_config exe)
+  ADD_LINK_FLAGS_TEST(dll_config lib_config)
+  ADD_LINK_FLAGS_TEST(exe_config dll_config)
 
   # If we are running right now with a UnixMakefiles based generator,
   # build the "Simple" test with the ExtraGenerators, if available
@@ -270,8 +298,8 @@ IF(BUILD_TESTING)
     FILE(MAKE_DIRECTORY "${_TEST_DIR}")
     FILE(WRITE "${_TEST_DIR}/nightly-cmake.sh"
       "cd ${_TEST_DIR}
-${CMake_BINARY_DIR}/bin/cmake -DCMAKE_CREATE_VERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Release/${script}
-${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Release/upload_release.cmake
+${CMake_BINARY_DIR}/bin/cmake -DCMAKE_CREATE_VERSION=next -P ${CMake_SOURCE_DIR}/Utilities/Release/${script}
+${CMake_BINARY_DIR}/bin/cmake -DVERSION=master -P ${CMake_SOURCE_DIR}/Utilities/Release/upload_release.cmake
     ")
     ADD_TEST(${name} /bin/sh ${_TEST_DIR}/nightly-cmake.sh)
     IF(COMMAND SET_TESTS_PROPERTIES AND COMMAND GET_TEST_PROPERTY)
@@ -980,6 +1008,8 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
     ADD_TEST_MACRO(ModuleDefinition example_exe)
   ENDIF(CMAKE_TEST_MSVC)
 
+  ADD_TEST_MACRO(CheckCompilerRelatedVariables CheckCompilerRelatedVariables)
+
   IF("${CMAKE_TEST_GENERATOR}" MATCHES "Makefile")
     ADD_TEST(MakeClean ${CMAKE_CTEST_COMMAND}
       --build-and-test
@@ -1046,7 +1076,7 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
 
   # Make sure CTest can handle a test with no newline in output.
   ADD_TEST(CTest.NoNewline
-    ${CMAKE_COMMAND} -E echo_append "This line has no newline!")
+    ${CMAKE_CMAKE_COMMAND} -E echo_append "This line has no newline!")
 
   # A simple test for ctest in script mode
   CONFIGURE_FILE("${CMake_SOURCE_DIR}/Tests/CTestScriptMode/CTestTestScriptMode.cmake.in"
@@ -1284,7 +1314,16 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
     -S "${CMake_BINARY_DIR}/Tests/CTestTestParallel/test.cmake" -V
     --output-log "${CMake_BINARY_DIR}/Tests/CTestTestParallel/testOutput.log"
     )
-  
+
+  CONFIGURE_FILE(
+    "${CMake_SOURCE_DIR}/Tests/CTestTestResourceLock/test.cmake.in"
+    "${CMake_BINARY_DIR}/Tests/CTestTestResourceLock/test.cmake"
+    @ONLY ESCAPE_QUOTES)
+  ADD_TEST(CTestTestResourceLock ${CMAKE_CTEST_COMMAND}
+    -S "${CMake_BINARY_DIR}/Tests/CTestTestResourceLock/test.cmake" -V
+    --output-log "${CMake_BINARY_DIR}/Tests/CTestTestResourceLock/output.log"
+    )
+
   CONFIGURE_FILE(
     "${CMake_SOURCE_DIR}/Tests/CTestTestScheduler/test.cmake.in"
     "${CMake_BINARY_DIR}/Tests/CTestTestScheduler/test.cmake"
@@ -1294,8 +1333,23 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
     --output-log "${CMake_BINARY_DIR}/Tests/CTestTestScheduler/testOutput.log"
     )
   SET_TESTS_PROPERTIES(CTestTestScheduler PROPERTIES
-    PASS_REGULAR_EXPRESSION "Start 1.*Start 2.*Start 3.*Start 4.*Start 5.*Start 5.*Start 4.*Start 3.*Start 2.*Start 1")
-  
+    PASS_REGULAR_EXPRESSION "Start 1.*Start 2.*Start 3.*Start 4.*Start 4.*Start 3.*Start 2.*Start 1")
+
+  CONFIGURE_FILE(
+    "${CMake_SOURCE_DIR}/Tests/CTestTestStopTime/test.cmake.in"
+    "${CMake_BINARY_DIR}/Tests/CTestTestStopTime/test.cmake"
+    @ONLY ESCAPE_QUOTES)
+  CONFIGURE_FILE(
+    "${CMake_SOURCE_DIR}/Tests/CTestTestStopTime/GetDate.cmake"
+    "${CMake_BINARY_DIR}/Tests/CTestTestStopTime/GetDate.cmake"
+    COPYONLY)
+  ADD_TEST(CTestTestStopTime ${CMAKE_CTEST_COMMAND}
+    -S "${CMake_BINARY_DIR}/Tests/CTestTestStopTime/test.cmake" -V
+    --output-log "${CMake_BINARY_DIR}/Tests/CTestTestStopTime/testOutput.log"
+    )
+  SET_TESTS_PROPERTIES(CTestTestStopTime PROPERTIES
+    PASS_REGULAR_EXPRESSION "The stop time has been passed")
+
   CONFIGURE_FILE(
     "${CMake_SOURCE_DIR}/Tests/CTestTestSubdir/test.cmake.in"
     "${CMake_BINARY_DIR}/Tests/CTestTestSubdir/test.cmake"
@@ -1384,26 +1438,38 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
   endforeach()
 
 
-  IF (CTEST_TEST_CTEST AND CMAKE_RUN_LONG_TESTS)
+  IF (CMAKE_TESTS_CDASH_SERVER)
+    SET(regex "^([^:]+)://([^/]+)(/.*)$")
+
+    IF ("${CMAKE_TESTS_CDASH_SERVER}" MATCHES "${regex}")
+      SET(protocol "${CMAKE_MATCH_1}")
+      SET(server "${CMAKE_MATCH_2}")
+      SET(path "${CMAKE_MATCH_3}")
+    ELSE ("${CMAKE_TESTS_CDASH_SERVER}" MATCHES "${regex}")
+      SET(protocol "http")
+      SET(server "www.cdash.org")
+      SET(path "/CDash")
+      MESSAGE("warning: CMAKE_TESTS_CDASH_SERVER does not match expected regex...")
+      MESSAGE("         ...using default url='${protocol}://${server}${path}' for CTestTest[23]")
+    ENDIF ("${CMAKE_TESTS_CDASH_SERVER}" MATCHES "${regex}")
+  ENDIF (CMAKE_TESTS_CDASH_SERVER)
+
+
+  IF (CTEST_TEST_CTEST AND CMAKE_RUN_LONG_TESTS AND CMAKE_TESTS_CDASH_SERVER)
     CONFIGURE_FILE("${CMake_SOURCE_DIR}/Tests/CTestTest/test.cmake.in"
       "${CMake_BINARY_DIR}/Tests/CTestTest/test.cmake" @ONLY ESCAPE_QUOTES)
     ADD_TEST(CTestTest ${CMAKE_CTEST_COMMAND}
       -S "${CMake_BINARY_DIR}/Tests/CTestTest/test.cmake" -V
       --output-log "${CMake_BINARY_DIR}/Tests/CTestTest/testOutput.log"
       )
+
     CONFIGURE_FILE("${CMake_SOURCE_DIR}/Tests/CTestTest2/test.cmake.in"
       "${CMake_BINARY_DIR}/Tests/CTestTest2/test.cmake" @ONLY ESCAPE_QUOTES)
     ADD_TEST(CTestTest2 ${CMAKE_CTEST_COMMAND}
       -S "${CMake_BINARY_DIR}/Tests/CTestTest2/test.cmake" -V
       --output-log "${CMake_BINARY_DIR}/Tests/CTestTest2/testOutput.log"
       )
-    CONFIGURE_FILE("${CMake_SOURCE_DIR}/Tests/CTestTest3/test.cmake.in"
-      "${CMake_BINARY_DIR}/Tests/CTestTest3/test.cmake" @ONLY ESCAPE_QUOTES)
-    ADD_TEST(CTestTest3 ${CMAKE_CTEST_COMMAND}
-      -S "${CMake_BINARY_DIR}/Tests/CTestTest3/test.cmake" -V
-      --output-log "${CMake_BINARY_DIR}/Tests/CTestTest3/testOutput.log"
-      )
-    
+
     # these tests take a long time, make sure they have it
     # if timeouts have not already been set
     GET_TEST_PROPERTY(CTestTest TIMEOUT PREVIOUS_TIMEOUT)
@@ -1417,13 +1483,37 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
       SET_TESTS_PROPERTIES ( CTestTest2
         PROPERTIES TIMEOUT ${CMAKE_LONG_TEST_TIMEOUT})
     ENDIF ("${PREVIOUS_TIMEOUT}" MATCHES NOTFOUND)
+  ENDIF (CTEST_TEST_CTEST AND CMAKE_RUN_LONG_TESTS AND CMAKE_TESTS_CDASH_SERVER)
 
-    GET_TEST_PROPERTY(CTestTest3 TIMEOUT PREVIOUS_TIMEOUT)
-    IF ("${PREVIOUS_TIMEOUT}" MATCHES NOTFOUND)
-      SET_TESTS_PROPERTIES ( CTestTest3
-        PROPERTIES TIMEOUT ${CMAKE_LONG_TEST_TIMEOUT})
-    ENDIF ("${PREVIOUS_TIMEOUT}" MATCHES NOTFOUND)
-  ENDIF (CTEST_TEST_CTEST AND CMAKE_RUN_LONG_TESTS)
+  IF(NOT DEFINED CTEST_RUN_CTestSubmitLargeOutput)
+    SET(CTEST_RUN_CTestSubmitLargeOutput OFF)
+
+    IF (CMAKE_TESTS_CDASH_SERVER AND "${server}" STREQUAL "localhost")
+      SET(CTEST_RUN_CTestSubmitLargeOutput ON)
+    ENDIF (CMAKE_TESTS_CDASH_SERVER AND "${server}" STREQUAL "localhost")
+  ENDIF(NOT DEFINED CTEST_RUN_CTestSubmitLargeOutput)
+
+  IF(CTEST_RUN_CTestSubmitLargeOutput)
+    CONFIGURE_FILE(
+      "${CMake_SOURCE_DIR}/Tests/CTestSubmitLargeOutput/test.cmake.in"
+      "${CMake_BINARY_DIR}/Tests/CTestSubmitLargeOutput/test.cmake"
+      @ONLY ESCAPE_QUOTES
+      )
+    ADD_TEST(CTestSubmitLargeOutput ${CMAKE_CTEST_COMMAND}
+      -S "${CMake_BINARY_DIR}/Tests/CTestSubmitLargeOutput/test.cmake" -V
+      --output-log "${CMake_BINARY_DIR}/Tests/CTestSubmitLargeOutput/testOutput.log"
+      )
+
+    # This test only passes if it fails to submit properly...
+    #
+    SET_TESTS_PROPERTIES(CTestSubmitLargeOutput PROPERTIES
+      PASS_REGULAR_EXPRESSION "Errors occurred during submission")
+
+    # Give this test plenty of time to run on slower machines:
+    #
+    SET_TESTS_PROPERTIES(CTestSubmitLargeOutput PROPERTIES
+      TIMEOUT ${CMAKE_LONG_TEST_TIMEOUT})
+  ENDIF(CTEST_RUN_CTestSubmitLargeOutput)
 
   IF (CMAKE_RUN_LONG_TESTS AND TEST_KDE4_STABLE_BRANCH)
     IF(UNIX)
@@ -1469,20 +1559,30 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
     # If there is CMakeLists.txt in the binary tree, assume in-source build
     SET(CMAKE_SKIP_BOOTSTRAP_TEST 1)
   ENDIF(EXISTS "${CMAKE_BINARY_DIR}/CMakeLists.txt")
-  IF(UNIX AND CMAKE_RUN_LONG_TESTS AND NOT CMAKE_SKIP_BOOTSTRAP_TEST)
-
-
+  SET(bootstrap "")
+  IF(CMAKE_RUN_LONG_TESTS AND NOT CMAKE_SKIP_BOOTSTRAP_TEST)
+    IF(UNIX)
+      SET(bootstrap ${CMake_SOURCE_DIR}/bootstrap)
+    ELSEIF(MSYS)
+      CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.bat.in
+                     ${CMAKE_CURRENT_BINARY_DIR}/bootstrap.bat @ONLY)
+      SET(bootstrap ${CMAKE_CURRENT_BINARY_DIR}/bootstrap.bat)
+    ENDIF()
+  ENDIF()
+  IF(bootstrap)
     ADD_TEST(BootstrapTest ${CMAKE_CTEST_COMMAND}
       --build-and-test
       ${CMake_SOURCE_DIR}
       ${CMake_BINARY_DIR}/Tests/BootstrapTest
       --build-nocmake
       --build-noclean
-      --build-makeprogram ${CMake_SOURCE_DIR}/bootstrap
+      --build-makeprogram ${bootstrap}
       --build-generator "${CMAKE_TEST_GENERATOR}"
       --test-command 
       ${CMake_BINARY_DIR}/Tests/BootstrapTest/Bootstrap.cmk/cmake)
     LIST(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/BootstrapTest")
+    # Make this test run early during parallel execution
+    SET_TESTS_PROPERTIES(BootstrapTest PROPERTIES COST 5000)
 
     # provide more time for the bootstrap test
     GET_TEST_PROPERTY(BootstrapTest TIMEOUT PREVIOUS_TIMEOUT)
@@ -1490,7 +1590,7 @@ ${CMake_BINARY_DIR}/bin/cmake -DVERSION=CVS -P ${CMake_SOURCE_DIR}/Utilities/Rel
       SET_TESTS_PROPERTIES ( BootstrapTest
         PROPERTIES TIMEOUT 5400)
     ENDIF ("${PREVIOUS_TIMEOUT}" MATCHES NOTFOUND)
-  ENDIF(UNIX AND CMAKE_RUN_LONG_TESTS AND NOT CMAKE_SKIP_BOOTSTRAP_TEST)
+  ENDIF()
 
   # fortran does not work for IDE builds because
   # CMAKE_STANDARD_LIBRARIES needs to be per language

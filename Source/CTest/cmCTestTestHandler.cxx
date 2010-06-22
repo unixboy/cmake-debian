@@ -1036,9 +1036,9 @@ void cmCTestTestHandler::ProcessDirectory(std::vector<cmStdString> &passed,
   
   bool randomSchedule = this->CTest->GetScheduleType() == "Random";
   if(randomSchedule)
-  {
+    {
     srand((unsigned)time(0));
-  }
+    }
 
   for (ListOfTests::iterator it = this->TestList.begin();
        it != this->TestList.end(); ++it)
@@ -1291,7 +1291,7 @@ std::string cmCTestTestHandler::EncodeFile(std::string file)
   std::vector<cmStdString> files;
   files.push_back(file);
 
-  if(!cmSystemTools::CreateTar(tarFile.c_str(), files, true, false))
+  if(!cmSystemTools::CreateTar(tarFile.c_str(), files, true, false, false))
     {
     cmCTestLog(this->CTest, ERROR_MESSAGE, "Error creating tar while "
       "attaching file: " << file << std::endl);
@@ -2099,6 +2099,17 @@ bool cmCTestTestHandler::SetTestsProperties(
               rtit->AttachOnFail.push_back(*f);
               }
             }
+          if ( key == "RESOURCE_LOCK" )
+            {
+            std::vector<std::string> lval;
+            cmSystemTools::ExpandListArgument(val.c_str(), lval);
+
+            for(std::vector<std::string>::iterator f = lval.begin();
+                f != lval.end(); ++f)
+              {
+              rtit->LockedResources.insert(*f);
+              }
+            }
           if ( key == "TIMEOUT" )
             {
             rtit->Timeout = atof(val.c_str());
@@ -2274,6 +2285,7 @@ bool cmCTestTestHandler::AddTest(const std::vector<std::string>& args)
   test.Timeout = 0;
   test.Cost = 0;
   test.Processors = 1;
+  test.PreviousRuns = 0;
   if (this->UseIncludeRegExpFlag &&
     !this->IncludeTestsRegularExpression.find(testname.c_str()))
     {

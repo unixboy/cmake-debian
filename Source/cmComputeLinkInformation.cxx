@@ -376,6 +376,8 @@ cmComputeLinkInformation
     {
     this->OrderDependentRPath
       ->SetImplicitDirectories(this->ImplicitLinkDirs);
+    this->OrderDependentRPath
+      ->AddLanguageDirectories(this->RuntimeLinkDirs);
     }
 
   // Decide whether to enable compatible library search path mode.
@@ -1324,13 +1326,12 @@ void cmComputeLinkInformation::AddFrameworkItem(std::string const& item)
 //----------------------------------------------------------------------------
 void cmComputeLinkInformation::AddDirectoryItem(std::string const& item)
 {
-#ifdef __APPLE__
-  if(cmSystemTools::IsPathToFramework(item.c_str()))
+  if(this->Makefile->IsOn("APPLE")
+     && cmSystemTools::IsPathToFramework(item.c_str()))
     {
     this->AddFrameworkItem(item);
     }
   else
-#endif
     {
     this->DropDirectoryItem(item);
     }
@@ -1641,6 +1642,14 @@ void cmComputeLinkInformation::LoadImplicitLinkInfo()
       {
       this->ImplicitLinkLibs.insert(item);
       }
+    }
+
+  // Get platform specific rpath link directories
+  if(const char *rpathDirs =
+     (this->Makefile->GetDefinition
+      ("CMAKE_PLATFORM_RUNTIME_PATH")))
+    {
+    cmSystemTools::ExpandListArgument(rpathDirs, this->RuntimeLinkDirs);
     }
 }
 
