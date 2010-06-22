@@ -1,5 +1,8 @@
-cmake (2.8.1-6) UNRELEASED; urgency=low
+cmake (2.8.2~rc3-1) UNRELEASED; urgency=low
 
+  * New upstream release.
+
+  [ Kai Wasserbäch ]
   * debian/patches/debian/patches/FindPython_fix_#569321_and_#580503.diff:
     Added. (Closes: #569321, #580503)
   * debian/cmake-data.NEWS: Document the changes of the new patch, so nobody
