@@ -8,6 +8,10 @@ cmake (2.8.2~rc3-1) UNRELEASED; urgency=low
   * debian/cmake-data.NEWS: Document the changes of the new patch, so nobody
     gets surprised.
 
+  [ Modestas Vainius ]
+  * Update patches:
+    - kFreeBSD_Hurd_fixes.diff - remove, merged upstream.
+
  -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 16:25:20 +0200
 
 cmake (2.8.1-5) unstable; urgency=low
