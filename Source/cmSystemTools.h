@@ -379,13 +379,11 @@ public:
 
   /** Create tar */
   static bool ListTar(const char* outFileName,
-                      std::vector<cmStdString>& files, 
                       bool gzip, bool verbose);
   static bool CreateTar(const char* outFileName,
                         const std::vector<cmStdString>& files, bool gzip,
-                        bool verbose);
-  static bool ExtractTar(const char* inFileName,
-                         const std::vector<cmStdString>& files, bool gzip, 
+                        bool bzip2, bool verbose);
+  static bool ExtractTar(const char* inFileName, bool gzip, 
                          bool verbose);
   // This should be called first thing in main
   // it will keep child processes from inheriting the
@@ -437,6 +435,9 @@ public:
       given.  */
   static bool CheckRPath(std::string const& file,
                          std::string const& newRPath);
+
+  /** Remove a directory; repeat a few times in case of locked files.  */
+  static bool RepeatedRemoveDirectory(const char* dir);
 
 private:
   static bool s_ForceUnixPaths;

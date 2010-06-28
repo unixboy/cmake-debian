@@ -202,7 +202,7 @@ void cmTarget::DefineProperties(cmake *cm)
 
   cm->DefineProperty
     ("HAS_CXX", cmProperty::TARGET,
-     "Link the target using the C++ linker tool (obselete).",
+     "Link the target using the C++ linker tool (obsolete).",
      "This is equivalent to setting the LINKER_LANGUAGE property to CXX.  "
      "See that property's documentation for details.");
 
@@ -706,6 +706,11 @@ void cmTarget::DefineProperties(cmake *cm)
     ("STATIC_LIBRARY_FLAGS", cmProperty::TARGET,
      "Extra flags to use when linking static libraries.",
      "Extra flags to use when linking a static library.");
+
+  cm->DefineProperty
+    ("STATIC_LIBRARY_FLAGS_<CONFIG>", cmProperty::TARGET,
+     "Per-configuration flags for creating a static library.",
+     "This is the configuration-specific version of STATIC_LIBRARY_FLAGS.");
 
   cm->DefineProperty
     ("SUFFIX", cmProperty::TARGET,

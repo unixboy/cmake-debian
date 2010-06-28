@@ -189,12 +189,15 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
 //----------------------------------------------------------------------------
 void cmMakefileTargetGenerator::WriteCommonCodeRules()
 {
+  const char* root = (this->Makefile->IsOn("CMAKE_MAKE_INCLUDE_FROM_ROOT")?
+                      "$(CMAKE_BINARY_DIR)/" : "");
+
   // Include the dependencies for the target.
   std::string dependFileNameFull = this->TargetBuildDirectoryFull;
   dependFileNameFull += "/depend.make";
   *this->BuildFileStream
     << "# Include any dependencies generated for this target.\n"
-    << this->LocalGenerator->IncludeDirective << " "
+    << this->LocalGenerator->IncludeDirective << " " << root
     << this->Convert(dependFileNameFull.c_str(),
                      cmLocalGenerator::HOME_OUTPUT,
                      cmLocalGenerator::MAKEFILE)
@@ -205,7 +208,7 @@ void cmMakefileTargetGenerator::WriteCommonCodeRules()
     // Include the progress variables for the target.
     *this->BuildFileStream
       << "# Include the progress variables for this target.\n"
-      << this->LocalGenerator->IncludeDirective << " "
+      << this->LocalGenerator->IncludeDirective << " " << root
       << this->Convert(this->ProgressFileNameFull.c_str(),
                        cmLocalGenerator::HOME_OUTPUT,
                        cmLocalGenerator::MAKEFILE)
@@ -238,7 +241,7 @@ void cmMakefileTargetGenerator::WriteCommonCodeRules()
   // Include the flags for the target.
   *this->BuildFileStream
     << "# Include the compile flags for this target's objects.\n"
-    << this->LocalGenerator->IncludeDirective << " "
+    << this->LocalGenerator->IncludeDirective << " " << root
     << this->Convert(this->FlagFileNameFull.c_str(),
                                      cmLocalGenerator::HOME_OUTPUT,
                                      cmLocalGenerator::MAKEFILE)
@@ -294,10 +297,8 @@ void cmMakefileTargetGenerator::WriteTargetLanguageFlags()
     // Add language feature flags.
     this->AddFeatureFlags(flags, lang);
 
-#ifdef __APPLE__
     this->LocalGenerator->AddArchitectureFlags(flags, this->Target,
                                                lang, this->ConfigName);
-#endif /* __APPLE__ */
 
     // Fortran-specific flags computed for this target.
     if(*l == "Fortran")
@@ -1329,7 +1330,7 @@ public:
     this->NextObject =
       this->LocalGenerator->Convert(obj.c_str(),
                                     cmLocalGenerator::START_OUTPUT,
-                                    cmLocalGenerator::SHELL);
+                                    cmLocalGenerator::RESPONSE);
 
     // Roll over to next string if the limit will be exceeded.
     if(this->LengthLimit != std::string::npos &&
@@ -1439,11 +1440,15 @@ void cmMakefileTargetGenerator::WriteTargetDriverRule(const char* main_output,
 //----------------------------------------------------------------------------
 std::string cmMakefileTargetGenerator::GetFrameworkFlags()
 {
-#ifndef __APPLE__
-  return std::string();
-#else
-  std::set<cmStdString> emitted;
+ if(!this->Makefile->IsOn("APPLE"))
+   {
+   return std::string();
+   }
+
+ std::set<cmStdString> emitted;
+#ifdef __APPLE__  /* don't insert this when crosscompiling e.g. to iphone */
   emitted.insert("/System/Library/Frameworks");
+#endif
   std::vector<std::string> includes;
   this->LocalGenerator->GetIncludeDirectories(includes);
   std::vector<std::string>::iterator i;
@@ -1475,7 +1480,6 @@ std::string cmMakefileTargetGenerator::GetFrameworkFlags()
       }
     }
   return flags;
-#endif
 }
 
 //----------------------------------------------------------------------------
@@ -1620,6 +1624,17 @@ cmMakefileTargetGenerator
     std::vector<std::string> object_strings;
     this->WriteObjectsStrings(object_strings, responseFileLimit);
 
+    // Lookup the response file reference flag.
+    std::string responseFlagVar = "CMAKE_";
+    responseFlagVar += this->Target->GetLinkerLanguage(this->ConfigName);
+    responseFlagVar += "_RESPONSE_FILE_LINK_FLAG";
+    const char* responseFlag =
+      this->Makefile->GetDefinition(responseFlagVar.c_str());
+    if(!responseFlag)
+      {
+      responseFlag = "@";
+      }
+
     // Write a response file for each string.
     const char* sep = "";
     for(unsigned int i = 0; i < object_strings.size(); ++i)
@@ -1637,7 +1652,7 @@ cmMakefileTargetGenerator
       sep = " ";
 
       // Reference the response file.
-      buildObjs += "@";
+      buildObjs += responseFlag;
       buildObjs += this->Convert(objects_rsp.c_str(),
                                  cmLocalGenerator::NONE,
                                  cmLocalGenerator::SHELL);

@@ -162,16 +162,6 @@ cmake::cmake()
     }
 #endif
 
-  // If MAKEFLAGS are given in the environment, remove the environment
-  // variable.  This will prevent try-compile from succeeding when it
-  // should fail (if "-i" is an option).  We cannot simply test
-  // whether "-i" is given and remove it because some make programs
-  // encode the MAKEFLAGS variable in a strange way.
-  if(getenv("MAKEFLAGS"))
-    {
-    cmSystemTools::PutEnv("MAKEFLAGS=");
-    }
-
   this->Verbose = false;
   this->InTryCompile = false;
   this->CacheManager = new cmCacheManager(this);
@@ -970,8 +960,9 @@ void CMakeCommandUsage(const char* program)
     << "  remove_directory dir      - remove a directory and its contents\n"
     << "  remove [-f] file1 file2 ... - remove the file(s), use -f to force "
        "it\n"
-    << "  tar [cxt][vfz] file.tar file/dir1 file/dir2 ... - create a tar "
-       "archive\n"
+    << "  tar [cxt][vfz][cvfj] file.tar "
+    "file/dir1 file/dir2 ... - create a tar "
+    "archive\n"
     << "  time command [args] ...   - run command and return elapsed time\n"
     << "  touch file                - touch a file.\n"
     << "  touch_nocreate file       - touch a file but do not create it.\n"
@@ -1543,7 +1534,12 @@ int cmake::ExecuteCMakeCommand(std::vector<std::string>& args)
         files.push_back(args[cc]);
         }
       bool gzip = false;
+      bool bzip2 = false;
       bool verbose = false;
+      if ( flags.find_first_of('j') != flags.npos )
+        {
+        bzip2 = true;
+        }
       if ( flags.find_first_of('z') != flags.npos )
         {
         gzip = true;
@@ -1555,7 +1551,7 @@ int cmake::ExecuteCMakeCommand(std::vector<std::string>& args)
 
       if ( flags.find_first_of('t') != flags.npos )
         {
-        if ( !cmSystemTools::ListTar(outFile.c_str(), files, gzip, verbose) )
+        if ( !cmSystemTools::ListTar(outFile.c_str(), gzip, verbose) )
           {
           cmSystemTools::Error("Problem creating tar: ", outFile.c_str());
           return 1;
@@ -1564,7 +1560,7 @@ int cmake::ExecuteCMakeCommand(std::vector<std::string>& args)
       else if ( flags.find_first_of('c') != flags.npos )
         {
         if ( !cmSystemTools::CreateTar(
-            outFile.c_str(), files, gzip, verbose) )
+               outFile.c_str(), files, gzip, bzip2, verbose) )
           {
           cmSystemTools::Error("Problem creating tar: ", outFile.c_str());
           return 1;
@@ -1573,7 +1569,7 @@ int cmake::ExecuteCMakeCommand(std::vector<std::string>& args)
       else if ( flags.find_first_of('x') != flags.npos )
         {
         if ( !cmSystemTools::ExtractTar(
-            outFile.c_str(), files, gzip, verbose) )
+            outFile.c_str(), gzip, verbose) )
           {
           cmSystemTools::Error("Problem extracting tar: ", outFile.c_str());
           return 1;
@@ -2223,6 +2219,16 @@ int cmake::Run(const std::vector<std::string>& args, bool noconfigure)
       {
       return 0;
       }
+    }
+
+  // If MAKEFLAGS are given in the environment, remove the environment
+  // variable.  This will prevent try-compile from succeeding when it
+  // should fail (if "-i" is an option).  We cannot simply test
+  // whether "-i" is given and remove it because some make programs
+  // encode the MAKEFLAGS variable in a strange way.
+  if(getenv("MAKEFLAGS"))
+    {
+    cmSystemTools::PutEnv("MAKEFLAGS=");
     }
 
   this->PreLoadCMakeFiles();
@@ -3900,6 +3906,9 @@ static bool cmakeCheckStampFile(const char* stampName)
       // build system is really out of date.
       std::cout << "CMake is re-running because " << stampName
                 << " is out-of-date.\n";
+      std::cout << "  the file '" << dep << "'\n";
+      std::cout << "  is newer than '" << stampDepends << "'\n";
+      std::cout << "  result='" << result << "'\n";
       return false;
       }
     }

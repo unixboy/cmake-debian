@@ -236,7 +236,7 @@ cmSourceFile* cmLocalVisualStudio7Generator::CreateVCProjBuildRule()
 {
   std::string stampName = cmake::GetCMakeFilesDirectoryPostSlash();
   stampName += "generate.stamp";
-  const char* dsprule = 
+  const char* dsprule =
     this->Makefile->GetRequiredDefinition("CMAKE_COMMAND");
   cmCustomCommandLine commandLine;
   commandLine.push_back(dsprule);
@@ -261,16 +261,20 @@ cmSourceFile* cmLocalVisualStudio7Generator::CreateVCProjBuildRule()
                   START_OUTPUT, UNCHANGED, true);
   commandLine.push_back(args);
   commandLine.push_back("--check-stamp-file");
-  commandLine.push_back(stampName.c_str());
+  std::string stampFilename = this->Convert(stampName.c_str(), FULL,
+                                            SHELL);
+  commandLine.push_back(stampFilename.c_str());
 
   std::vector<std::string> const& listFiles = this->Makefile->GetListFiles();
 
   cmCustomCommandLines commandLines;
   commandLines.push_back(commandLine);
   const char* no_working_directory = 0;
-  this->Makefile->AddCustomCommandToOutput(stampName.c_str(), listFiles,
-                                           makefileIn.c_str(), commandLines,
-                                           comment.c_str(),
+  std::string fullpathStampName = this->Convert(stampName.c_str(), FULL,
+                                            UNCHANGED);
+  this->Makefile->AddCustomCommandToOutput(fullpathStampName.c_str(),
+                                           listFiles, makefileIn.c_str(),
+                                           commandLines, comment.c_str(),
                                            no_working_directory, true);
   if(cmSourceFile* file = this->Makefile->GetSource(makefileIn.c_str()))
     {
@@ -913,7 +917,20 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
       }
     fout << "\t\t\t<Tool\n"
          << "\t\t\t\tName=\"" << tool << "\"\n";
-    if(const char* libflags = target.GetProperty("STATIC_LIBRARY_FLAGS"))
+
+    std::string libflags;
+    if(const char* flags = target.GetProperty("STATIC_LIBRARY_FLAGS"))
+      {
+      libflags += flags;
+      }
+    std::string libFlagsConfig = "STATIC_LIBRARY_FLAGS_";
+    libFlagsConfig += configTypeUpper;
+    if(const char* flagsConfig = target.GetProperty(libFlagsConfig.c_str()))
+      {
+      libflags += " ";
+      libflags += flagsConfig;
+      }
+    if(!libflags.empty())
       {
       fout << "\t\t\t\tAdditionalOptions=\"" << libflags << "\"\n";
       }
@@ -978,7 +995,7 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
     temp = target.GetDirectory(configName);
     temp += "/";
     temp += targetNamePDB;
-    fout << "\t\t\t\tProgramDataBaseFile=\"" <<
+    fout << "\t\t\t\tProgramDatabaseFile=\"" <<
       this->ConvertToXMLOutputPathSingle(temp.c_str()) << "\"\n";
     if(isDebug)
       {
@@ -1053,7 +1070,7 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
     fout << "\"\n";
     std::string path = this->ConvertToXMLOutputPathSingle(
       target.GetDirectory(configName).c_str());
-    fout << "\t\t\t\tProgramDataBaseFile=\""
+    fout << "\t\t\t\tProgramDatabaseFile=\""
          << path << "/" << targetNamePDB
          << "\"\n";
     if(isDebug)
