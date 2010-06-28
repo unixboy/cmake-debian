@@ -89,22 +89,6 @@ MARK_AS_ADVANCED(
   PYTHON_INCLUDE_DIR
 )
 
-# Python Should be built and installed as a Framework on OSX
-IF(Python_FRAMEWORKS)
-  # If a framework has been selected for the include path,
-  # make sure "-framework" is used to link it.
-  IF("${PYTHON_INCLUDE_DIR}" MATCHES "Python\\.framework")
-    SET(PYTHON_LIBRARY "")
-    SET(PYTHON_DEBUG_LIBRARY "")
-  ENDIF("${PYTHON_INCLUDE_DIR}" MATCHES "Python\\.framework")
-  IF(NOT PYTHON_LIBRARY)
-    SET (PYTHON_LIBRARY "-framework Python" CACHE FILEPATH "Python Framework" FORCE)
-  ENDIF(NOT PYTHON_LIBRARY)
-  IF(NOT PYTHON_DEBUG_LIBRARY)
-    SET (PYTHON_DEBUG_LIBRARY "-framework Python" CACHE FILEPATH "Python Framework" FORCE)
-  ENDIF(NOT PYTHON_DEBUG_LIBRARY)
-ENDIF(Python_FRAMEWORKS)
-
 # We use PYTHON_INCLUDE_DIR, PYTHON_LIBRARY and PYTHON_DEBUG_LIBRARY for the
 # cache entries because they are meant to specify the location of a single
 # library. We now set the variables listed by the documentation for this
@@ -127,7 +111,12 @@ GET_PROPERTY(_TARGET_SUPPORTS_SHARED_LIBS
 
 FUNCTION(PYTHON_ADD_MODULE _NAME )
   OPTION(PYTHON_ENABLE_MODULE_${_NAME} "Add module ${_NAME}" TRUE)
-  OPTION(PYTHON_MODULE_${_NAME}_BUILD_SHARED "Add module ${_NAME} shared" ${_TARGET_SUPPORTS_SHARED_LIBS})
+  OPTION(PYTHON_MODULE_${_NAME}_BUILD_SHARED
+    "Add module ${_NAME} shared" ${_TARGET_SUPPORTS_SHARED_LIBS})
+
+  # Mark these options as advanced
+  MARK_AS_ADVANCED(PYTHON_ENABLE_MODULE_${_NAME}
+    PYTHON_MODULE_${_NAME}_BUILD_SHARED)
 
   IF(PYTHON_ENABLE_MODULE_${_NAME})
     IF(PYTHON_MODULE_${_NAME}_BUILD_SHARED)
@@ -150,13 +139,13 @@ FUNCTION(PYTHON_WRITE_MODULES_HEADER _filename)
 
   GET_FILENAME_COMPONENT(_name "${_filename}" NAME)
   STRING(REPLACE "." "_" _name "${_name}")
-  STRING(TOUPPER ${_name} _name)
+  STRING(TOUPPER ${_name} _nameUpper)
 
   SET(_filenameTmp "${_filename}.in")
   FILE(WRITE ${_filenameTmp} "/*Created by cmake, do not edit, changes will be lost*/\n")
   FILE(APPEND ${_filenameTmp} 
-"#ifndef ${_name}
-#define ${_name}
+"#ifndef ${_nameUpper}
+#define ${_nameUpper}
 
 #include <Python.h>
 
@@ -179,14 +168,15 @@ extern \"C\" {
 
 
   FOREACH(_currentModule ${PY_STATIC_MODULES_LIST})
-    FILE(APPEND ${_filenameTmp} "int CMakeLoadPythonModule_${_currentModule}(void) \n{\n  static char name[]=\"${PYTHON_MODULE_PREFIX}${_currentModule}\"; return PyImport_AppendInittab(name, init${PYTHON_MODULE_PREFIX}${_currentModule});\n}\n\n")
+    FILE(APPEND ${_filenameTmp} "int ${_name}_${_currentModule}(void) \n{\n  static char name[]=\"${PYTHON_MODULE_PREFIX}${_currentModule}\"; return PyImport_AppendInittab(name, init${PYTHON_MODULE_PREFIX}${_currentModule});\n}\n\n")
   ENDFOREACH(_currentModule ${PY_STATIC_MODULES_LIST})
 
-  FILE(APPEND ${_filenameTmp} "#ifndef EXCLUDE_LOAD_ALL_FUNCTION\nvoid CMakeLoadAllPythonModules(void)\n{\n")
+  FILE(APPEND ${_filenameTmp} "void ${_name}_LoadAllPythonModules(void)\n{\n")
   FOREACH(_currentModule ${PY_STATIC_MODULES_LIST})
-    FILE(APPEND ${_filenameTmp} "  CMakeLoadPythonModule_${_currentModule}();\n")
+    FILE(APPEND ${_filenameTmp} "  ${_name}_${_currentModule}();\n")
   ENDFOREACH(_currentModule ${PY_STATIC_MODULES_LIST})
-  FILE(APPEND ${_filenameTmp} "}\n#endif\n\n#endif\n")
+  FILE(APPEND ${_filenameTmp} "}\n\n")
+  FILE(APPEND ${_filenameTmp} "#ifndef EXCLUDE_LOAD_ALL_FUNCTION\nvoid CMakeLoadAllPythonModules(void)\n{\n  ${_name}_LoadAllPythonModules();\n}\n#endif\n\n#endif\n")
   
 # with CONFIGURE_FILE() cmake complains that you may not use a file created using FILE(WRITE) as input file for CONFIGURE_FILE()
   EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_filenameTmp}" "${_filename}" OUTPUT_QUIET ERROR_QUIET)

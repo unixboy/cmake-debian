@@ -32,9 +32,14 @@ private:
   virtual void NoteNewRevision();
   virtual bool UpdateImpl();
 
+  bool UpdateByFetchAndReset();
+  bool UpdateByCustom(std::string const& custom);
+  bool UpdateInternal();
+
   void LoadRevisions();
   void LoadModifications();
 
+public: // needed by older Sun compilers
   // Parsing helper classes.
   class OneLineParser;
   class DiffParser;

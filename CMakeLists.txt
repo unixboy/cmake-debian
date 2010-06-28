@@ -79,11 +79,6 @@ MACRO(CMAKE_HANDLE_SYSTEM_LIBRARIES)
   CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_ZLIB "Use system-installed zlib"
     ${CMAKE_USE_SYSTEM_LIBRARIES} "NOT CMAKE_USE_SYSTEM_CURL" ON)
 
-  # There is currently no option for system tar because the upstream
-  # libtar does not have our modifications to allow reentrant
-  # object-oriented use of the library.
-  # OPTION(CMAKE_USE_SYSTEM_TAR    "Use system-installed tar"   OFF)
-
   # Mention to the user what system libraries are being used.
   FOREACH(util CURL EXPAT XMLRPC ZLIB)
     IF(CMAKE_USE_SYSTEM_${util})
@@ -248,25 +243,41 @@ MACRO (CMAKE_BUILD_UTILITIES)
     ENDIF(NOT CMAKE_BUILD_CURL_SHARED)
     SET(CMAKE_CURL_INCLUDES)
     SET(CMAKE_CURL_LIBRARIES cmcurl)
+    IF(CMAKE_TESTS_CDASH_SERVER)
+      SET(CMAKE_CURL_TEST_URL "${CMAKE_TESTS_CDASH_SERVER}/user.php")
+    ENDIF(CMAKE_TESTS_CDASH_SERVER)
     ADD_SUBDIRECTORY(Utilities/cmcurl)
   ENDIF(CMAKE_USE_SYSTEM_CURL)
 
-  #---------------------------------------------------------------------
-  # Build Tar library for CTest.
-  SET(CMTAR_ZLIB_HEADER ${CMAKE_ZLIB_HEADER})
-  SET(CMTAR_ZLIB_LIBRARIES ${CMAKE_ZLIB_LIBRARIES})
-  SET(CMTAR_ZLIB_INCLUDE_DIRS ${CMAKE_ZLIB_INCLUDES})
-  SET(CMAKE_TAR_INCLUDES ${CMAKE_CURRENT_BINARY_DIR}/Utilities/cmtar)
-  SET(CMAKE_TAR_LIBRARIES cmtar)
-  SUBDIRS(Utilities/cmtar)
-  
   #---------------------------------------------------------------------
   # Build Compress library for CTest.
   SET(CMAKE_COMPRESS_INCLUDES 
     "${CMAKE_CURRENT_BINARY_DIR}/Utilities/cmcompress")
   SET(CMAKE_COMPRESS_LIBRARIES "cmcompress")
   ADD_SUBDIRECTORY(Utilities/cmcompress)
-  
+  IF(CMAKE_USE_SYSTEM_BZIP2)
+    FIND_PACKAGE(BZip2)
+  ELSE()
+    SET(BZIP2_INCLUDE_DIR 
+      "${CMAKE_CURRENT_SOURCE_DIR}/Utilities/cmbzip2")
+    SET(BZIP2_LIBRARIES cmbzip2)
+    ADD_SUBDIRECTORY(Utilities/cmbzip2)
+  ENDIF()
+  IF(CMAKE_USE_SYSTEM_LIBARCHIVE)
+    FIND_PACKAGE(libarchive)
+    SET(CMAKE_TAR_LIBRARIES libarchive)
+  ELSE(CMAKE_USE_SYSTEM_LIBARCHIVE)
+    SET(HAVE_LIBZ 1)
+    SET(HAVE_ZLIB_H 1)
+    SET(ZLIB_INCLUDE_DIR ${CMAKE_ZLIB_INCLUDES})
+    SET(ZLIB_LIBRARIES ${CMAKE_ZLIB_LIBRARIES})
+    SET(ZLIB_LIBRARY ${CMAKE_ZLIB_LIBRARIES})
+    SET(BUILD_ARCHIVE_WITHIN_CMAKE TRUE)
+    ADD_DEFINITIONS(-DLIBARCHIVE_STATIC)
+    ADD_SUBDIRECTORY(Utilities/cmlibarchive)
+    SET(CMAKE_TAR_LIBRARIES cmlibarchive ${BZIP2_LIBRARIES})
+  ENDIF(CMAKE_USE_SYSTEM_LIBARCHIVE)
+
   #---------------------------------------------------------------------
   # Build expat library for CMake and CTest.
   IF(CMAKE_USE_SYSTEM_EXPAT)
@@ -328,20 +339,37 @@ ENDMACRO (CMAKE_BUILD_UTILITIES)
 # The CMake version number.
 SET(CMake_VERSION_MAJOR 2)
 SET(CMake_VERSION_MINOR 8)
-SET(CMake_VERSION_PATCH 1)
-#SET(CMake_VERSION_RC 5)
+SET(CMake_VERSION_PATCH 2)
+SET(CMake_VERSION_TWEAK 0)
+SET(CMake_VERSION_RC 3)
 
-# We use odd minor numbers for development versions.
-# Use a date for the development patch level.
-IF("${CMake_VERSION_MINOR}" MATCHES "[13579]$")
+# Releases define a tweak level.
+IF(DEFINED CMake_VERSION_TWEAK)
+  SET(CMake_VERSION_IS_RELEASE 1)
+  SET(CMake_VERSION_SOURCE "")
+ELSE()
+  SET(CMake_VERSION_IS_RELEASE 0)
+
+  # Use the date as the tweak level.
   INCLUDE(${CMake_SOURCE_DIR}/Source/kwsys/kwsysDateStamp.cmake)
-  SET(CMake_VERSION_PATCH
+  SET(CMake_VERSION_TWEAK
     "${KWSYS_DATE_STAMP_YEAR}${KWSYS_DATE_STAMP_MONTH}${KWSYS_DATE_STAMP_DAY}"
     )
-ENDIF("${CMake_VERSION_MINOR}" MATCHES "[13579]$")
 
-SET(CMake_VERSION "${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
-SET(CMake_VERSION_FULL "${CMake_VERSION}.${CMake_VERSION_PATCH}")
+  INCLUDE(${CMake_SOURCE_DIR}/Source/CMakeVersionSource.cmake)
+ENDIF()
+
+# Compute the full version string.
+SET(CMake_VERSION ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}.${CMake_VERSION_PATCH})
+IF(${CMake_VERSION_TWEAK} GREATER 0)
+  SET(CMake_VERSION ${CMake_VERSION}.${CMake_VERSION_TWEAK})
+ENDIF()
+IF(CMake_VERSION_RC)
+  SET(CMake_VERSION ${CMake_VERSION}-rc${CMake_VERSION_RC})
+ENDIF()
+IF(CMake_VERSION_SOURCE)
+  SET(CMake_VERSION ${CMake_VERSION}-${CMake_VERSION_SOURCE})
+ENDIF()
 
 # Include the standard Dart testing module
 ENABLE_TESTING()
@@ -361,13 +389,24 @@ SET(LIBRARY_OUTPUT_PATH "" CACHE INTERNAL
 # install tree.
 SET(CMAKE_SKIP_RPATH ON CACHE INTERNAL "CMake does not need RPATHs.")
 
-SET(CMAKE_DATA_DIR "/share/cmake-${CMake_VERSION}" CACHE STRING
+SET(CMAKE_DATA_DIR "/share/cmake-${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}" CACHE STRING
   "Install location for data (relative to prefix).")
-SET(CMAKE_DOC_DIR "/doc/cmake-${CMake_VERSION}" CACHE STRING
+SET(CMAKE_DOC_DIR "/doc/cmake-${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}" CACHE STRING
   "Install location for documentation (relative to prefix).")
 SET(CMAKE_MAN_DIR "/man" CACHE STRING
   "Install location for man pages (relative to prefix).")
 MARK_AS_ADVANCED(CMAKE_DATA_DIR CMAKE_DOC_DIR CMAKE_MAN_DIR)
+IF(CYGWIN AND EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
+  # Force doc, data and man dirs to conform to cygwin layout.
+  SET(CMAKE_DOC_DIR  "/share/doc/cmake-${CMake_VERSION}")
+  SET(CMAKE_DATA_DIR "/share/cmake-${CMake_VERSION}")
+  SET(CMAKE_MAN_DIR  "/share/man")
+  # let the user know we just forced these values
+  MESSAGE(STATUS "Setup for Cygwin packaging")
+  MESSAGE(STATUS "Override cache CMAKE_DOC_DIR = ${CMAKE_DOC_DIR}")
+  MESSAGE(STATUS "Override cache CMAKE_DATA_DIR = ${CMAKE_DATA_DIR}")
+  MESSAGE(STATUS "Override cache CMAKE_MAN_DIR = ${CMAKE_MAN_DIR}")
+ENDIF()
 STRING(REGEX REPLACE "^/" "" CMake_DATA_DEST "${CMAKE_DATA_DIR}")
 STRING(REGEX REPLACE "^/" "" CMake_DOC_DEST "${CMAKE_DOC_DIR}")
 
@@ -382,6 +421,23 @@ INCLUDE(CompileFlags.cmake)
 INCLUDE(CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(unsetenv "stdlib.h" HAVE_UNSETENV)
 CHECK_SYMBOL_EXISTS(environ "stdlib.h" HAVE_ENVIRON_NOT_REQUIRE_PROTOTYPE)
+
+# CMAKE_TESTS_CDASH_SERVER: CDash server used by CMake/Tests.
+#
+# If not defined or "", this variable defaults to the server at
+# http://www.cdash.org/CDash.
+#
+# If set explicitly to "NOTFOUND", curl tests and ctest tests that use
+# the network are skipped.
+#
+# If set to something starting with "http://localhost/", the CDash is
+# expected to be an instance of CDash used for CDash testing, pointing
+# to a cdash4simpletest database. In these cases, the CDash dashboards
+# should be run first.
+#
+IF("x${CMAKE_TESTS_CDASH_SERVER}" STREQUAL "x")
+  SET(CMAKE_TESTS_CDASH_SERVER "http://www.cdash.org/CDash")
+ENDIF("x${CMAKE_TESTS_CDASH_SERVER}" STREQUAL "x")
 
 # build the utilities (a macro defined in this file) 
 CMAKE_BUILD_UTILITIES()

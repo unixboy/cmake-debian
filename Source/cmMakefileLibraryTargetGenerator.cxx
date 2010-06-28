@@ -122,6 +122,10 @@ void cmMakefileLibraryTargetGenerator::WriteStaticLibraryRules()
   std::string extraFlags;
   this->LocalGenerator->AppendFlags
     (extraFlags,this->Target->GetProperty("STATIC_LIBRARY_FLAGS"));
+  std::string staticLibraryFlagsConfig = "STATIC_LIBRARY_FLAGS_";
+  staticLibraryFlagsConfig += cmSystemTools::UpperCase(this->ConfigName);
+  this->LocalGenerator->AppendFlags
+    (extraFlags, this->Target->GetProperty(staticLibraryFlagsConfig.c_str()));
   this->WriteLibraryRules(linkRuleVar.c_str(), extraFlags.c_str(), false);
 }
 
@@ -682,10 +686,8 @@ void cmMakefileLibraryTargetGenerator::WriteLibraryRules
   std::string langFlags;
   this->AddFeatureFlags(langFlags, linkLanguage);
 
-#ifdef __APPLE__
   this->LocalGenerator->AddArchitectureFlags(langFlags, this->Target,
                                              linkLanguage, this->ConfigName);
-#endif /* __APPLE__ */
 
   // remove any language flags that might not work with the
   // particular os

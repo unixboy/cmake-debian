@@ -251,12 +251,22 @@ void cmDocumentVariables::DefineVariables(cmake* cm)
      " executable being run.",false,
      "Variables that Provide Information");
   cm->DefineProperty
+    ("CMAKE_TWEAK_VERSION", cmProperty::VARIABLE,
+     "The tweak version of cmake (i.e. the 1 in X.X.X.1).",
+     "This specifies the tweak version of the CMake executable being run.  "
+     "Releases use tweak < 20000000 and development versions use the date "
+     "format CCYYMMDD for the tweak level."
+     ,false, "Variables that Provide Information");
+  cm->DefineProperty
     ("CMAKE_VERSION", cmProperty::VARIABLE,
-     "The full version of cmake in major.minor.patch format.",
+     "The full version of cmake in major.minor.patch[.tweak[-id]] format.",
      "This specifies the full version of the CMake executable being run.  "
      "This variable is defined by versions 2.6.3 and higher.  "
-     "See variables CMAKE_MAJOR_VERSION, CMAKE_MINOR_VERSION, and "
-     "CMAKE_PATCH_VERSION for individual version components.", false,
+     "See variables CMAKE_MAJOR_VERSION, CMAKE_MINOR_VERSION, "
+     "CMAKE_PATCH_VERSION, and CMAKE_TWEAK_VERSION "
+     "for individual version components.  "
+     "The [-id] component appears in non-release versions "
+     "and may be arbitrary text.", false,
      "Variables that Provide Information");
 
   cm->DefineProperty
@@ -598,7 +608,7 @@ void cmDocumentVariables::DefineVariables(cmake* cm)
      "will check each of the contained directories for the existence of the "
      "library which is currently searched. By default it contains the "
      "standard directories for the current system. It is NOT intended to be "
-     "modified by the project, use CMAKE_SYSTEM_LIBRARY_PATH for this. See "
+     "modified by the project, use CMAKE_LIBRARY_PATH for this. See "
      "also CMAKE_SYSTEM_PREFIX_PATH.", false,
      "Variables That Change Behavior");
 
@@ -1314,6 +1324,8 @@ void cmDocumentVariables::DefineVariables(cmake* cm)
                      cmProperty::VARIABLE,0,0);
   cm->DefineProperty("CMAKE_<LANG>_LINK_FLAGS",
                      cmProperty::VARIABLE,0,0);
+  cm->DefineProperty("CMAKE_<LANG>_RESPONSE_FILE_LINK_FLAG",
+                     cmProperty::VARIABLE,0,0);
   cm->DefineProperty("CMAKE_<LANG>_STANDARD_LIBRARIES",
                      cmProperty::VARIABLE,0,0);
   cm->DefineProperty("CMAKE_<LANG>_STANDARD_LIBRARIES_INIT",
@@ -1387,5 +1399,7 @@ void cmDocumentVariables::DefineVariables(cmake* cm)
   cm->DefineProperty("CMAKE_LINK_DEPENDENT_LIBRARY_FILES",
                      cmProperty::VARIABLE,0,0);
   cm->DefineProperty("CMAKE_LINK_DEPENDENT_LIBRARY_DIRS",
+                     cmProperty::VARIABLE,0,0);
+  cm->DefineProperty("CMAKE_MAKE_INCLUDE_FROM_ROOT",
                      cmProperty::VARIABLE,0,0);
 }

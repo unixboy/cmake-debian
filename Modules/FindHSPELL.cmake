@@ -1,10 +1,14 @@
-# - Try to find HSPELL
+# - Try to find Hspell
 # Once done this will define
 #
-#  HSPELL_FOUND - system has HSPELL
-#  HSPELL_INCLUDE_DIR - the HSPELL include directory
-#  HSPELL_LIBRARIES - The libraries needed to use HSPELL
-#  HSPELL_DEFINITIONS - Compiler switches required for using HSPELL
+#  HSPELL_FOUND - system has Hspell
+#  HSPELL_INCLUDE_DIR - the Hspell include directory
+#  HSPELL_LIBRARIES - The libraries needed to use Hspell
+#  HSPELL_DEFINITIONS - Compiler switches required for using Hspell
+#
+#  HSPELL_VERSION_STRING - The version of Hspell found (x.y)
+#  HSPELL_MAJOR_VERSION  - the major version of Hspell
+#  HSPELL_MINOR_VERSION  - The minor version of Hspell
 
 #=============================================================================
 # Copyright 2006-2009 Kitware, Inc.
@@ -20,21 +24,20 @@
 # (To distributed this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-IF (HSPELL_INCLUDE_DIR AND HSPELL_LIBRARIES)
-  # Already in cache, be silent
-  SET(HSPELL_FIND_QUIETLY TRUE)
-ENDIF (HSPELL_INCLUDE_DIR AND HSPELL_LIBRARIES)
+FIND_PATH(HSPELL_INCLUDE_DIR hspell.h)
 
+FIND_LIBRARY(HSPELL_LIBRARIES NAMES hspell)
 
-FIND_PATH(HSPELL_INCLUDE_DIR hspell.h )
-
-FIND_LIBRARY(HSPELL_LIBRARIES NAMES hspell )
+IF (HSPELL_INCLUDE_DIR)
+    FILE(READ "${HSPELL_INCLUDE_DIR}/hspell.h" HSPELL_H)
+    STRING(REGEX REPLACE ".*#define HSPELL_VERSION_MAJOR ([0-9]+).*" "\\1" HSPELL_VERSION_MAJOR "${HSPELL_H}")
+    STRING(REGEX REPLACE ".*#define HSPELL_VERSION_MINOR ([0-9]+).*" "\\1" HSPELL_VERSION_MINOR "${HSPELL_H}")
+ENDIF()
 
 # handle the QUIETLY and REQUIRED arguments and set HSPELL_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(HSPELL DEFAULT_MSG HSPELL_LIBRARIES HSPELL_INCLUDE_DIR)
-
 
 MARK_AS_ADVANCED(HSPELL_INCLUDE_DIR HSPELL_LIBRARIES)
 

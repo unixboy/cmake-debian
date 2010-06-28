@@ -69,19 +69,6 @@ DynamicLoader::GetSymbolAddress(DynamicLoader::LibraryHandle lib, const char* sy
   return *reinterpret_cast<DynamicLoader::SymbolPointer*>(&result);
 }
 
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibPrefix()
-{
-  return "lib";
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibExtension()
-{
-  return ".sl";
-}
-
-//----------------------------------------------------------------------------
 const char* DynamicLoader::LastError()
 {
   // TODO: Need implementation with errno/strerror
@@ -176,21 +163,6 @@ DynamicLoader::SymbolPointer DynamicLoader::GetSymbolAddress(
 }
 
 //----------------------------------------------------------------------------
-const char* DynamicLoader::LibPrefix()
-{
-  return "lib";
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibExtension()
-{
-  // NSCreateObjectFileImageFromFile fail when dealing with dylib image
-  // it returns NSObjectFileImageInappropriateFile
-  //return ".dylib";
-  return ".so";
-}
-
-//----------------------------------------------------------------------------
 const char* DynamicLoader::LastError()
 {
   return 0;
@@ -282,22 +254,6 @@ DynamicLoader::SymbolPointer DynamicLoader::GetSymbolAddress(
 #else
   return *reinterpret_cast<DynamicLoader::SymbolPointer*>(&result);
 #endif
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibPrefix()
-{
-#ifdef __MINGW32__
-  return "lib";
-#else
-  return "";
-#endif
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibExtension()
-{
-  return ".dll";
 }
 
 //----------------------------------------------------------------------------
@@ -418,18 +374,6 @@ DynamicLoader::SymbolPointer DynamicLoader::GetSymbolAddress(
 }
 
 //----------------------------------------------------------------------------
-const char* DynamicLoader::LibPrefix()
-{
-  return "lib";
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibExtension()
-{
-  return ".so";
-}
-
-//----------------------------------------------------------------------------
 const char* DynamicLoader::LastError()
 {
   const char *retval = strerror(last_dynamic_err);
@@ -444,7 +388,7 @@ const char* DynamicLoader::LastError()
 // 5. Implementation for systems without dynamic libs
 // __gnu_blrts__ is IBM BlueGene/L
 // __LIBCATAMOUNT__ is defined on Catamount on Cray compute nodes
-#if defined(__gnu_blrts__) || defined(__LIBCATAMOUNT__)
+#if defined(__gnu_blrts__) || defined(__LIBCATAMOUNT__) || defined(__CRAYXT_COMPUTE_LINUX_TARGET)
 #include <string.h> // for strerror()
 #define DYNAMICLOADER_DEFINED 1
 
@@ -474,18 +418,6 @@ DynamicLoader::SymbolPointer DynamicLoader::GetSymbolAddress(
 {
   return 0;
 }
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibPrefix()
-  {
-  return "lib";
-  }
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibExtension()
-  {
-  return ".a";
-  }
 
 //----------------------------------------------------------------------------
 const char* DynamicLoader::LastError()
@@ -537,22 +469,6 @@ DynamicLoader::SymbolPointer DynamicLoader::GetSymbolAddress(
   } result;
   result.pvoid = dlsym(lib, sym);
   return result.psym;
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibPrefix()
-{
-  return "lib";
-}
-
-//----------------------------------------------------------------------------
-const char* DynamicLoader::LibExtension()
-{
-#ifdef __CYGWIN__
-  return ".dll";
-#else
-  return ".so";
-#endif
 }
 
 //----------------------------------------------------------------------------
