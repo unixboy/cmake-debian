@@ -1,4 +1,4 @@
-cmake (2.8.2~rc3-1) UNRELEASED; urgency=low
+cmake (2.8.2-1) UNRELEASED; urgency=low
 
   * New upstream release:
     - Detects Clang compiler (Closes: #560693).
