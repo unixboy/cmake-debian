@@ -1,4 +1,4 @@
-cmake (2.8.2-1) UNRELEASED; urgency=low
+cmake (2.8.2-1) unstable; urgency=low
 
   * New upstream release:
     - Detects Clang compiler (Closes: #560693).
@@ -20,7 +20,7 @@ cmake (2.8.2-1) UNRELEASED; urgency=low
   * Add packaging copyright to debian/copyright.
   * Include copyright information for Utilities/xml/* in the debian/copyright.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 16:25:20 +0200
+ -- Modestas Vainius <modax@debian.org>  Wed, 30 Jun 2010 11:20:53 +0300
 
 cmake (2.8.1-5) unstable; urgency=low
 
