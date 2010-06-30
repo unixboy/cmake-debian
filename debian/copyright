@@ -56,9 +56,7 @@ http://www.cmake.org/HTML/Copyright.html
 CMake is licensed under OSI approved BSD "July 22 1999" style license and
 therefore the right to use and distribute it in binary form linked with Qt4 are
 granted by the Qt GPL Exception. See /usr/share/doc/libqtcore4/copyright for
-more information on the Qt GPL Exception. Complete text of the original BSD
-"July 22 1999" license can be found in /usr/share/common-licenses/BSD on Debian
-systems.
+more information on the Qt GPL Exception.
 --
 
 Detailed copyright and licensing summary can be found below:
@@ -152,38 +150,6 @@ Detailed copyright and licensing summary can be found below:
   | WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
   | FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
   | OTHER DEALINGS IN THE SOFTWARE.
---
-
---
-  OSI approvied BSD-like License without advertising clause
-    39 files are licensed under this license:
-
-    + Modules/FindSubversion.cmake
-    + Source/CPack/cmCPackDebGenerator.cxx
-    + Utilities/cmcurl/krb4.c
-    + Utilities/cmcurl/security.c
-    + Utilities/cmtar/tar.h
-    + Utilities/cmtar/compat/basename.c
-    + Utilities/cmtar/compat/dirname.c
-    + Utilities/cmtar/compat/strlcat.c
-    + Utilities/cmtar/compat/strlcpy.c
-    Utilities/cmxmlrpc/* excluding:
-    -? Utilities/cmxmlrpc/CMakeLists.txt
-    -? Utilities/cmxmlrpc/bool.h
-    -? Utilities/cmxmlrpc/casprintf.c
-    -? Utilities/cmxmlrpc/casprintf.h
-    -? Utilities/cmxmlrpc/inline.h
-    -? Utilities/cmxmlrpc/linklist.h
-    -? Utilities/cmxmlrpc/mallocvar.h
-    -? Utilities/cmxmlrpc/synch_client.c
-    -? Utilities/cmxmlrpc/transport_config.h
-    -? Utilities/cmxmlrpc/xmlrpc_curl_transport.c
-    -? Utilities/cmxmlrpc/xmlrpc_curl_transport.h
-    -? Utilities/cmxmlrpc/xmlrpc_strutil.c
-
-  On Debian systems, the complete text of the
-  BSD-like License can be found in
-  /usr/share/common-licenses/BSD
 --
 
 --
