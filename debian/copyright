@@ -59,6 +59,13 @@ granted by the Qt GPL Exception. See /usr/share/doc/libqtcore4/copyright for
 more information on the Qt GPL Exception.
 --
 
+Packaging (debian/*) is licensed under the same license as this software (see
+above) and it is copyright by:
+  Copyright: © 2001-2006 A. Maitland Bottoms <bottoms@debian.org>
+  Copyright: © 2007-2008 Pierre Habouzit <madcoder@debian.org>
+  Copyright: © 2008-2010 Modestas Vainius <modax@debian.org>
+  Copyright: © 2010 Kai Wasserbäch <debian@carbon-project.org>
+
 Detailed copyright and licensing summary can be found below:
 
   Copyright: © 2002, 2005, 2007 Insight Consortium. All Rights Reserved.

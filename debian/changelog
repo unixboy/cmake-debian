@@ -17,6 +17,7 @@ cmake (2.8.2-1) UNRELEASED; urgency=low
     - add Breaks: cmake (<= 2.6.2-1) to cmake-gui-curses.
   * Remove deprecated references to /usr/share/common-licenses/BSD from
     debian/copyright.
+  * Add packaging copyright to debian/copyright.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 16:25:20 +0200
 
