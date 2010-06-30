@@ -12,6 +12,9 @@ cmake (2.8.2-1) UNRELEASED; urgency=low
   [ Modestas Vainius ]
   * Update patches:
     - kFreeBSD_Hurd_fixes.diff - remove, merged upstream.
+  * Bump Standards-Version to 3.9.0:
+    - replace Conflicts: cmake (<= 2.6.2-1) with Breaks in cmake-data;
+    - add Breaks: cmake (<= 2.6.2-1) to cmake-gui-curses.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 16:25:20 +0200
 
