@@ -18,6 +18,7 @@ cmake (2.8.2-1) UNRELEASED; urgency=low
   * Remove deprecated references to /usr/share/common-licenses/BSD from
     debian/copyright.
   * Add packaging copyright to debian/copyright.
+  * Include copyright information for Utilities/xml/* in the debian/copyright.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 03 Jun 2010 16:25:20 +0200
 
