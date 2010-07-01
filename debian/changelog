@@ -2,10 +2,10 @@ cmake (2.8.2-2) UNRELEASED; urgency=low
 
   * debian/control:
     - Added libarchive-dev to Build-Depends.
-    - Don't B-D on procps on hurd-i386, already provided by hurd.
+    - Don't B-D on procps on Hurd, already provided by hurd.
   * debian/rules: Use system libarchive.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 01 Jul 2010 16:50:53 +0200
+ -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 01 Jul 2010 16:58:57 +0200
 
 cmake (2.8.2-1) unstable; urgency=low
 
