@@ -11,7 +11,7 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/cmake.git;a=summary
 
 Package: cmake
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, cmake-data (= ${source:Version}), procps
+Depends: ${shlibs:Depends}, ${misc:Depends}, cmake-data (= ${source:Version}), procps [!hurd-any]
 Suggests: gcc, make
 Description: A cross-platform, open-source make system
  CMake is used to control the software compilation process using
