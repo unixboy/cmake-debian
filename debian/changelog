@@ -1,3 +1,10 @@
+cmake (2.8.2-2) UNRELEASED; urgency=low
+
+  * debian/control: Added libarchive-dev to Build-Depends.
+  * debian/rules: Use system libarchive.
+
+ -- Kai Wasserbäch <debian@carbon-project.org>  Thu, 01 Jul 2010 16:42:43 +0200
+
 cmake (2.8.2-1) unstable; urgency=low
 
   * New upstream release:
