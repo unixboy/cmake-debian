@@ -1,11 +1,10 @@
----
- CMakeLists.txt                              |    3 +-
- Modules/Findlibarchive.cmake                |   41 ++++++++++++++++++++++++++++
- Tests/CMakeTests/ModuleNoticesTest.cmake.in |    2 +
- 3 files changed, 45 insertions(+), 1 deletion(-)
+Description: add Findlibarchive.cmake needed to build with system libarchive
+Author: Kai Wasserbäch <debian@carbon-project.org>
+Forwarded: yes
+Bug: http://public.kitware.com/Bug/view.php?id=10923
+Origin: vendor
+Last-Update: 2010-07-01
 
-Index: b/CMakeLists.txt
-===================================================================
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -265,7 +265,8 @@ MACRO (CMAKE_BUILD_UTILITIES)
@@ -18,8 +17,6 @@ Index: b/CMakeLists.txt
    ELSE(CMAKE_USE_SYSTEM_LIBARCHIVE)
      SET(HAVE_LIBZ 1)
      SET(HAVE_ZLIB_H 1)
-Index: b/Modules/Findlibarchive.cmake
-===================================================================
 --- /dev/null
 +++ b/Modules/Findlibarchive.cmake
 @@ -0,0 +1,41 @@
@@ -64,8 +61,6 @@ Index: b/Modules/Findlibarchive.cmake
 +
 +  mark_as_advanced(LIBARCHIVE_INCLUDE_DIR LIBARCHIVE_LIBRARY HAVE_LIBARCHIVE_GZIP_SUPPORT HAVE_LIBARCHIVE_LZMA_SUPPORT)
 +endif (LIBARCHIVE_LIBRARY AND LIBARCHIVE_INCLUDE_DIR)
-Index: b/Tests/CMakeTests/ModuleNoticesTest.cmake.in
-===================================================================
 --- a/Tests/CMakeTests/ModuleNoticesTest.cmake.in
 +++ b/Tests/CMakeTests/ModuleNoticesTest.cmake.in
 @@ -22,6 +22,8 @@ string(REPLACE "\r\r" "\r" notice_regex
