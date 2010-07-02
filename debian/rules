@@ -18,7 +18,7 @@ $(BUILD_FLAGS_FILE):
 #	echo 'set(TARGET_SOVERSION CACHE STRING "" FORCE)'                     >> $@
 #	echo 'set(BUILD_DOCUMENTATION ON CACHE BOOL "" FORCE)'                 >> $@
 #	echo 'set(BUILD_DOXYGEN ON CACHE BOOL "" FORCE)'                       >> $@
-	echo 'set(CMAKE_USE_SYSTEM_LIBARCHIVE YES CACHE BOOL "" FORCE)'          >> $@
+	echo 'set(CMAKE_USE_SYSTEM_LIBARCHIVE YES CACHE BOOL "" FORCE)'        >> $@
 	echo 'set(CTEST_USE_XMLRPC YES CACHE BOOL "" FORCE)'                   >> $@
 
 override_dh_auto_configure: $(BUILD_FLAGS_FILE)
