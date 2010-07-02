@@ -5,6 +5,8 @@ cmake (2.8.2-2) UNRELEASED; urgency=low
     - Added libarchive-dev to Build-Depends.
     - Don't {,B-}D on procps on Hurd, already provided by hurd.
     - Added Homepage field (fixes no-homepage-field).
+    - Added new binary package cmake-docs and moved all additional
+      documentation there (registered with doc-base now).
   * debian/rules: Use system libarchive.
   * debian/patches:
     - add_libarchive_script.patch: Added to allow building with the system's
@@ -16,7 +18,7 @@ cmake (2.8.2-2) UNRELEASED; urgency=low
     fix-CTestTestFailedSubmit-xmlrpc.diff patch to fix a (wrongly) failing test
     in that case.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 02 Jul 2010 16:08:26 +0200
+ -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 02 Jul 2010 19:07:57 +0200
 
 cmake (2.8.2-1) unstable; urgency=low
 
