@@ -6,15 +6,17 @@ cmake (2.8.2-2) UNRELEASED; urgency=low
     - Don't {,B-}D on procps on Hurd, already provided by hurd.
     - Added Homepage field (fixes no-homepage-field).
   * debian/rules: Use system libarchive.
-  * debian/patches/add_libarchive_script.patch: Added to allow building with
-    the system's libarchive.
+  * debian/patches:
+    - add_libarchive_script.patch: Added to allow building with the system's
+      libarchive.
+    - fix_spelling_errors.patch: Added. Thanks to Lintian for finding them.
 
   [ Modestas Vainius ]
   * Build with CTEST_USE_XMLRPC to re-enable XMLRPC support in CTest and add
     fix-CTestTestFailedSubmit-xmlrpc.diff patch to fix a (wrongly) failing test
     in that case.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 02 Jul 2010 15:21:55 +0200
+ -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 02 Jul 2010 16:08:26 +0200
 
 cmake (2.8.2-1) unstable; urgency=low
 

@@ -5,3 +5,4 @@ cpack_installed_size.diff
 FindPython_fix_#569321_and_#580503.diff
 add_libarchive_script.patch
 fix-CTestTestFailedSubmit-xmlrpc.diff
+fix_spelling_errors.patch
