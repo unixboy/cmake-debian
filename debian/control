@@ -79,6 +79,7 @@ Breaks: cmake (<= 2.8.2-1), cmake-data (<= 2.8.2-1),
 Replaces: cmake (<= 2.8.2-1), cmake-data (<= 2.8.2-1),
  cmake-curses-gui (<= 2.8.2-1), cmake-qt-gui (<= 2.8.2-1)
 Section: doc
+Suggests: cmake
 Description: Extended documentation in various formats for CMake
  CMake is used to control the software compilation process using simple
  platform and compiler independent configuration files. CMake generates native
