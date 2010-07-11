@@ -19,6 +19,7 @@ cmake (2.8.2-2) UNRELEASED; urgency=low
     in that case.
   * Add cmake-dbg package.
   * Add cmake to cmake-doc Suggests.
+  * Start package synopsis with lowercase letter where applicable.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 02 Jul 2010 21:32:17 +0200
 

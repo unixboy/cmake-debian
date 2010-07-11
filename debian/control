@@ -14,7 +14,7 @@ Package: cmake
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, cmake-data (= ${source:Version}), procps [!hurd-any]
 Suggests: gcc, make
-Description: A cross-platform, open-source make system
+Description: a cross-platform, open-source make system
  CMake is used to control the software compilation process using
  simple platform and compiler independent configuration files. CMake
  generates native makefiles and workspaces that can be used in the
@@ -44,7 +44,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, cmake (= ${binary:Version})
 Replaces: cmake (<= 2.6.2-1)
 Breaks: cmake (<= 2.6.2-1)
-Description: Curses based user interface for CMake (ccmake)
+Description: curses based user interface for CMake (ccmake)
  CMake is used to control the software compilation process using simple
  platform and compiler independent configuration files. CMake generates native
  makefiles and workspaces that can be used in the compiler environment of your
@@ -80,7 +80,7 @@ Breaks: cmake (<= 2.8.2-1), cmake-data (<= 2.8.2-1),
 Replaces: cmake (<= 2.8.2-1), cmake-data (<= 2.8.2-1),
  cmake-curses-gui (<= 2.8.2-1), cmake-qt-gui (<= 2.8.2-1)
 Suggests: cmake
-Description: Extended documentation in various formats for CMake
+Description: extended documentation in various formats for CMake
  CMake is used to control the software compilation process using simple
  platform and compiler independent configuration files. CMake generates native
  makefiles and workspaces that can be used in the compiler environment of your
