@@ -72,13 +72,13 @@ Description: Qt4 based user interface for CMake (cmake-gui)
 
 Package: cmake-doc
 Architecture: all
+Section: doc
 Depends: ${misc:Depends}
 Recommends: doc-base
 Breaks: cmake (<= 2.8.2-1), cmake-data (<= 2.8.2-1),
  cmake-curses-gui (<= 2.8.2-1), cmake-qt-gui (<= 2.8.2-1)
 Replaces: cmake (<= 2.8.2-1), cmake-data (<= 2.8.2-1),
  cmake-curses-gui (<= 2.8.2-1), cmake-qt-gui (<= 2.8.2-1)
-Section: doc
 Suggests: cmake
 Description: Extended documentation in various formats for CMake
  CMake is used to control the software compilation process using simple
