@@ -17,6 +17,7 @@ cmake (2.8.2-2) UNRELEASED; urgency=low
   * Build with CTEST_USE_XMLRPC to re-enable XMLRPC support in CTest and add
     fix-CTestTestFailedSubmit-xmlrpc.diff patch to fix a (wrongly) failing test
     in that case.
+  * Add cmake-dbg package.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 02 Jul 2010 21:32:17 +0200
 

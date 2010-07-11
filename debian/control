@@ -87,3 +87,16 @@ Description: Extended documentation in various formats for CMake
  .
  This package provides additional documentation in various formats like HTML or
  plain text.
+
+Package: cmake-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: ${misc:Depends}, cmake (= ${binary:Version})
+Description: debugging symbols for CMake
+ CMake is used to control the software compilation process using simple
+ platform and compiler independent configuration files. CMake generates native
+ makefiles and workspaces that can be used in the compiler environment of your
+ choice.
+ .
+ This package provides CMake debugging symbols.
