@@ -1,3 +1,9 @@
+cmake (2.8.2-3) UNRELEASED; urgency=low
+
+  * Close old Ubuntu bug which is fixed by 2.8.0. (LP: #156403)
+
+ -- Kai Wasserbäch <debian@carbon-project.org>  Mon, 12 Jul 2010 18:26:58 +0200
+
 cmake (2.8.2-2) unstable; urgency=low
 
   [ Kai Wasserbäch ]
