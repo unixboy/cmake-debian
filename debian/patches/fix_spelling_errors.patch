@@ -4,6 +4,7 @@ Last-Update: 2010-07-02
 Subject: Fix all the spelling errors reported by Lintian.
 Forwarded: yes
 Bug: http://public.kitware.com/Bug/view.php?id=10928
+Applied-Upstream: http://cmake.org/gitweb?p=cmake.git;a=commitdiff;h=9203e918
 ---
  Modules/CPackRPM.cmake                  |    4 ++--
  Modules/FindCUDA.cmake                  |    4 ++--

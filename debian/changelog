@@ -1,3 +1,9 @@
+cmake (2.8.2-3) UNRELEASED; urgency=low
+
+  * debian/patches/fix_spelling_errors.patch: Added Applied-Upstream header.
+
+ -- Kai Wasserbäch <debian@carbon-project.org>  Tue, 13 Jul 2010 16:51:22 +0200
+
 cmake (2.8.2-2) unstable; urgency=low
 
   [ Kai Wasserbäch ]
