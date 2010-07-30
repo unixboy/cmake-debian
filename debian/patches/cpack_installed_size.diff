@@ -8,6 +8,7 @@ Author: Modestas Vainius <modax@debian.org>
 Bug: http://public.kitware.com/Bug/view.php?id=10296
 Forwarded: yes
 Last-Update: 2010-05-17
+Applied-Upstream: http://cmake.org/gitweb?p=cmake.git;a=commit;h=8110c099449c3c78414429a40ba8ba4f9c149538
 
 --- a/Source/CPack/cmCPackDebGenerator.cxx
 +++ b/Source/CPack/cmCPackDebGenerator.cxx
