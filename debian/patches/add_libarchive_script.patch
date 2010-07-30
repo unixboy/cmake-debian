@@ -4,6 +4,7 @@ Forwarded: yes
 Bug: http://public.kitware.com/Bug/view.php?id=10923
 Origin: vendor
 Last-Update: 2010-07-01
+Applied-Upstream: http://cmake.org/gitweb?p=cmake.git;a=commitdiff;h=01d2057a
 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
