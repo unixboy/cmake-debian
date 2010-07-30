@@ -10,6 +10,7 @@ Subject: Fix platform file for GNU/Hurd
 Bug: http://public.kitware.com/Bug/view.php?id=9873
 Forwarded: http://public.kitware.com/Bug/view.php?id=9873
 Origin: other, http://public.kitware.com/Bug/file_download.php?file_id=2644&type=bug
+Applied-Upstream: http://cmake.org/gitweb?p=cmake.git;a=commitdiff;h=90467d62
 
 --- a/Modules/Platform/GNU.cmake
 +++ b/Modules/Platform/GNU.cmake
