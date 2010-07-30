@@ -12,6 +12,7 @@ Bug: http://public.kitware.com/Bug/view.php?id=9611
 Origin: vendor
 Forwarded: yes
 Last-Update: 2010-05-17
+Applied-Upstream: http://cmake.org/gitweb?p=cmake.git;a=commitdiff;h=963921f2a86a6cfa78c86dc7127ca117f540f199
 
 --- a/Modules/FindJNI.cmake
 +++ b/Modules/FindJNI.cmake
