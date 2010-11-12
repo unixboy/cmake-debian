@@ -1,10 +1,13 @@
-cmake (2.8.2-3) UNRELEASED; urgency=low
+cmake (2.8.3-1) UNRELEASED; urgency=low
 
+  * New upstream release.
+
+  [ Kai Wasserbäch ]
   * debian/patches/fix_spelling_errors.patch: Added Applied-Upstream header.
   * debian/control: Bumped Standards-Version to 3.9.1, no further changes
     needed.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Tue, 13 Jul 2010 16:51:22 +0200
+ -- Modestas Vainius <modax@debian.org>  Sat, 13 Nov 2010 01:07:46 +0200
 
 cmake (2.8.2-2) unstable; urgency=low
 
