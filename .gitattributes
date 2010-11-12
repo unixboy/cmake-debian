@@ -13,4 +13,8 @@ configure        crlf=input
 *.sln           -crlf
 *.vcproj        -crlf
 
-debian/changelog merge=dpkg-mergechangelogs
+*.c              whitespace=tab-in-indent
+*.h              whitespace=tab-in-indent
+*.cxx            whitespace=tab-in-indent
+*.txt            whitespace=tab-in-indent
+*.cmake          whitespace=tab-in-indent
