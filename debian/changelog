@@ -7,6 +7,16 @@ cmake (2.8.3-1) UNRELEASED; urgency=low
   * debian/control: Bumped Standards-Version to 3.9.1, no further changes
     needed.
 
+  [ Modestas Vainius ]
+  * Drop patches which were merged upstream:
+    - debian/patches/hurd_platform.diff;
+    - FindGTK2_pangommconfig.diff;
+    - FindJNI_fix_libarch_determination.diff;
+    - cpack_installed_size.diff;
+    - add_libarchive_script.patch - better version merged upstream;
+    - fix-CTestTestFailedSubmit-xmlrpc.diff;
+    - fix_spelling_errors.patch.
+
  -- Modestas Vainius <modax@debian.org>  Sat, 13 Nov 2010 01:07:46 +0200
 
 cmake (2.8.2-2) unstable; urgency=low
