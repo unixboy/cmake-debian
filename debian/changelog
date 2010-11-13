@@ -1,4 +1,4 @@
-cmake (2.8.3-1) UNRELEASED; urgency=low
+cmake (2.8.3-1) experimental; urgency=low
 
   * New upstream release.
 
@@ -22,7 +22,7 @@ cmake (2.8.3-1) UNRELEASED; urgency=low
   * Add fixup_manpages.diff patch to fix small issues with cmake mangpages
     (found by lintian).
 
- -- Modestas Vainius <modax@debian.org>  Sat, 13 Nov 2010 01:07:46 +0200
+ -- Modestas Vainius <modax@debian.org>  Sat, 13 Nov 2010 02:16:34 +0200
 
 cmake (2.8.2-2) unstable; urgency=low
 
