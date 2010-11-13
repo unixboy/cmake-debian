@@ -1,0 +1,41 @@
+From: Modestas Vainius <modax@debian.org>
+Subject: fix a couple of small issues with cmake manpages
+Origin: vendor
+Forwarded: no
+Last-Update: 2010-11-13
+
+W: cmake: manpage-has-errors-from-man usr/share/man/man1/cmake.1.gz 10029: warning [p 158, 13.5i]: can't break line
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz informations information
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz dependant dependent
+--- a/Modules/FindPostgreSQL.cmake
++++ b/Modules/FindPostgreSQL.cmake
+@@ -1,6 +1,4 @@
+-# Find the PostgreSQL installation.
+-#
+-# ----------------------------------------------------------------------------
++# - Find the PostgreSQL installation.
+ # Usage:
+ # In your CMakeLists.txt file do something like this:
+ # ...
+--- a/Modules/CPackDeb.cmake
++++ b/Modules/CPackDeb.cmake
+@@ -60,7 +60,7 @@
+ # CPACK_DEBIAN_PACKAGE_DEBUG
+ #     Mandatory : NO
+ #     Default   : -
+-#     May be set when invoking cpack in order to trace debug informations
++#     May be set when invoking cpack in order to trace debug information
+ #     during CPackDeb run.
+ # CPACK_DEBIAN_PACKAGE_PREDEPENDS
+ #     Mandatory : NO
+--- a/Modules/UsewxWidgets.cmake
++++ b/Modules/UsewxWidgets.cmake
+@@ -6,7 +6,7 @@
+ #  # Note that for MinGW users the order of libs is important!
+ #  FIND_PACKAGE(wxWidgets REQUIRED net gl core base)
+ #  INCLUDE(${wxWidgets_USE_FILE})
+-#  # and for each of your dependant executable/library targets:
++#  # and for each of your dependent executable/library targets:
+ #  TARGET_LINK_LIBRARIES(<YourTarget> ${wxWidgets_LIBRARIES})
+ #
+ # DEPRECATED

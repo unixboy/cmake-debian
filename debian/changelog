@@ -19,6 +19,8 @@ cmake (2.8.3-1) UNRELEASED; urgency=low
   * Adapt FindPython_fix_#569321_and_#580503.diff patch to upstream changes.
   * Bump libarchive-dev Build-Depends to 2.8.0. cmake needs symbols which
     appeared in that version. (Closes: #595275)
+  * Add fixup_manpages.diff patch to fix small issues with cmake mangpages
+    (found by lintian).
 
  -- Modestas Vainius <modax@debian.org>  Sat, 13 Nov 2010 01:07:46 +0200
 
