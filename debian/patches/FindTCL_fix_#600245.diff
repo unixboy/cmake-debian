@@ -5,6 +5,7 @@ Description: FindTCL.cmake switches variables in the FIND_LIBRARY invocation.
 Last-Update: 2010-11-27
 Origin: vendor
 Forwarded: http://cmake.org/Bug/view.php?id=11528
+Applied-Upstream: http://cmake.org/gitweb?p=cmake.git;a=commitdiff;h=d95913e2
 ---
  Modules/FindTCL.cmake |    4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
