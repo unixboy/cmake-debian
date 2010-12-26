@@ -3,8 +3,8 @@ Title: Reference of CMake variables.
 Section: Programming
 
 Format: HTML
-Index: /usr/share/doc/cmake-doc/cmake-variables.html
-Files: /usr/share/doc/cmake-doc/cmake-variables.html
+Index: /usr/share/doc/cmake/cmake-variables.html
+Files: /usr/share/doc/cmake/cmake-variables.html
 
 Format: Text
-Files: /usr/share/doc/cmake-doc/cmake-variables.txt.gz
+Files: /usr/share/doc/cmake/cmake-variables.txt.gz

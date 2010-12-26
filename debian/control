@@ -3,7 +3,7 @@ Section: devel
 Priority: optional
 Maintainer: Modestas Vainius <modax@debian.org>
 Uploaders: A. Maitland Bottoms <bottoms@debian.org>, Kai Wasserbäch <debian@carbon-project.org>
-Build-Depends: debhelper (>= 7.3), libcurl4-gnutls-dev, libxmlrpc-c3-dev, libexpat1-dev, zlib1g-dev,
+Build-Depends: debhelper (>= 7.4.2), libcurl4-gnutls-dev, libxmlrpc-c3-dev, libexpat1-dev, zlib1g-dev,
  libncurses5-dev, libqt4-dev (>= 4.4.0), procps [!hurd-any], libarchive-dev (>= 2.8.0)
 Standards-Version: 3.9.1
 Vcs-Git: git://git.debian.org/git/collab-maint/cmake.git

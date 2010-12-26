@@ -33,6 +33,9 @@ override_dh_auto_clean:
 	dh_auto_clean
 	rm -f $(BUILD_FLAGS_FILE)
 
+override_dh_installdocs:
+	dh_installdocs --link-doc=cmake
+
 %:
 	dh --parallel --builddirectory=Build --dbg-package=cmake-dbg $@
 

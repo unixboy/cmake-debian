@@ -3,8 +3,8 @@ Title: Reference of curses based interface of CMake.
 Section: Programming
 
 Format: HTML
-Index: /usr/share/doc/cmake-doc/ccmake.html
-Files: /usr/share/doc/cmake-doc/ccmake.html
+Index: /usr/share/doc/cmake/ccmake.html
+Files: /usr/share/doc/cmake/ccmake.html
 
 Format: Text
-Files: /usr/share/doc/cmake-doc/ccmake.txt.gz
+Files: /usr/share/doc/cmake/ccmake.txt.gz
