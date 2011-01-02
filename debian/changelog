@@ -1,4 +1,4 @@
-cmake (2.8.3-3) UNRELEASED; urgency=low
+cmake (2.8.3-3) experimental; urgency=low
 
   * Install documentation to /usr/share/cmake-data instead as it's the "base"
     package rather than cmake. Also link doc directories to it.
@@ -6,7 +6,7 @@ cmake (2.8.3-3) UNRELEASED; urgency=low
     Create a symlink manually in the postinst of the affected (!cmake-data)
     packages.
 
- -- Modestas Vainius <modax@debian.org>  Sun, 02 Jan 2011 13:29:09 +0200
+ -- Modestas Vainius <modax@debian.org>  Sun, 02 Jan 2011 14:10:18 +0200
 
 cmake (2.8.3-2) experimental; urgency=low
 
