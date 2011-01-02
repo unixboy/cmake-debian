@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+pkgname=`basename "$0" .postinst`
+
+# Manually create a /usr/share/doc/$pkgname symlink manually on upgrades (see
+# #404850)
+if [ "$1" = "configure" ] && [ -n "$2" ] && \
+     dpkg --compare-versions "$2" lt "2.8.3-3";
+then
+    rmdir "/usr/share/doc/$pkgname"
+    ln -s "cmake-data" "/usr/share/doc/$pkgname"
+fi
+
+#DEBHELPER#
