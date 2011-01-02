@@ -1,4 +1,4 @@
-cmake (2.8.3-2) UNRELEASED; urgency=low
+cmake (2.8.3-2) experimental; urgency=low
 
   [ Kai Wasserbäch ]
   * debian/source/local-options: Added "unapply-patches".
@@ -13,7 +13,7 @@ cmake (2.8.3-2) UNRELEASED; urgency=low
   * Backport a patch from 2.8.4 to fix ASM support. Thanks to Leon Nardella for
     heads up. (Closes: #608510, LP: #695335)
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Fri, 27 Nov 2010 10:41:10 +0100
+ -- Modestas Vainius <modax@debian.org>  Sun, 02 Jan 2011 12:45:38 +0200
 
 cmake (2.8.3-1) experimental; urgency=low
 
