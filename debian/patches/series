@@ -1,3 +1,4 @@
 FindPython_fix_#569321_and_#580503.diff
 fixup_manpages.diff
 FindTCL_fix_#600245.diff
+backport_fix_asm_support.diff

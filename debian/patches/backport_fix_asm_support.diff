@@ -1,0 +1,27 @@
+From: Alex Neundorf <neundorf@kde.org>
+Subject: Include CMakeDetermineCompilerId in CMakeDetermineASMCompiler.cmake (#11467)
+Forwarded: yes
+Origin: backport commit:e3dfbf62fcd54f582057fcec7a7989ac73712e55
+Bug: http://public.kitware.com/Bug/view.php?id=11467
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=608510
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/cmake/+bug/695335
+Last-Update: 2010-11-17
+Applied-Upstream: 2.8.4
+
+CMakeDetermineASMCompiler.cmake relied on that somebody else (usually
+during enabling C or CXX) already included that file, and broke if that
+was not the case.
+Thanks to Louis for the patch
+
+Alex
+
+--- a/Modules/CMakeDetermineASMCompiler.cmake
++++ b/Modules/CMakeDetermineASMCompiler.cmake
+@@ -65,6 +65,7 @@ IF(NOT CMAKE_ASM${ASM_DIALECT}_COMPILER_
+   SET(CMAKE_ASM${ASM_DIALECT}_COMPILER_ID_VENDOR_FLAGS_GNU "--version")
+   SET(CMAKE_ASM${ASM_DIALECT}_COMPILER_ID_VENDOR_REGEX_GNU "GNU assembler")
+ 
++  INCLUDE(CMakeDetermineCompilerId)
+   CMAKE_DETERMINE_COMPILER_ID_VENDOR(ASM${ASM_DIALECT})
+ 
+   IF(CMAKE_ASM${ASM_DIALECT}_COMPILER_ID)
