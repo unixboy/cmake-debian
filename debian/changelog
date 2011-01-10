@@ -1,3 +1,9 @@
+cmake (2.8.3-4) UNRELEASED; urgency=low
+
+  * debian/patches/FindVTK_fix_#600889.diff: Added. (Closes: #600889)
+
+ -- Kai Wasserbäch <debian@carbon-project.org>  Mon, 10 Jan 2011 22:16:51 +0100
+
 cmake (2.8.3-3) experimental; urgency=low
 
   * Install documentation to /usr/share/cmake-data instead as it's the "base"

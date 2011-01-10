@@ -1,0 +1,34 @@
+From: Kai Wasserbäch <debian@carbon-project.org>
+Description: FindVTK.cmake missed a case which lead to NOT-FOUND errors.
+ FindVTK.cmake didn't handle the VTK 5.x case when trying to find VTK. This
+ caused CMake to error out with a misleading error message VTK_DIR not set.
+ This patch adds the missing case.
+Last-Update: 2010-11-27
+Origin: vendor
+---
+ Modules/FindVTK.cmake |   14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+--- a/Modules/FindVTK.cmake
++++ b/Modules/FindVTK.cmake
+@@ -118,6 +118,20 @@ IF(_VTK_40_ALLOW AND NOT VTK_DIR)
+     IF(EXISTS ${VTK_DIR}/UseVTK.cmake AND NOT EXISTS ${VTK_DIR}/VTKConfig.cmake)
+       SET(VTK_FOUND 1)
+       INCLUDE(UseVTKConfig40) # No VTKConfig; load VTK 4.0 settings.
++    ELSEIF(EXISTS ${VTK_DIR}/VTKConfig.cmake AND NOT EXISTS ${VTK_DIR}/UseVTK.cmake)
++      INCLUDE("${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake")
++      INCLUDE("${VTK_DIR}/VTKConfig.cmake")
++      SET(VTK_VERSION "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}.${VTK_BUILD_VERSION}")
++      FIND_PACKAGE_HANDLE_STANDARD_ARGS(VTK REQUIRED_VARS VTK_USE_FILE
++                                                VTK_MAJOR_VERSION
++                                                VTK_MINOR_VERSION
++                                                VTK_BUILD_VERSION
++                                                VTK_INCLUDE_DIRS
++                                                VTK_LIBRARY_DIRS
++                                                VTK_KITS
++                                                VTK_LANGUAGES
++                                             VERSION_VAR VTK_VERSION
++                                             )
+     ELSE()
+       # We found the wrong version.  Pretend we did not find it.
+       SET(VTK_DIR "VTK_DIR-NOTFOUND" CACHE PATH "The ${VTK_DIR_DESCRIPTION}" FORCE)
