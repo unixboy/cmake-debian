@@ -3,8 +3,9 @@ Description: FindVTK.cmake missed a case which lead to NOT-FOUND errors.
  FindVTK.cmake didn't handle the VTK 5.x case when trying to find VTK. This
  caused CMake to error out with a misleading error message VTK_DIR not set.
  This patch adds the missing case.
-Last-Update: 2010-11-27
+Last-Update: 2011-01-10
 Origin: vendor
+Forwarded: http://cmake.org/Bug/view.php?id=11678
 ---
  Modules/FindVTK.cmake |   14 ++++++++++++++
  1 file changed, 14 insertions(+)
