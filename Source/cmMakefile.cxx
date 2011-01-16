@@ -827,7 +827,8 @@ cmMakefile::AddCustomCommandToTarget(const char* target,
     {
     // Add the command to the appropriate build step for the target.
     std::vector<std::string> no_output;
-    cmCustomCommand cc(no_output, depends, commandLines, comment, workingDir);
+    cmCustomCommand cc(this, no_output, depends,
+                       commandLines, comment, workingDir);
     cc.SetEscapeOldStyle(escapeOldStyle);
     cc.SetEscapeAllowMakeVars(true);
     switch(type)
@@ -947,7 +948,7 @@ cmMakefile::AddCustomCommandToOutput(const std::vector<std::string>& outputs,
   if(file)
     {
     cmCustomCommand* cc =
-      new cmCustomCommand(outputs, depends2, commandLines,
+      new cmCustomCommand(this, outputs, depends2, commandLines,
                           comment, workingDir);
     cc->SetEscapeOldStyle(escapeOldStyle);
     cc->SetEscapeAllowMakeVars(true);
@@ -1364,8 +1365,8 @@ void cmMakefile::AddLinkLibraryForTarget(const char *target,
     cmOStringStream e;
     e << "Attempt to add link library \""
       << lib << "\" to target \""
-      << target << "\" which is not built by this project.";
-    cmSystemTools::Error(e.str().c_str());
+      << target << "\" which is not built in this directory.";
+    this->IssueMessage(cmake::FATAL_ERROR, e.str().c_str());
     }
 }
 
@@ -2340,17 +2341,19 @@ void cmMakefile::AddDefaultDefinitions()
   working, these variables are still also set here in this place, but they
   will be reset in CMakeSystemSpecificInformation.cmake before the platform
   files are executed. */
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
   this->AddDefinition("WIN32", "1");
   this->AddDefinition("CMAKE_HOST_WIN32", "1");
 #else
   this->AddDefinition("UNIX", "1");
   this->AddDefinition("CMAKE_HOST_UNIX", "1");
 #endif
-  // Cygwin is more like unix so enable the unix commands
 #if defined(__CYGWIN__)
-  this->AddDefinition("UNIX", "1");
-  this->AddDefinition("CMAKE_HOST_UNIX", "1");
+  if(cmSystemTools::IsOn(cmSystemTools::GetEnv("CMAKE_LEGACY_CYGWIN_WIN32")))
+    {
+    this->AddDefinition("WIN32", "1");
+    this->AddDefinition("CMAKE_HOST_WIN32", "1");
+    }
 #endif
 #if defined(__APPLE__)
   this->AddDefinition("APPLE", "1");
@@ -2822,35 +2825,100 @@ void cmMakefile::DisplayStatus(const char* message, float s)
 
 std::string cmMakefile::GetModulesFile(const char* filename)
 {
-  std::vector<std::string> modulePath;
-  const char* def = this->GetDefinition("CMAKE_MODULE_PATH");
-  if(def)
-    {
-    cmSystemTools::ExpandListArgument(def, modulePath);
-    }
+  std::string result;
 
-  // Also search in the standard modules location.
-  def = this->GetDefinition("CMAKE_ROOT");
-  if(def)
+  // We search the module always in CMAKE_ROOT and in CMAKE_MODULE_PATH,
+  // and then decide based on the policy setting which one to return.
+  // See CMP0017 for more details.
+  // The specific problem was that KDE 4.5.0 installs a
+  // FindPackageHandleStandardArgs.cmake which doesn't have the new features
+  // of FPHSA.cmake introduced in CMake 2.8.3 yet, and by setting
+  // CMAKE_MODULE_PATH also e.g. FindZLIB.cmake from cmake included
+  // FPHSA.cmake from kdelibs and not from CMake, and tried to use the
+  // new features, which were not there in the version from kdelibs, and so
+  // failed ("
+  std::string moduleInCMakeRoot;
+  std::string moduleInCMakeModulePath;
+
+  // Always search in CMAKE_MODULE_PATH:
+  const char* cmakeModulePath = this->GetDefinition("CMAKE_MODULE_PATH");
+  if(cmakeModulePath)
     {
-    std::string rootModules = def;
-    rootModules += "/Modules";
-    modulePath.push_back(rootModules);
-    }
-  //std::string  Look through the possible module directories.
-  for(std::vector<std::string>::iterator i = modulePath.begin();
-      i != modulePath.end(); ++i)
-    {
-    std::string itempl = *i;
-    cmSystemTools::ConvertToUnixSlashes(itempl);
-    itempl += "/";
-    itempl += filename;
-    if(cmSystemTools::FileExists(itempl.c_str()))
+    std::vector<std::string> modulePath;
+    cmSystemTools::ExpandListArgument(cmakeModulePath, modulePath);
+
+    //Look through the possible module directories.
+    for(std::vector<std::string>::iterator i = modulePath.begin();
+        i != modulePath.end(); ++i)
       {
-      return itempl;
+      std::string itempl = *i;
+      cmSystemTools::ConvertToUnixSlashes(itempl);
+      itempl += "/";
+      itempl += filename;
+      if(cmSystemTools::FileExists(itempl.c_str()))
+        {
+        moduleInCMakeModulePath = itempl;
+        break;
+        }
       }
     }
-  return "";
+
+  // Always search in the standard modules location.
+  const char* cmakeRoot = this->GetDefinition("CMAKE_ROOT");
+  if(cmakeRoot)
+    {
+    moduleInCMakeRoot = cmakeRoot;
+    moduleInCMakeRoot += "/Modules/";
+    moduleInCMakeRoot += filename;
+    cmSystemTools::ConvertToUnixSlashes(moduleInCMakeRoot);
+    if(!cmSystemTools::FileExists(moduleInCMakeRoot.c_str()))
+      {
+      moduleInCMakeRoot = "";
+      }
+    }
+
+  // Normally, prefer the files found in CMAKE_MODULE_PATH. Only when the file
+  // from which we are being called is located itself in CMAKE_ROOT, then
+  // prefer results from CMAKE_ROOT depending on the policy setting.
+  result = moduleInCMakeModulePath;
+  if (result.size() == 0)
+    {
+    result = moduleInCMakeRoot;
+    }
+
+  if ((moduleInCMakeModulePath.size()>0) && (moduleInCMakeRoot.size()>0))
+    {
+    const char* currentFile = this->GetDefinition("CMAKE_CURRENT_LIST_FILE");
+    if (currentFile && (strstr(currentFile, cmakeRoot) == currentFile))
+      {
+      switch (this->GetPolicyStatus(cmPolicies::CMP0017))
+        {
+        case cmPolicies::WARN:
+        {
+          cmOStringStream e;
+          e << "File " << currentFile << " includes "
+            << moduleInCMakeModulePath
+            << " (found via CMAKE_MODULE_PATH) which shadows "
+            << moduleInCMakeRoot  << ". This may cause errors later on .\n"
+            << this->GetPolicies()->GetPolicyWarning(cmPolicies::CMP0017);
+
+          this->IssueMessage(cmake::AUTHOR_WARNING, e.str());
+           // break;  // fall through to OLD behaviour
+        }
+        case cmPolicies::OLD:
+          result = moduleInCMakeModulePath;
+          break;
+        case cmPolicies::REQUIRED_IF_USED:
+        case cmPolicies::REQUIRED_ALWAYS:
+        case cmPolicies::NEW:
+        default:
+          result = moduleInCMakeRoot;
+          break;
+        }
+      }
+    }
+
+  return result;
 }
 
 void cmMakefile::ConfigureString(const std::string& input,
@@ -3588,6 +3656,12 @@ cmTarget* cmMakefile::FindTargetToUse(const char* name)
   if(imported != this->ImportedTargets.end())
     {
     return imported->second;
+    }
+
+  // Look for a target built in this directory.
+  if(cmTarget* t = this->FindTarget(name))
+    {
+    return t;
     }
 
   // Look for a target built in this project.
