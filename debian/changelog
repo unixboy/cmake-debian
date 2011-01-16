@@ -1,9 +1,11 @@
 cmake (2.8.4~rc1-1) UNRELEASED; urgency=low
 
   * New upstream release.
-    - Dropped obsolete patches:
+    - Dropped obsolete patches (merged or taken from upstream):
       + backport_fix_asm_support.diff
       + FindTCL_fix_#600245.diff
+      + FindPython_fix_#569321_and_#580503.diff (Please note, that upstream's
+        solution is slightly different from what Debian had initially!)
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 
