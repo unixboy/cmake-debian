@@ -2,9 +2,9 @@ Subject: Add -lpthread when using Boost::Thread.
 Author: Kai Wasserbäch <debian@carbon-project.org>
 Origin: vendor
 Last-Update: 2011-01-16
-Bug: http://public.kitware.com/Bug/view.php?id=10692
+Bug: http://cmake.org/Bug/view.php?id=10692
 Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=563479
-Forwarded: no
+Forwarded: http://cmake.org/Bug/file_download.php?file_id=3629&type=bug
 ---
  Modules/FindBoost.cmake |    3 +++
  1 file changed, 3 insertions(+)
