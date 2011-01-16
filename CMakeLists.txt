@@ -10,6 +10,7 @@
 # See the License for more information.
 #=============================================================================
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.5 FATAL_ERROR)
+SET(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
 PROJECT(CMake)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
@@ -418,9 +419,9 @@ ENDIF()
 # The CMake version number.
 SET(CMake_VERSION_MAJOR 2)
 SET(CMake_VERSION_MINOR 8)
-SET(CMake_VERSION_PATCH 3)
+SET(CMake_VERSION_PATCH 4)
 SET(CMake_VERSION_TWEAK 0)
-#SET(CMake_VERSION_RC 4)
+SET(CMake_VERSION_RC 1)
 
 # Releases define a tweak level.
 IF(DEFINED CMake_VERSION_TWEAK)

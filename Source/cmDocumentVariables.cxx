@@ -464,6 +464,25 @@ void cmDocumentVariables::DefineVariables(cmake* cm)
 
   // Variables defined by cmake, that change the behavior
   // of cmake
+
+  cm->DefineProperty
+    ("CMAKE_POLICY_DEFAULT_CMP<NNNN>",  cmProperty::VARIABLE,
+     "Default for CMake Policy CMP<NNNN> when it is otherwise left unset.",
+     "Commands cmake_minimum_required(VERSION) and cmake_policy(VERSION) "
+     "by default leave policies introduced after the given version unset.  "
+     "Set CMAKE_POLICY_DEFAULT_CMP<NNNN> to OLD or NEW to specify the "
+     "default for policy CMP<NNNN>, where <NNNN> is the policy number."
+     "\n"
+     "This variable should not be set by a project in CMake code; "
+     "use cmake_policy(SET) instead.  "
+     "Users running CMake may set this variable in the cache "
+     "(e.g. -DCMAKE_POLICY_DEFAULT_CMP<NNNN>=<OLD|NEW>) "
+     "to set a policy not otherwise set by the project.  "
+     "Set to OLD to quiet a policy warning while using old behavior "
+     "or to NEW to try building the project with new behavior.",
+     false,
+     "Variables That Change Behavior");
+
     cm->DefineProperty
     ("CMAKE_FIND_LIBRARY_PREFIXES",  cmProperty::VARIABLE,
      "Prefixes to prepend when looking for libraries.",
@@ -1334,6 +1353,29 @@ void cmDocumentVariables::DefineVariables(cmake* cm)
     "Defined to true if the language is enabled.",
     "When language <LANG> is enabled by project() or enable_language() "
     "this variable is defined to 1.",
+    false,"Variables for Languages");
+
+  cm->DefineProperty(
+    "CMAKE_Fortran_MODDIR_FLAG", cmProperty::VARIABLE,
+    "Fortran flag for module output directory.",
+    "This stores the flag needed to pass the value of the "
+    "Fortran_MODULE_DIRECTORY target property to the compiler.",
+    false,"Variables for Languages");
+
+  cm->DefineProperty(
+    "CMAKE_Fortran_MODDIR_DEFAULT", cmProperty::VARIABLE,
+    "Fortran default module output directory.",
+    "Most Fortran compilers write .mod files to the current working "
+    "directory.  "
+    "For those that do not, this is set to \".\" and used when the "
+    "Fortran_MODULE_DIRECTORY target property is not set.",
+    false,"Variables for Languages");
+
+  cm->DefineProperty(
+    "CMAKE_Fortran_MODOUT_FLAG", cmProperty::VARIABLE,
+    "Fortran flag to enable module output.",
+    "Most Fortran compilers write .mod files out by default.  "
+    "For others, this stores the flag needed to enable module output.",
     false,"Variables for Languages");
 
   // variables that are used by cmake but not to be documented

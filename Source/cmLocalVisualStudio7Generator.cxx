@@ -427,7 +427,7 @@ cmVS7FlagTable cmLocalVisualStudio7GeneratorFlagTable[] =
   // The YX and Yu options are in a per-global-generator table because
   // their values differ based on the VS IDE version.
   {"ForcedIncludeFiles", "FI", "Forced include files", "",
-   cmVS7FlagTable::UserValueRequired},
+   cmVS7FlagTable::UserValueRequired | cmVS7FlagTable::SemicolonAppendable},
 
   // boolean flags
   {"BufferSecurityCheck", "GS", "Buffer security check", "TRUE", 0},
@@ -546,12 +546,7 @@ public:
       {
       this->Stream << this->LG->EscapeForXML("\n");
       }
-    std::string script =
-      this->LG->ConstructScript(cc.GetCommandLines(),
-                                cc.GetWorkingDirectory(),
-                                this->Config,
-                                cc.GetEscapeOldStyle(),
-                                cc.GetEscapeAllowMakeVars());
+    std::string script = this->LG->ConstructScript(cc, this->Config);
     this->Stream << this->LG->EscapeForXML(script.c_str());
     }
 private:
@@ -669,6 +664,7 @@ void cmLocalVisualStudio7Generator::WriteConfiguration(std::ostream& fout,
   targetOptions.FixExceptionHandlingDefault();
   targetOptions.Parse(flags.c_str());
   targetOptions.Parse(defineFlags.c_str());
+  targetOptions.ParseFinish();
   targetOptions.AddDefines
     (this->Makefile->GetProperty("COMPILE_DEFINITIONS"));
   targetOptions.AddDefines(target.GetProperty("COMPILE_DEFINITIONS"));
@@ -801,7 +797,6 @@ void cmLocalVisualStudio7Generator::WriteConfiguration(std::ostream& fout,
     tool = "VFMIDLTool";
     }
   fout << "\t\t\t<Tool\n\t\t\t\tName=\"" << tool << "\"\n";
-  targetOptions.OutputPreprocessorDefinitions(fout, "\t\t\t\t", "\n");
   fout << "\t\t\t\tMkTypLibCompatible=\"FALSE\"\n";
   if( this->PlatformName == "x64" )
     {
@@ -1032,7 +1027,12 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
     temp += "/";
     temp += targetNameImport;
     fout << "\t\t\t\tImportLibrary=\""
-         << this->ConvertToXMLOutputPathSingle(temp.c_str()) << "\"/>\n";
+         << this->ConvertToXMLOutputPathSingle(temp.c_str()) << "\"";
+    if(this->FortranProject)
+      {
+      fout << "\n\t\t\t\tLinkDLL=\"true\"";
+      }
+    fout << "/>\n";
     }
     break;
     case cmTarget::EXECUTABLE:
@@ -1098,11 +1098,13 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
       }
     if ( target.GetPropertyAsBool("WIN32_EXECUTABLE") )
       {
-      fout << "\t\t\t\tSubSystem=\"2\"\n";
+      fout << "\t\t\t\tSubSystem=\""
+           << (this->FortranProject? "subSystemWindows" : "2") << "\"\n";
       }
     else
       {
-      fout << "\t\t\t\tSubSystem=\"1\"\n";
+      fout << "\t\t\t\tSubSystem=\""
+           << (this->FortranProject? "subSystemConsole" : "1") << "\"\n";
       }
     std::string stackVar = "CMAKE_";
     stackVar += linkLanguage;
@@ -1588,12 +1590,7 @@ WriteCustomRule(std::ostream& fout,
            << this->EscapeForXML(fc.CompileFlags.c_str()) << "\"/>\n";
       }
 
-    std::string script = 
-      this->ConstructScript(command.GetCommandLines(),
-                            command.GetWorkingDirectory(),
-                            i->c_str(),
-                            command.GetEscapeOldStyle(),
-                            command.GetEscapeAllowMakeVars());
+    std::string script = this->ConstructScript(command, i->c_str());
     fout << "\t\t\t\t\t<Tool\n"
          << "\t\t\t\t\tName=\"" << customTool << "\"\n"
          << "\t\t\t\t\tDescription=\"" 
@@ -1621,9 +1618,12 @@ WriteCustomRule(std::ostream& fout,
           ++d)
         {
         // Get the real name of the dependency in case it is a CMake target.
-        std::string dep = this->GetRealDependency(d->c_str(), i->c_str());
-        fout << this->ConvertToXMLOutputPath(dep.c_str())
-             << ";";
+        std::string dep;
+        if(this->GetRealDependency(d->c_str(), i->c_str(), dep))
+          {
+          fout << this->ConvertToXMLOutputPath(dep.c_str())
+               << ";";
+          }
         }
       }
     fout << "\"\n";
