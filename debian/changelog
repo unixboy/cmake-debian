@@ -11,6 +11,7 @@ cmake (2.8.4~rc1-1) UNRELEASED; urgency=low
   * debian/README.Debian: Deleted, we're shipping an unmodified version of the
     Python modules again.
   * debian/README.source: Deleted, not needed with "3.0 (quilt)".
+  * debian/control: Changed my E-Mail address.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 
