@@ -1,4 +1,4 @@
-cmake (2.8.4~rc1-1) UNRELEASED; urgency=low
+cmake (2.8.4~rc2-1) UNRELEASED; urgency=low
 
   * New upstream release.
     - Dropped obsolete patches (merged or taken from upstream):
