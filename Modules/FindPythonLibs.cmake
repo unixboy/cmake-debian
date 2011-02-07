@@ -104,7 +104,7 @@ SET(PYTHON_LIBRARIES "${PYTHON_LIBRARY}")
 SET(PYTHON_DEBUG_LIBRARIES "${PYTHON_DEBUG_LIBRARY}")
 
 
-INCLUDE(FindPackageHandleStandardArgs)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(PythonLibs DEFAULT_MSG PYTHON_LIBRARIES PYTHON_INCLUDE_DIRS)
 
 
@@ -151,6 +151,7 @@ FUNCTION(PYTHON_WRITE_MODULES_HEADER _filename)
   GET_FILENAME_COMPONENT(_name "${_filename}" NAME)
   STRING(REPLACE "." "_" _name "${_name}")
   STRING(TOUPPER ${_name} _nameUpper)
+  SET(_filename ${CMAKE_CURRENT_BINARY_DIR}/${_filename})
 
   SET(_filenameTmp "${_filename}.in")
   FILE(WRITE ${_filenameTmp} "/*Created by cmake, do not edit, changes will be lost*/\n")
