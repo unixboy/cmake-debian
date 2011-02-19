@@ -12,7 +12,11 @@ cmake (2.8.4~rc2-1) UNRELEASED; urgency=low
   * debian/README.Debian: Deleted, we're shipping an unmodified version of the
     Python modules again.
   * debian/README.source: Deleted, not needed with "3.0 (quilt)".
-  * debian/control: Changed my E-Mail address.
+  * debian/control:
+    - Changed my E-Mail address.
+    - Bumped B-D on debhelper.
+  * debian/compat: now "8".
+  * debian/rules: Updated for debhelper v8.
 
   [ Modestas Vainius ]
   * Disable git-import-orig in debian/watch. One extra command is not a good
