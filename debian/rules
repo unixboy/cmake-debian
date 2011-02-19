@@ -15,13 +15,9 @@ $(BUILD_FLAGS_FILE) verify-build-flags:
 	$(call $(flag_action),CMAKE_C_FLAGS,"$(CFLAGS)","C flags")
 	$(call $(flag_action),CMAKE_CXX_FLAGS,"$(CFLAGS)","C++ flags")
 	$(call $(flag_action),CMAKE_SKIP_BOOTSTRAP_TEST,ON,"Skip BootstrapTest")
-	$(call $(flag_action),BUILD_WXDialog,ON,"Build WXDialog")
 	$(call $(flag_action),BUILD_CursesDialog,ON,"Build curses GUI")
 	$(call $(flag_action),BUILD_QtDialog,ON,"Build Qt4 GUI")
-#	$(call $(flag_action),TARGET_VERSION)
-#	$(call $(flag_action),TARGET_SOVERSION)
 #	$(call $(flag_action),BUILD_DOCUMENTATION,ON)
-#	$(call $(flag_action),BUILD_DOXYGEN,ON)
 	$(call $(flag_action),CMAKE_USE_SYSTEM_LIBARCHIVE,ON)
 	$(call $(flag_action),CTEST_USE_XMLRPC,ON)
 

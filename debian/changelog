@@ -27,6 +27,11 @@ cmake (2.8.4-1) UNRELEASED; urgency=low
     longer needed with ccache 3.0 or later.
   * Add verify-build-flags target to debian/rules. It can be used to verify if
     build flags are still valid (i.e. present in any of CMakeLists.txt).
+  * Remove obsolete build flags from debian/rules:
+    - BUILD_WXDialog;
+    - TARGET_VERSION;
+    - TARGET_SOVERSION;
+    - BUILD_DOXYGEN.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 
