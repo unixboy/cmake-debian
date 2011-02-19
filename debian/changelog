@@ -1,7 +1,8 @@
-cmake (2.8.4~rc2-1) UNRELEASED; urgency=low
+cmake (2.8.4-1) UNRELEASED; urgency=low
+
+  * New upstream release.
 
   [ Kai Wasserbäch ]
-  * New upstream release.
     - Dropped obsolete patches (merged or taken from upstream):
       + backport_fix_asm_support.diff
       + FindTCL_fix_#600245.diff
