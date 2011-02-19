@@ -1,12 +1,21 @@
 From: Modestas Vainius <modax@debian.org>
 Subject: fix a couple of small issues with cmake manpages
 Origin: vendor
-Forwarded: no
-Last-Update: 2010-11-13
+Forwarded: yes
+Bug: http://public.kitware.com/Bug/view.php?id=11883
+Last-Update: 2010-02-19
 
 W: cmake: manpage-has-errors-from-man usr/share/man/man1/cmake.1.gz 10029: warning [p 158, 13.5i]: can't break line
 I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz informations information
 I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz dependant dependent
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz prefered preferred
+I: cmake: spelling-error-in-binary ./usr/bin/cmake prefered preferred
+I: cmake: spelling-error-in-binary ./usr/bin/cpack prefered preferred
+I: cmake: spelling-error-in-binary ./usr/bin/ctest prefered preferred
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakepolicies.1.gz prefered preferred
+I: cmake-curses-gui: spelling-error-in-binary ./usr/bin/ccmake prefered preferred
+I: cmake-qt-gui: spelling-error-in-binary ./usr/bin/cmake-gui prefered preferred
+
 --- a/Modules/FindPostgreSQL.cmake
 +++ b/Modules/FindPostgreSQL.cmake
 @@ -1,6 +1,4 @@
@@ -39,3 +48,47 @@ I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz dependant depe
  #  TARGET_LINK_LIBRARIES(<YourTarget> ${wxWidgets_LIBRARIES})
  #
  # DEPRECATED
+--- a/Source/cmPolicies.cxx
++++ b/Source/cmPolicies.cxx
+@@ -453,7 +453,7 @@ cmPolicies::cmPolicies()
+     "Starting with CMake 2.8.4, if a cmake-module shipped with CMake (i.e. "
+     "located in the CMake module directory) calls include() or "
+     "find_package(), the files located in the the CMake module directory are "
+-    "prefered over the files in CMAKE_MODULE_PATH.  "
++    "preferred over the files in CMAKE_MODULE_PATH.  "
+     "This makes sure that the modules belonging to "
+     "CMake always get those files included which they expect, and against "
+     "which they were developed and tested.  "
+--- a/Source/cmTarget.h
++++ b/Source/cmTarget.h
+@@ -326,7 +326,7 @@ public:
+    */
+   bool FindSourceFiles();
+ 
+-  ///! Return the prefered linker language for this target
++  ///! Return the preferred linker language for this target
+   const char* GetLinkerLanguage(const char* config = 0);
+ 
+   ///! Return the rule variable used to create this type of target,
+--- a/Utilities/cmcurl/easy.c
++++ b/Utilities/cmcurl/easy.c
+@@ -708,7 +708,7 @@ void curl_easy_reset(CURL *curl)
+   data->set.ssl.verifypeer = TRUE;
+   data->set.ssl.verifyhost = 2;
+ #ifdef CURL_CA_BUNDLE
+-  /* This is our prefered CA cert bundle since install time */
++  /* This is our preferred CA cert bundle since install time */
+   data->set.ssl.CAfile = (char *)CURL_CA_BUNDLE;
+ #endif
+ 
+--- a/Utilities/cmcurl/setup.h
++++ b/Utilities/cmcurl/setup.h
+@@ -155,7 +155,7 @@ typedef unsigned char bool;
+ #define SIZEOF_CURL_OFF_T 4
+ #endif
+ 
+-/* We set up our internal prefered (CURL_)FORMAT_OFF_T here */
++/* We set up our internal preferred (CURL_)FORMAT_OFF_T here */
+ #if SIZEOF_CURL_OFF_T > 4
+ #define FORMAT_OFF_T "lld"
+ #else
