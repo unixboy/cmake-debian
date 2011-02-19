@@ -1,25 +1,30 @@
 #!/usr/bin/make -f
 
 BUILD_FLAGS_FILE = build-flags.cmake
+set_build_flag = echo 'set($(1) $(2) CACHE \
+    $(if $(filter $(2),YES ON TRUE NO OFF FALSE),BOOL,STRING) \
+    $(or $(3),"") FORCE)' >> $(BUILD_FLAGS_FILE)
 
 $(BUILD_FLAGS_FILE):
 	touch $@
-	echo 'set(CMAKE_SKIP_RPATH YES CACHE BOOL "Skip rpath" FORCE)'          >> $@
-	echo 'set(CMAKE_USE_RELATIVE_PATHS YES CACHE BOOL "Use relative paths" FORCE)' >> $@
-	echo 'set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "Verbose build" FORCE)'  >> $@
-	echo 'set(CMAKE_C_FLAGS "$(CFLAGS)" CACHE STRING "C flags" FORCE)'      >> $@
-	echo 'set(CMAKE_CXX_FLAGS "$(CFLAGS)" CACHE STRING "C++ flags" FORCE)'  >> $@
-	echo 'set(CMAKE_SKIP_BOOTSTRAP_TEST ON CACHE BOOL "Skip BootstrapTest" FORCE)' >> $@
-#	echo 'set(BUILD_WXDialog ON CACHE STRING "Build WXDialog" FORCE)'      >> $@
-	echo 'set(BUILD_CursesDialog TRUE CACHE BOOL "Build curses GUI" FORCE)' >> $@
-	echo 'set(BUILD_QtDialog TRUE CACHE BOOL "Build Qt4 GUI" FORCE)'        >> $@
-	echo 'set(MINGW_CC_LINUX2WIN_EXECUTABLE "" CACHE FILEPATH "Never detect mingw" FORCE)' >> $@
-#	echo 'set(TARGET_VERSION CACHE STRING ""FORCE)'                        >> $@
-#	echo 'set(TARGET_SOVERSION CACHE STRING "" FORCE)'                     >> $@
-#	echo 'set(BUILD_DOCUMENTATION ON CACHE BOOL "" FORCE)'                 >> $@
-#	echo 'set(BUILD_DOXYGEN ON CACHE BOOL "" FORCE)'                       >> $@
-	echo 'set(CMAKE_USE_SYSTEM_LIBARCHIVE YES CACHE BOOL "" FORCE)'        >> $@
-	echo 'set(CTEST_USE_XMLRPC YES CACHE BOOL "" FORCE)'                   >> $@
+	$(call $(flag_action),CMAKE_SKIP_RPATH,ON,"Skip rpath")
+	$(call $(flag_action),CMAKE_USE_RELATIVE_PATHS,ON,"Use relative paths")
+	$(call $(flag_action),CMAKE_VERBOSE_MAKEFILE,ON,"Verbose build")
+	$(call $(flag_action),CMAKE_C_FLAGS,"$(CFLAGS)","C flags")
+	$(call $(flag_action),CMAKE_CXX_FLAGS,"$(CFLAGS)","C++ flags")
+	$(call $(flag_action),CMAKE_SKIP_BOOTSTRAP_TEST,ON,"Skip BootstrapTest")
+	$(call $(flag_action),BUILD_WXDialog,ON,"Build WXDialog")
+	$(call $(flag_action),BUILD_CursesDialog,ON,"Build curses GUI")
+	$(call $(flag_action),BUILD_QtDialog,ON,"Build Qt4 GUI")
+	$(call $(flag_action),MINGW_CC_LINUX2WIN_EXECUTABLE,"","Never detect mingw")
+#	$(call $(flag_action),TARGET_VERSION)
+#	$(call $(flag_action),TARGET_SOVERSION)
+#	$(call $(flag_action),BUILD_DOCUMENTATION,ON)
+#	$(call $(flag_action),BUILD_DOXYGEN,ON)
+	$(call $(flag_action),CMAKE_USE_SYSTEM_LIBARCHIVE,ON)
+	$(call $(flag_action),CTEST_USE_XMLRPC,ON)
+
+$(BUILD_FLAGS_FILE): flag_action := set_build_flag
 
 override_dh_auto_configure: $(BUILD_FLAGS_FILE)
 	rm -rf Build && mkdir -p Build

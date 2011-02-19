@@ -22,6 +22,7 @@ cmake (2.8.4-1) UNRELEASED; urgency=low
   [ Modestas Vainius ]
   * Disable git-import-orig in debian/watch. One extra command is not a good
     enough reason to lose control of packaging to non-trivial black-box tools.
+  * Use less error-prone way of setting build flags.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 
