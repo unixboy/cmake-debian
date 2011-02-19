@@ -25,6 +25,8 @@ cmake (2.8.4-1) UNRELEASED; urgency=low
   * Use less error-prone way of setting build flags.
   * Do not set MINGW_CC_LINUX2WIN_EXECUTABLE build flag. Workaround is no
     longer needed with ccache 3.0 or later.
+  * Add verify-build-flags target to debian/rules. It can be used to verify if
+    build flags are still valid (i.e. present in any of CMakeLists.txt).
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 

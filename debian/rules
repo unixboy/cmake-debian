@@ -4,9 +4,11 @@ BUILD_FLAGS_FILE = build-flags.cmake
 set_build_flag = echo 'set($(1) $(2) CACHE \
     $(if $(filter $(2),YES ON TRUE NO OFF FALSE),BOOL,STRING) \
     $(or $(3),"") FORCE)' >> $(BUILD_FLAGS_FILE)
+verify_build_flag = @grep \
+    --include=CMakeLists.txt --include=*.cmake \
+    --exclude=$(BUILD_FLAGS_FILE) -rqs '\b$(1)\b' . || echo '$(1) flag is obsolete'
 
-$(BUILD_FLAGS_FILE):
-	touch $@
+$(BUILD_FLAGS_FILE) verify-build-flags:
 	$(call $(flag_action),CMAKE_SKIP_RPATH,ON,"Skip rpath")
 	$(call $(flag_action),CMAKE_USE_RELATIVE_PATHS,ON,"Use relative paths")
 	$(call $(flag_action),CMAKE_VERBOSE_MAKEFILE,ON,"Verbose build")
@@ -24,6 +26,8 @@ $(BUILD_FLAGS_FILE):
 	$(call $(flag_action),CTEST_USE_XMLRPC,ON)
 
 $(BUILD_FLAGS_FILE): flag_action := set_build_flag
+verify-build-flags: flag_action := verify_build_flag
+.PHONY: verify-build-flags
 
 override_dh_auto_configure: $(BUILD_FLAGS_FILE)
 	rm -rf Build && mkdir -p Build
