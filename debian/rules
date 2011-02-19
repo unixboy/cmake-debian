@@ -16,7 +16,6 @@ $(BUILD_FLAGS_FILE):
 	$(call $(flag_action),BUILD_WXDialog,ON,"Build WXDialog")
 	$(call $(flag_action),BUILD_CursesDialog,ON,"Build curses GUI")
 	$(call $(flag_action),BUILD_QtDialog,ON,"Build Qt4 GUI")
-	$(call $(flag_action),MINGW_CC_LINUX2WIN_EXECUTABLE,"","Never detect mingw")
 #	$(call $(flag_action),TARGET_VERSION)
 #	$(call $(flag_action),TARGET_SOVERSION)
 #	$(call $(flag_action),BUILD_DOCUMENTATION,ON)

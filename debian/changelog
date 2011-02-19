@@ -23,6 +23,8 @@ cmake (2.8.4-1) UNRELEASED; urgency=low
   * Disable git-import-orig in debian/watch. One extra command is not a good
     enough reason to lose control of packaging to non-trivial black-box tools.
   * Use less error-prone way of setting build flags.
+  * Do not set MINGW_CC_LINUX2WIN_EXECUTABLE build flag. Workaround is no
+    longer needed with ccache 3.0 or later.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 
