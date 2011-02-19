@@ -1,5 +1,6 @@
 cmake (2.8.4~rc2-1) UNRELEASED; urgency=low
 
+  [ Kai Wasserbäch ]
   * New upstream release.
     - Dropped obsolete patches (merged or taken from upstream):
       + backport_fix_asm_support.diff
@@ -12,6 +13,10 @@ cmake (2.8.4~rc2-1) UNRELEASED; urgency=low
     Python modules again.
   * debian/README.source: Deleted, not needed with "3.0 (quilt)".
   * debian/control: Changed my E-Mail address.
+
+  [ Modestas Vainius ]
+  * Disable git-import-orig in debian/watch. One extra command is not a good
+    enough reason to lose control of packaging to non-trivial black-box tools.
 
  -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
 
