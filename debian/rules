@@ -1,5 +1,11 @@
 #!/usr/bin/make -f
 
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+    BOOTSTRAP_PARALLEL = --parallel=$(NUMJOBS)
+endif
+
+
 BUILD_FLAGS_FILE = build-flags.cmake
 set_build_flag = echo 'set($(1) $(2) CACHE \
     $(if $(filter $(2),YES ON TRUE NO OFF FALSE),BOOL,STRING) \
@@ -27,8 +33,9 @@ verify-build-flags: flag_action := verify_build_flag
 
 override_dh_auto_configure: $(BUILD_FLAGS_FILE)
 	rm -rf Build && mkdir -p Build
-	+cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
-	                         --init=../$(BUILD_FLAGS_FILE) --system-libs $(CONFIGURE_PARALLEL)
+	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
+	                         --init=../$(BUILD_FLAGS_FILE) --system-libs $(CONFIGURE_PARALLEL) \
+	                         $(BOOTSTRAP_PARALLEL)
 
 override_dh_auto_test:
 	HOME="`pwd`/Build" dh_auto_test
