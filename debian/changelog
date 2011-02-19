@@ -1,4 +1,4 @@
-cmake (2.8.4-1) UNRELEASED; urgency=low
+cmake (2.8.4-1) experimental; urgency=low
 
   * New upstream release.
 
@@ -36,7 +36,7 @@ cmake (2.8.4-1) UNRELEASED; urgency=low
   * Enable more verbosiness when bootstraping.
   * Add more spelling fixes to fixup_manpages.diff patch.
 
- -- Kai Wasserbäch <debian@carbon-project.org>  Sun, 16 Jan 2011 11:40:34 +0100
+ -- Modestas Vainius <modax@debian.org>  Sat, 19 Feb 2011 20:07:33 +0200
 
 cmake (2.8.3-4) unstable; urgency=low
 
