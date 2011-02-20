@@ -44,6 +44,13 @@ cmake (2.8.4-1) experimental; urgency=low
 
  -- Modestas Vainius <modax@debian.org>  Sat, 19 Feb 2011 20:07:33 +0200
 
+cmake (2.8.3-5) unstable; urgency=low
+
+  * Check if /usr/share/doc/$pkgname is a directory before attempting to remove
+    it in {cmake,cmake-doc,cmake-dbg,cmake-*-gui}.postinst. (Closes: #614202)
+
+ -- Modestas Vainius <modax@debian.org>  Sun, 20 Feb 2011 14:16:34 +0200
+
 cmake (2.8.3-4) unstable; urgency=low
 
   * Release to unstable.
