@@ -1,9 +1,11 @@
 cmake (2.8.4-3) UNRELEASED; urgency=low
 
+  * 2.8.4-2 ended up in unstable by accident :-( Fix distribution field
+    accordingly.
 
  -- Modestas Vainius <modax@debian.org>  Mon, 21 Feb 2011 01:09:51 +0200
 
-cmake (2.8.4-2) experimental; urgency=low
+cmake (2.8.4-2) unstable; urgency=low
 
   [ Kai Wasserbäch ]
   * debian/watch: Remove trailing backslash.
