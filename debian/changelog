@@ -2,6 +2,9 @@ cmake (2.8.4+dfsg.1-1) UNRELEASED; urgency=low
 
   * 2.8.4-2 ended up in unstable by accident :-( Fix distribution field
     accordingly.
+  * Remove files licensed under proprietary licence from the original tarball.
+    (Closes: #614390) Generate a new tarball with +dfsg.1 suffix. Thanks to
+    Vasily Gurevich for heads up.
 
  -- Modestas Vainius <modax@debian.org>  Mon, 21 Feb 2011 01:09:51 +0200
 
