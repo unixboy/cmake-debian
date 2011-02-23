@@ -1,4 +1,4 @@
-cmake (2.8.4+dfsg.1-1) UNRELEASED; urgency=low
+cmake (2.8.4+dfsg.1-1) unstable; urgency=low
 
   * 2.8.4-2 ended up in unstable by accident :-( Fix distribution field
     accordingly.
@@ -6,7 +6,7 @@ cmake (2.8.4+dfsg.1-1) UNRELEASED; urgency=low
     (Closes: #614390) Generate a new tarball with +dfsg.1 suffix. Thanks to
     Vasily Gurevich for heads up.
 
- -- Modestas Vainius <modax@debian.org>  Mon, 21 Feb 2011 01:09:51 +0200
+ -- Modestas Vainius <modax@debian.org>  Wed, 23 Feb 2011 23:12:02 +0200
 
 cmake (2.8.4-2) unstable; urgency=low
 
