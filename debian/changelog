@@ -1,3 +1,8 @@
+cmake (2.8.4+dfsg.1-2) UNRELEASED; urgency=low
+
+
+ -- Modestas Vainius <modax@debian.org>  Fri, 25 Feb 2011 19:01:22 +0200
+
 cmake (2.8.4+dfsg.1-1) unstable; urgency=low
 
   * 2.8.4-2 ended up in unstable by accident :-( Fix distribution field
