@@ -1,9 +1,9 @@
-cmake (2.8.4+dfsg.1-2) UNRELEASED; urgency=low
+cmake (2.8.4+dfsg.1-2) unstable; urgency=low
 
   * Add backport_test_order_fix.diff to restore conpatibility with earlier
     versions with respect to the test run order. (Closes: #615054)
 
- -- Modestas Vainius <modax@debian.org>  Fri, 25 Feb 2011 19:01:22 +0200
+ -- Modestas Vainius <modax@debian.org>  Fri, 25 Feb 2011 19:12:33 +0200
 
 cmake (2.8.4+dfsg.1-1) unstable; urgency=low
 
