@@ -1,10 +1,10 @@
-cmake (2.8.2+dfsg.1-0+squeeze1) UNRELEASED; urgency=low
+cmake (2.8.2+dfsg.1-0+squeeze1) stable-proposed-updates; urgency=low
 
   * Regenerate original tarball removing files provided under proprietary
     licence. (Closes: #614390) They were not actually used. Mention removed
     files in the debian/copyright.
 
- -- Modestas Vainius <modax@debian.org>  Fri, 04 Mar 2011 22:06:09 +0200
+ -- Modestas Vainius <modax@debian.org>  Fri, 04 Mar 2011 22:16:29 +0200
 
 cmake (2.8.2-2) unstable; urgency=low
 
