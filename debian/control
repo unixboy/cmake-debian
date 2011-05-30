@@ -14,7 +14,7 @@ Package: cmake
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, cmake-data (= ${source:Version}), procps [!hurd-any]
 Suggests: gcc, make
-Description: a cross-platform, open-source make system
+Description: cross-platform, open-source make system
  CMake is used to control the software compilation process using
  simple platform and compiler independent configuration files. CMake
  generates native makefiles and workspaces that can be used in the
