@@ -5,6 +5,8 @@ cmake (2.8.4+dfsg.1-3) UNRELEASED; urgency=low
   * Generate colour Makefiles when $TERM is set to 'screen-256color-bce'.
     Thanks to Davide Mancusi for the patch (screen-256color-bce.diff).
     (Closes: #627853)
+  * Add libxmlrpc-core-c3-dev as a preferred alternative to libxmlrpc-c3-dev
+    in Build-Depends. libxmlrpc-c3-dev has become a transitional package.
 
  -- Modestas Vainius <modax@debian.org>  Fri, 04 Mar 2011 22:38:25 +0200
 
