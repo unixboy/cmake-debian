@@ -1,4 +1,4 @@
-cmake (2.8.4+dfsg.1-3) UNRELEASED; urgency=low
+cmake (2.8.4+dfsg.1-3) unstable; urgency=low
 
   * Merge 2.8.2+dfsg.1-0+squeeze1 changes.
   * Do not start cmake description synopsis with an article.
@@ -18,7 +18,7 @@ cmake (2.8.4+dfsg.1-3) UNRELEASED; urgency=low
   * Make FindGTK2.cmake work with Debian multiarch
     (patch multiarch_findgtk2_fix.diff). (LP: #751940)
 
- -- Modestas Vainius <modax@debian.org>  Fri, 04 Mar 2011 22:38:25 +0200
+ -- Modestas Vainius <modax@debian.org>  Wed, 08 Jun 2011 00:15:00 +0300
 
 cmake (2.8.4+dfsg.1-2) unstable; urgency=low
 
