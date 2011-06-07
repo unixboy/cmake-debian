@@ -15,6 +15,8 @@ cmake (2.8.4+dfsg.1-3) UNRELEASED; urgency=low
     job in majority of cases. Also require dpkg-dev >= 1.16 at both build
     time (Build-Depends) and runtime (cmake Depends) because the patch needs
     dpkg-architecture -qDEB_HOST_MULTIARCH. (Closes: #618932)
+  * Make FindGTK2.cmake work with Debian multiarch
+    (patch multiarch_findgtk2_fix.diff). (LP: #751940)
 
  -- Modestas Vainius <modax@debian.org>  Fri, 04 Mar 2011 22:38:25 +0200
 
