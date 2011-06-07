@@ -1,0 +1,52 @@
+From: Jonathan Riddell <jriddell@ubuntu.com>
+Subject: Add multiarch lib path support to find_library() (HACK)
+Bug: http://public.kitware.com/Bug/view.php?id=12037
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=618932
+Bug-Ubuntu: https://bugs.launchpad.net/debian/+source/cmake/+bug/737137
+Origin: vendor, http://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=ubuntu_multiarch_library_directory.diff;att=1;bug=618932
+Forwarded: yes
+Acked-By: Modestas Vainius <modax@debian.org>
+Last-Update: 2011-06-07
+
+This is the same as ubuntu_multiarch_library_directory.diff in Ubuntu packages.
+I do not consider this patch to be a proper fix but rather hack-level stuff.
+It does not support cross-compilation or find_package() etc. However, the lack
+of better solution at the right time forced me to include it.  Hopefully, it's
+temporary.
+
+--- a/Modules/Platform/UnixPaths.cmake
++++ b/Modules/Platform/UnixPaths.cmake
+@@ -29,6 +29,8 @@ SET(UNIX 1)
+ GET_FILENAME_COMPONENT(_CMAKE_INSTALL_DIR "${CMAKE_ROOT}" PATH)
+ GET_FILENAME_COMPONENT(_CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" PATH)
+ 
++EXECUTE_PROCESS(COMMAND dpkg-architecture -qDEB_HOST_MULTIARCH OUTPUT_VARIABLE CMAKE_ARCH_TRIPLET OUTPUT_STRIP_TRAILING_WHITESPACE)
++
+ # List common installation prefixes.  These will be used for all
+ # search types.
+ LIST(APPEND CMAKE_SYSTEM_PREFIX_PATH
+@@ -74,6 +76,7 @@ LIST(APPEND CMAKE_SYSTEM_PROGRAM_PATH
+   )
+ 
+ LIST(APPEND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
++  /lib/${CMAKE_ARCH_TRIPLET} /usr/lib/${CMAKE_ARCH_TRIPLET}
+   /lib /usr/lib /usr/lib32 /usr/lib64
+   )
+ 
+--- a/Source/cmFindBase.cxx
++++ b/Source/cmFindBase.cxx
+@@ -346,6 +346,14 @@ void cmFindBase::AddPrefixPaths(std::vec
+       {
+       dir += "/";
+       }
++    if (subdir == "lib")
++      {
++      const char* triplet = this->Makefile->GetDefinition("CMAKE_ARCH_TRIPLET");
++      if (triplet)
++        {
++        this->AddPathInternal(dir+"lib/"+triplet, pathType);
++        }
++      }
+     std::string add = dir + subdir;
+     if(add != "/")
+       {

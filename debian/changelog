@@ -9,6 +9,12 @@ cmake (2.8.4+dfsg.1-3) UNRELEASED; urgency=low
     in Build-Depends. libxmlrpc-c3-dev has become a transitional package.
   * Bump Standards-Version to 3.9.2: no changes needed.
   * Switch Vcs-* debian/control fields to anonscm.debian.org.
+  * Fix find_library() to find libraries in multiarch library paths (patch
+    multiarch_library_directory_hack.diff). While the patch is not a good fix
+    (hackish by nature, no cross-compilation support etc.), it should do the
+    job in majority of cases. Also require dpkg-dev >= 1.16 at both build
+    time (Build-Depends) and runtime (cmake Depends) because the patch needs
+    dpkg-architecture -qDEB_HOST_MULTIARCH. (Closes: #618932)
 
  -- Modestas Vainius <modax@debian.org>  Fri, 04 Mar 2011 22:38:25 +0200
 
