@@ -1,3 +1,8 @@
+cmake (2.8.4+dfsg.1-4) UNRELEASED; urgency=low
+
+
+ -- Modestas Vainius <modax@debian.org>  Thu, 09 Jun 2011 00:37:03 +0300
+
 cmake (2.8.4+dfsg.1-3) unstable; urgency=low
 
   * Merge 2.8.2+dfsg.1-0+squeeze1 changes.
