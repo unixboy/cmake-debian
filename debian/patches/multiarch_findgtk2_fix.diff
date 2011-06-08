@@ -8,15 +8,15 @@ Forwarded: no
 Last-Update: 2011-06-07
 
 Fix FindGTK2.cmake to work with Debian/Ubuntu multiarch library paths. The
-patch depends on multiarch_library_directory_hack.diff patch.
+patch depends on multiarch_basic_support.diff patch.
 
 --- a/Modules/FindGTK2.cmake
 +++ b/Modules/FindGTK2.cmake
-@@ -185,6 +185,7 @@ function(_GTK2_FIND_INCLUDE_DIR _var _hd
- 
-     find_path(${_var} ${_hdr}
+@@ -187,6 +187,7 @@ function(_GTK2_FIND_INCLUDE_DIR _var _hd
          PATHS
-+            /usr/lib/${CMAKE_ARCH_TRIPLET}
              /usr/local/lib64
              /usr/local/lib
++            /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}
              /usr/lib64
+             /usr/lib
+             /opt/gnome/include

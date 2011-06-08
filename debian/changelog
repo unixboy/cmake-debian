@@ -7,6 +7,8 @@ cmake (2.8.4+dfsg.1-4) UNRELEASED; urgency=low
     implementation does not need dpkg-dev 1.16, it is entirely backwards
     compatible with previous releases and in addition, it implements multiarch
     support for find_package().
+  * Adapt multiarch_findgtk2_fix.diff patch to work with
+    multiarch_basic_support.diff.
 
  -- Modestas Vainius <modax@debian.org>  Thu, 09 Jun 2011 00:37:03 +0300
 
