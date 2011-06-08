@@ -2,5 +2,4 @@ fixup_manpages.diff
 FindBoost_add_-lpthread_#563479.diff
 backport_test_order_fix.diff
 screen-256color-bce.diff
-multiarch_library_directory_hack.diff
 multiarch_findgtk2_fix.diff

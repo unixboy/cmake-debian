@@ -1,5 +1,7 @@
 cmake (2.8.4+dfsg.1-4) UNRELEASED; urgency=low
 
+  * Drop multiarch_library_directory_hack.diff patch. A better solution has
+    been implemented (see below).
 
  -- Modestas Vainius <modax@debian.org>  Thu, 09 Jun 2011 00:37:03 +0300
 
