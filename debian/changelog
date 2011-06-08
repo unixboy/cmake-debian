@@ -1,4 +1,4 @@
-cmake (2.8.4+dfsg.1-4) UNRELEASED; urgency=low
+cmake (2.8.4+dfsg.1-4) unstable; urgency=low
 
   * Drop multiarch_library_directory_hack.diff patch. A better solution has
     been implemented (see below).
@@ -10,7 +10,7 @@ cmake (2.8.4+dfsg.1-4) UNRELEASED; urgency=low
   * Adapt multiarch_findgtk2_fix.diff patch to work with
     multiarch_basic_support.diff.
 
- -- Modestas Vainius <modax@debian.org>  Thu, 09 Jun 2011 00:37:03 +0300
+ -- Modestas Vainius <modax@debian.org>  Thu, 09 Jun 2011 01:18:19 +0300
 
 cmake (2.8.4+dfsg.1-3) unstable; urgency=low
 
