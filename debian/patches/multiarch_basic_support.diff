@@ -1,0 +1,385 @@
+From: Brad King <brad.king@kitware.com>
+Date: Wed, 8 Jun 2011 08:46:31 -0400
+Bug: http://public.kitware.com/Bug/view.php?id=12037
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=618932
+Subject: [PATCH 1/2] Teach find_(library|package) about Linux multiarch (#12037)
+Acked-By: Modestas Vainius <modax@debian.org>
+Origin: upstream, http://public.kitware.com/Bug/file_download.php?file_id=3920&type=bug
+                  http://public.kitware.com/Bug/file_download.php?file_id=3921&type=bug
+
+Implement support for multiarch as specified here:
+
+  http://wiki.debian.org/Multiarch
+  https://wiki.ubuntu.com/MultiarchSpec
+
+Detect the <arch> part of <prefix>/lib/<arch> from the implicit library
+search path from each compiler to set CMAKE_<lang>_LIBRARY_ARCHITECTURE.
+Define CMAKE_LIBRARY_ARCHITECTURE using one of these values (they should
+all be the same).  Teach the find_library and find_package commands to
+search <prefix>/lib/<arch> whenever they would search <prefix>/lib.
+
+[PATCH 2/2] Test find_package multiarch support (#12037)
+
+--- a/Modules/CMakeCCompiler.cmake.in
++++ b/Modules/CMakeCCompiler.cmake.in
+@@ -28,6 +28,7 @@ SET(CMAKE_C_LINKER_PREFERENCE 10)
+ # Save compiler ABI information.
+ SET(CMAKE_C_SIZEOF_DATA_PTR "@CMAKE_C_SIZEOF_DATA_PTR@")
+ SET(CMAKE_C_COMPILER_ABI "@CMAKE_C_COMPILER_ABI@")
++SET(CMAKE_C_LIBRARY_ARCHITECTURE "@CMAKE_C_LIBRARY_ARCHITECTURE@")
+ 
+ IF(CMAKE_C_SIZEOF_DATA_PTR)
+   SET(CMAKE_SIZEOF_VOID_P "${CMAKE_C_SIZEOF_DATA_PTR}")
+@@ -37,6 +38,10 @@ IF(CMAKE_C_COMPILER_ABI)
+   SET(CMAKE_INTERNAL_PLATFORM_ABI "${CMAKE_C_COMPILER_ABI}")
+ ENDIF(CMAKE_C_COMPILER_ABI)
+ 
++IF(CMAKE_C_LIBRARY_ARCHITECTURE)
++  SET(CMAKE_LIBRARY_ARCHITECTURE "@CMAKE_C_LIBRARY_ARCHITECTURE@")
++ENDIF()
++
+ SET(CMAKE_C_HAS_ISYSROOT "@CMAKE_C_HAS_ISYSROOT@")
+ @CMAKE_C_OSX_DEPLOYMENT_TARGET_FLAG_CODE@
+ 
+--- a/Modules/CMakeCXXCompiler.cmake.in
++++ b/Modules/CMakeCXXCompiler.cmake.in
+@@ -29,6 +29,7 @@ SET(CMAKE_CXX_LINKER_PREFERENCE_PROPAGAT
+ # Save compiler ABI information.
+ SET(CMAKE_CXX_SIZEOF_DATA_PTR "@CMAKE_CXX_SIZEOF_DATA_PTR@")
+ SET(CMAKE_CXX_COMPILER_ABI "@CMAKE_CXX_COMPILER_ABI@")
++SET(CMAKE_CXX_LIBRARY_ARCHITECTURE "@CMAKE_CXX_LIBRARY_ARCHITECTURE@")
+ 
+ IF(CMAKE_CXX_SIZEOF_DATA_PTR)
+   SET(CMAKE_SIZEOF_VOID_P "${CMAKE_CXX_SIZEOF_DATA_PTR}")
+@@ -38,6 +39,10 @@ IF(CMAKE_CXX_COMPILER_ABI)
+   SET(CMAKE_INTERNAL_PLATFORM_ABI "${CMAKE_CXX_COMPILER_ABI}")
+ ENDIF(CMAKE_CXX_COMPILER_ABI)
+ 
++IF(CMAKE_CXX_LIBRARY_ARCHITECTURE)
++  SET(CMAKE_LIBRARY_ARCHITECTURE "@CMAKE_CXX_LIBRARY_ARCHITECTURE@")
++ENDIF()
++
+ SET(CMAKE_CXX_HAS_ISYSROOT "@CMAKE_CXX_HAS_ISYSROOT@")
+ @CMAKE_CXX_OSX_DEPLOYMENT_TARGET_FLAG_CODE@
+ 
+--- a/Modules/CMakeDetermineCompilerABI.cmake
++++ b/Modules/CMakeDetermineCompilerABI.cmake
+@@ -86,6 +86,17 @@ FUNCTION(CMAKE_DETERMINE_COMPILER_ABI la
+       SET(CMAKE_${lang}_IMPLICIT_LINK_LIBRARIES "${implicit_libs}" PARENT_SCOPE)
+       SET(CMAKE_${lang}_IMPLICIT_LINK_DIRECTORIES "${implicit_dirs}" PARENT_SCOPE)
+ 
++      # Detect library architecture directory name.
++      IF(CMAKE_LIBRARY_ARCHITECTURE_REGEX)
++        FOREACH(dir ${implicit_dirs})
++          IF("${dir}" MATCHES "/lib/${CMAKE_LIBRARY_ARCHITECTURE_REGEX}$")
++            GET_FILENAME_COMPONENT(arch "${dir}" NAME)
++            SET(CMAKE_${lang}_LIBRARY_ARCHITECTURE "${arch}" PARENT_SCOPE)
++            BREAK()
++          ENDIF()
++        ENDFOREACH()
++      ENDIF()
++
+     ELSE(CMAKE_DETERMINE_${lang}_ABI_COMPILED)
+       MESSAGE(STATUS "Detecting ${lang} compiler ABI info - failed")
+       FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+--- a/Modules/CMakeFortranCompiler.cmake.in
++++ b/Modules/CMakeFortranCompiler.cmake.in
+@@ -34,6 +34,7 @@ ENDIF(UNIX)
+ # Save compiler ABI information.
+ SET(CMAKE_Fortran_SIZEOF_DATA_PTR "@CMAKE_Fortran_SIZEOF_DATA_PTR@")
+ SET(CMAKE_Fortran_COMPILER_ABI "@CMAKE_Fortran_COMPILER_ABI@")
++SET(CMAKE_Fortran_LIBRARY_ARCHITECTURE "@CMAKE_Fortran_LIBRARY_ARCHITECTURE@")
+ 
+ IF(CMAKE_Fortran_SIZEOF_DATA_PTR AND NOT CMAKE_SIZEOF_VOID_P)
+   SET(CMAKE_SIZEOF_VOID_P "${CMAKE_Fortran_SIZEOF_DATA_PTR}")
+@@ -43,5 +44,9 @@ IF(CMAKE_Fortran_COMPILER_ABI)
+   SET(CMAKE_INTERNAL_PLATFORM_ABI "${CMAKE_Fortran_COMPILER_ABI}")
+ ENDIF(CMAKE_Fortran_COMPILER_ABI)
+ 
++IF(CMAKE_Fortran_LIBRARY_ARCHITECTURE)
++  SET(CMAKE_LIBRARY_ARCHITECTURE "@CMAKE_Fortran_LIBRARY_ARCHITECTURE@")
++ENDIF()
++
+ SET(CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES "@CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES@")
+ SET(CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES "@CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES@")
+--- a/Modules/Platform/Linux.cmake
++++ b/Modules/Platform/Linux.cmake
+@@ -45,6 +45,9 @@ ELSE(DEFINED CMAKE_INSTALL_SO_NO_EXE)
+   ENDIF(EXISTS "/etc/debian_version")
+ ENDIF(DEFINED CMAKE_INSTALL_SO_NO_EXE)
+ 
++# Match multiarch library directory names.
++SET(CMAKE_LIBRARY_ARCHITECTURE_REGEX "[a-z0-9_]+-linux-gnu")
++
+ INCLUDE(Platform/UnixPaths)
+ 
+ # Debian has lib64 paths only for compatibility so they should not be
+--- a/Source/cmDocumentVariables.cxx
++++ b/Source/cmDocumentVariables.cxx
+@@ -798,6 +798,18 @@ void cmDocumentVariables::DefineVariable
+      "set to the output of uname -r. On other "
+      "systems this is set to major-minor version numbers.",false,
+      "Variables That Describe the System");
++  cm->DefineProperty
++    ("CMAKE_LIBRARY_ARCHITECTURE", cmProperty::VARIABLE,
++     "Target architecture library directory name, if detected.",
++     "This is the value of CMAKE_<lang>_LIBRARY_ARCHITECTURE as "
++     "detected for one of the enabled languages.",false,
++     "Variables That Describe the System");
++  cm->DefineProperty
++    ("CMAKE_LIBRARY_ARCHITECTURE_REGEX", cmProperty::VARIABLE,
++     "Regex matching possible target architecture library directory names.",
++     "This is used to detect CMAKE_<lang>_LIBRARY_ARCHITECTURE from the "
++     "implicit linker search path by matching the <arch> name.",false,
++     "Variables That Describe the System");
+ 
+   cm->DefineProperty
+     ("CMAKE_HOST_SYSTEM", cmProperty::VARIABLE,
+@@ -1336,6 +1348,14 @@ void cmDocumentVariables::DefineVariable
+      "Variables for Languages");
+ 
+   cm->DefineProperty
++    ("CMAKE_<LANG>_LIBRARY_ARCHITECTURE", cmProperty::VARIABLE,
++     "Target architecture library directory name detected for <lang>.",
++     "If the <lang> compiler passes to the linker an architecture-specific "
++     "system library search directory such as <prefix>/lib/<arch> this "
++     "variable contains the <arch> name if/as detected by CMake.",false,
++     "Variables for Languages");
++
++  cm->DefineProperty
+     ("CMAKE_<LANG>_LINKER_PREFERENCE_PROPAGATES", cmProperty::VARIABLE,
+      "True if CMAKE_<LANG>_LINKER_PREFERENCE propagates across targets.",
+      "This is used when CMake selects a linker language for a target.  "
+--- a/Source/cmFindBase.cxx
++++ b/Source/cmFindBase.cxx
+@@ -72,12 +72,14 @@ void cmFindBase::GenerateDocumentation()
+     "1. Search paths specified in cmake-specific cache variables.  "
+     "These are intended to be used on the command line with a -DVAR=value.  "
+     "This can be skipped if NO_CMAKE_PATH is passed.\n"
++    "XXX_EXTRA_PREFIX_ENTRY"
+     "   <prefix>/XXX_SUBDIR for each <prefix> in CMAKE_PREFIX_PATH\n"
+     "   CMAKE_XXX_PATH\n"
+     "   CMAKE_XXX_MAC_PATH\n"
+     "2. Search paths specified in cmake-specific environment variables.  "
+     "These are intended to be set in the user's shell configuration.  "
+     "This can be skipped if NO_CMAKE_ENVIRONMENT_PATH is passed.\n"
++    "XXX_EXTRA_PREFIX_ENTRY"
+     "   <prefix>/XXX_SUBDIR for each <prefix> in CMAKE_PREFIX_PATH\n"
+     "   CMAKE_XXX_PATH\n"
+     "   CMAKE_XXX_MAC_PATH\n"
+@@ -92,6 +94,7 @@ void cmFindBase::GenerateDocumentation()
+     "5. Search cmake variables defined in the Platform files "
+     "for the current system.  This can be skipped if NO_CMAKE_SYSTEM_PATH "
+     "is passed.\n"
++    "XXX_EXTRA_PREFIX_ENTRY"
+     "   <prefix>/XXX_SUBDIR for each <prefix> in CMAKE_SYSTEM_PREFIX_PATH\n"
+     "   CMAKE_SYSTEM_XXX_PATH\n"
+     "   CMAKE_SYSTEM_XXX_MAC_PATH\n"
+@@ -346,6 +349,15 @@ void cmFindBase::AddPrefixPaths(std::vec
+       {
+       dir += "/";
+       }
++    if(subdir == "lib")
++      {
++      const char* arch =
++        this->Makefile->GetDefinition("CMAKE_LIBRARY_ARCHITECTURE");
++      if(arch && *arch)
++        {
++        this->AddPathInternal(dir+"lib/"+arch, pathType);
++        }
++      }
+     std::string add = dir + subdir;
+     if(add != "/")
+       {
+--- a/Source/cmFindLibraryCommand.cxx
++++ b/Source/cmFindLibraryCommand.cxx
+@@ -44,6 +44,10 @@ void cmFindLibraryCommand::GenerateDocum
+                                "SEARCH_XXX", "library");
+   cmSystemTools::ReplaceString(this->GenericDocumentation,
+                                "XXX_SUBDIR", "lib");
++  cmSystemTools::ReplaceString(
++    this->GenericDocumentation,
++    "XXX_EXTRA_PREFIX_ENTRY",
++    "   <prefix>/lib/<arch> if CMAKE_LIBRARY_ARCHITECTURE is set, and\n");
+   cmSystemTools::ReplaceString(this->GenericDocumentation,
+                                "CMAKE_FIND_ROOT_PATH_MODE_XXX",
+                                "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY");
+--- a/Source/cmFindPackageCommand.cxx
++++ b/Source/cmFindPackageCommand.cxx
+@@ -240,9 +240,9 @@ void cmFindPackageCommand::GenerateDocum
+     "  <prefix>/(cmake|CMake)/                                 (W)\n"
+     "  <prefix>/<name>*/                                       (W)\n"
+     "  <prefix>/<name>*/(cmake|CMake)/                         (W)\n"
+-    "  <prefix>/(share|lib)/cmake/<name>*/                     (U)\n"
+-    "  <prefix>/(share|lib)/<name>*/                           (U)\n"
+-    "  <prefix>/(share|lib)/<name>*/(cmake|CMake)/             (U)\n"
++    "  <prefix>/(lib/<arch>|lib|share)/cmake/<name>*/          (U)\n"
++    "  <prefix>/(lib/<arch>|lib|share)/<name>*/                (U)\n"
++    "  <prefix>/(lib/<arch>|lib|share)/<name>*/(cmake|CMake)/  (U)\n"
+     "On systems supporting OS X Frameworks and Application Bundles "
+     "the following directories are searched for frameworks or bundles "
+     "containing a configuration file:\n"
+@@ -254,6 +254,7 @@ void cmFindPackageCommand::GenerateDocum
+     "  <prefix>/<name>.app/Contents/Resources/CMake/           (A)\n"
+     "In all cases the <name> is treated as case-insensitive and corresponds "
+     "to any of the names specified (<package> or names given by NAMES).  "
++    "Paths with lib/<arch> are enabled if CMAKE_LIBRARY_ARCHITECTURE is set.  "
+     "If PATH_SUFFIXES is specified the suffixes are appended to each "
+     "(W) or (U) directory entry one-by-one.\n"
+     "This set of directories is intended to work in cooperation with "
+@@ -344,6 +345,13 @@ bool cmFindPackageCommand
+   // Check for debug mode.
+   this->DebugMode = this->Makefile->IsOn("CMAKE_FIND_DEBUG_MODE");
+ 
++  // Lookup target architecture, if any.
++  if(const char* arch =
++     this->Makefile->GetDefinition("CMAKE_LIBRARY_ARCHITECTURE"))
++    {
++    this->LibraryArchitecture = arch;
++    }
++
+   // Lookup whether lib64 paths should be used.
+   if(this->Makefile->PlatformIs64Bit() &&
+      this->Makefile->GetCMakeInstance()
+@@ -2111,6 +2119,10 @@ bool cmFindPackageCommand::SearchPrefix(
+ 
+   // Construct list of common install locations (lib and share).
+   std::vector<std::string> common;
++  if(!this->LibraryArchitecture.empty())
++    {
++    common.push_back("lib/"+this->LibraryArchitecture);
++    }
+   if(this->UseLib64Paths)
+     {
+     common.push_back("lib64");
+@@ -2118,7 +2130,7 @@ bool cmFindPackageCommand::SearchPrefix(
+   common.push_back("lib");
+   common.push_back("share");
+ 
+-  //  PREFIX/(share|lib)/cmake/(Foo|foo|FOO).*/
++  //  PREFIX/(lib/ARCH|lib|share)/cmake/(Foo|foo|FOO).*/
+   {
+   cmFindPackageFileList lister(this);
+   lister
+@@ -2132,7 +2144,7 @@ bool cmFindPackageCommand::SearchPrefix(
+     }
+   }
+ 
+-  //  PREFIX/(share|lib)/(Foo|foo|FOO).*/
++  //  PREFIX/(lib/ARCH|lib|share)/(Foo|foo|FOO).*/
+   {
+   cmFindPackageFileList lister(this);
+   lister
+@@ -2145,7 +2157,7 @@ bool cmFindPackageCommand::SearchPrefix(
+     }
+   }
+ 
+-  //  PREFIX/(share|lib)/(Foo|foo|FOO).*/(cmake|CMake)/
++  //  PREFIX/(lib/ARCH|lib|share)/(Foo|foo|FOO).*/(cmake|CMake)/
+   {
+   cmFindPackageFileList lister(this);
+   lister
+--- a/Source/cmFindPackageCommand.h
++++ b/Source/cmFindPackageCommand.h
+@@ -137,6 +137,7 @@ private:
+   bool DebugMode;
+   bool UseLib64Paths;
+   bool PolicyScope;
++  std::string LibraryArchitecture;
+   std::vector<std::string> Names;
+   std::vector<std::string> Configs;
+   std::set<std::string> IgnoredPaths;
+--- a/Source/cmFindPathCommand.cxx
++++ b/Source/cmFindPathCommand.cxx
+@@ -46,6 +46,8 @@ void cmFindPathCommand::GenerateDocument
+   cmSystemTools::ReplaceString(this->GenericDocumentation,
+                                "XXX_SUBDIR", "include");
+   cmSystemTools::ReplaceString(this->GenericDocumentation,
++                               "XXX_EXTRA_PREFIX_ENTRY", "");
++  cmSystemTools::ReplaceString(this->GenericDocumentation,
+                                "CMAKE_FIND_ROOT_PATH_MODE_XXX",
+                                "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE");
+   if(!this->IncludeFileInPath)
+--- a/Source/cmFindProgramCommand.cxx
++++ b/Source/cmFindProgramCommand.cxx
+@@ -42,6 +42,8 @@ void cmFindProgramCommand::GenerateDocum
+   cmSystemTools::ReplaceString(this->GenericDocumentation,
+                                "XXX_SUBDIR", "[s]bin");
+   cmSystemTools::ReplaceString(this->GenericDocumentation,
++                               "XXX_EXTRA_PREFIX_ENTRY", "");
++  cmSystemTools::ReplaceString(this->GenericDocumentation,
+                                "CMAKE_FIND_ROOT_PATH_MODE_XXX",
+                                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM");
+ }
+--- a/Tests/FindPackageTest/CMakeLists.txt
++++ b/Tests/FindPackageTest/CMakeLists.txt
+@@ -48,6 +48,7 @@ SET(PACKAGES
+   WrongA WrongB WrongC WrongD
+   wibbleA wibbleB
+   RecursiveA RecursiveB RecursiveC
++  ArchA ArchB ArchC ArchD
+   EnvA EnvB
+   )
+ FOREACH(p ${PACKAGES})
+@@ -109,6 +110,14 @@ FIND_PACKAGE(RecursiveA)
+ FIND_PACKAGE(RecursiveB 2)
+ FIND_PACKAGE(RecursiveC 3.1 EXACT)
+ 
++# Test architecture-specific search directories.
++SET(CMAKE_LIBRARY_ARCHITECTURE arch)
++FIND_PACKAGE(ArchA NAMES Bar)
++FIND_PACKAGE(ArchB NAMES Foo CONFIGS FooConfig.cmake)
++FIND_PACKAGE(ArchC 3.1 EXACT NAMES zot)
++FIND_PACKAGE(ArchD 4.0 EXACT NAMES zot)
++UNSET(CMAKE_LIBRARY_ARCHITECTURE)
++
+ # Test <Package>_DIR environment variable.
+ # We erase the main prefix path to ensure the env var is used.
+ SET(CMAKE_PREFIX_PATH)
+@@ -143,6 +152,10 @@ SET(wibbleB_EXPECTED "B/wibble-config.cm
+ SET(RecursiveA_EXPECTED "lib/RecursiveA/recursivea-config.cmake")
+ SET(RecursiveB_EXPECTED "lib/zot-2.0/zot-config.cmake")
+ SET(RecursiveC_EXPECTED "lib/zot-3.1/zot-config.cmake")
++SET(ArchA_EXPECTED "lib/arch/Bar/BarConfig.cmake")
++SET(ArchB_EXPECTED "lib/arch/foo-1.2/CMake/FooConfig.cmake")
++SET(ArchC_EXPECTED "lib/arch/zot-3.1/zot-config.cmake")
++SET(ArchD_EXPECTED "lib/arch/cmake/zot-4.0/zot-config.cmake")
+ SET(EnvA_EXPECTED "lib/zot-3.1/zot-config.cmake")
+ SET(EnvB_MISSING "EnvB_DIR-NOTFOUND")
+ 
+--- /dev/null
++++ b/Tests/FindPackageTest/lib/arch/Bar/BarConfig.cmake
+@@ -0,0 +1 @@
++# Test config file.
+--- /dev/null
++++ b/Tests/FindPackageTest/lib/arch/cmake/zot-4.0/zot-config-version.cmake
+@@ -0,0 +1,7 @@
++SET(PACKAGE_VERSION 4.0)
++IF("${PACKAGE_FIND_VERSION_MAJOR}" EQUAL 4)
++  SET(PACKAGE_VERSION_COMPATIBLE 1)
++  IF("${PACKAGE_FIND_VERSION_MINOR}" EQUAL 0)
++    SET(PACKAGE_VERSION_EXACT 1)
++  ENDIF("${PACKAGE_FIND_VERSION_MINOR}" EQUAL 0)
++ENDIF("${PACKAGE_FIND_VERSION_MAJOR}" EQUAL 4)
+--- /dev/null
++++ b/Tests/FindPackageTest/lib/arch/cmake/zot-4.0/zot-config.cmake
+@@ -0,0 +1 @@
++# Test config file.
+--- /dev/null
++++ b/Tests/FindPackageTest/lib/arch/foo-1.2/CMake/FooConfig.cmake
+@@ -0,0 +1 @@
++# Test config file.
+--- /dev/null
++++ b/Tests/FindPackageTest/lib/arch/zot-3.1/zot-config-version.cmake
+@@ -0,0 +1,7 @@
++SET(PACKAGE_VERSION 3.1)
++IF("${PACKAGE_FIND_VERSION_MAJOR}" EQUAL 3)
++  SET(PACKAGE_VERSION_COMPATIBLE 1)
++  IF("${PACKAGE_FIND_VERSION_MINOR}" EQUAL 1)
++    SET(PACKAGE_VERSION_EXACT 1)
++  ENDIF("${PACKAGE_FIND_VERSION_MINOR}" EQUAL 1)
++ENDIF("${PACKAGE_FIND_VERSION_MAJOR}" EQUAL 3)
+--- /dev/null
++++ b/Tests/FindPackageTest/lib/arch/zot-3.1/zot-config.cmake
+@@ -0,0 +1 @@
++# Test config file.
