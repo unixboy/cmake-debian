@@ -6,6 +6,7 @@ Subject: [PATCH 1/2] Teach find_(library|package) about Linux multiarch (#12037)
 Acked-By: Modestas Vainius <modax@debian.org>
 Origin: upstream, http://public.kitware.com/Bug/file_download.php?file_id=3920&type=bug
                   http://public.kitware.com/Bug/file_download.php?file_id=3921&type=bug
+Last-Update: 2011-06-11 (arm-linux-gnueabi*, kfreebsd, hurd support)
 
 Implement support for multiarch as specified here:
 
@@ -383,3 +384,19 @@ search <prefix>/lib/<arch> whenever they would search <prefix>/lib.
 +++ b/Tests/FindPackageTest/lib/arch/zot-3.1/zot-config.cmake
 @@ -0,0 +1 @@
 +# Test config file.
+--- a/Modules/Platform/kFreeBSD.cmake
++++ b/Modules/Platform/kFreeBSD.cmake
+@@ -1,2 +1,4 @@
+ # kFreeBSD looks just like Linux.
+ INCLUDE(Platform/Linux)
++
++SET(CMAKE_LIBRARY_ARCHITECTURE_REGEX "[a-z0-9_]+(-[a-z0-9_]+)?-kfreebsd-gnu[a-z0-9_]*")
+--- a/Modules/Platform/GNU.cmake
++++ b/Modules/Platform/GNU.cmake
+@@ -8,4 +8,6 @@ SET(CMAKE_SHARED_LIBRARY_RPATH_LINK_C_FL
+ SET(CMAKE_SHARED_LIBRARY_SONAME_C_FLAG "-Wl,-soname,")
+ SET(CMAKE_EXE_EXPORTS_C_FLAG "-Wl,--export-dynamic")
+ 
++SET(CMAKE_LIBRARY_ARCHITECTURE_REGEX "[a-z0-9_]+(-[a-z0-9_]+)?-gnu[a-z0-9_]*")
++
+ INCLUDE(Platform/UnixPaths)
