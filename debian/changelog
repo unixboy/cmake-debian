@@ -1,9 +1,11 @@
-cmake (2.8.4+dfsg.1-5) UNRELEASED; urgency=low
+cmake (2.8.4+dfsg.1-5) UNRELEASED; urgency=medium
 
   * Fix multiarch regex to support armel and (hopefully) all other possible
     linux architectures (patch multiarch_basic_support.diff updated).
   * Support multiarch paths on kfreebsd and hurd (patch
     multiarch_basic_support.diff updated). (Closes: #630167)
+  * Urgency=medium, the bugs above make cmake almost unusable on armel and
+    kfreebsd.
 
  -- Modestas Vainius <modax@debian.org>  Sat, 11 Jun 2011 22:15:57 +0300
 
