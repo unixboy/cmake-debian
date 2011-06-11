@@ -1,5 +1,7 @@
 cmake (2.8.4+dfsg.1-5) UNRELEASED; urgency=low
 
+  * Fix multiarch regex to support armel and (hopefully) all other possible
+    linux architectures (patch multiarch_basic_support.diff updated).
 
  -- Modestas Vainius <modax@debian.org>  Sat, 11 Jun 2011 22:15:57 +0300
 
