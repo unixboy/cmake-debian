@@ -1,6 +1,8 @@
 cmake (2.8.5~rc2-0r1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * No longer repack upstream tarball and drop dfsg suffix from the version
+    number. The tarball is DFSG clean now.
 
  -- Modestas Vainius <modax@debian.org>  Sun, 19 Jun 2011 15:42:11 +0300
 
