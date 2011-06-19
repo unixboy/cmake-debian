@@ -11,8 +11,8 @@ Generated Makefiles do not use color highlighting if $TERM is set to
 
 --- a/Source/kwsys/Terminal.c
 +++ b/Source/kwsys/Terminal.c
-@@ -162,6 +162,7 @@ static const char* kwsysTerminalVT100Nam
-   "rxvt-unicode",
+@@ -163,6 +163,7 @@ static const char* kwsysTerminalVT100Nam
+   "rxvt-unicode-256color",
    "screen",
    "screen-256color",
 +  "screen-256color-bce",
