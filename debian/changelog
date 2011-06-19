@@ -9,6 +9,7 @@ cmake (2.8.5~rc2-0r1) UNRELEASED; urgency=low
   * Refresh screen-256color-bce.diff patch.
   * Add spelling_formatting_fixes.diff which fixes a couple of new
     spelling / formatting errors.
+  * Override incorrect menu-icon-missing lintian warning properly.
 
  -- Modestas Vainius <modax@debian.org>  Sun, 19 Jun 2011 15:42:11 +0300
 
