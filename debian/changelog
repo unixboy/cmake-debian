@@ -1,3 +1,9 @@
+cmake (2.8.5~rc2-0r1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Modestas Vainius <modax@debian.org>  Sun, 19 Jun 2011 15:42:11 +0300
+
 cmake (2.8.4+dfsg.1-5) unstable; urgency=medium
 
   * Fix multiarch regex to support armel and (hopefully) all other possible
