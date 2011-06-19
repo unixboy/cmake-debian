@@ -1,0 +1,51 @@
+From: Modestas Vainius <modax@debian.org>
+Subject: Fix a couple of new spelling / formatting errors
+Forwarded: yes
+Origin: vendor
+Last-Update: 2011-06-19
+
+The patch fixes the following problems spotted by lintian:
+
+W: cmake-data: manpage-has-errors-from-man usr/share/man/man1/cmakemodules.1.gz 2641: warning [p 39, 1.5i]: can't break line
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakeprops.1.gz explict explicit
+I: cmake: spelling-error-in-binary usr/bin/cmake explict explicit
+I: cmake: spelling-error-in-binary usr/bin/cpack explict explicit
+I: cmake: spelling-error-in-binary usr/bin/ctest explict explicit
+W: cmake: manpage-has-errors-from-man usr/share/man/man1/cmake.1.gz 7300: warning [p 120, 3.3i]: can't break line
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz explict explicit
+I: cmake-curses-gui: spelling-error-in-binary usr/bin/ccmake explict explicit
+I: cmake-qt-gui: spelling-error-in-binary usr/bin/cmake-gui explict explicit
+
+--- a/Source/cmComputeLinkDepends.cxx
++++ b/Source/cmComputeLinkDepends.cxx
+@@ -69,7 +69,7 @@ We can also infer the edge
+ because *every* time A appears B is seen on its right.  We do not know
+ whether A really needs symbols from B to link, but it *might* so we
+ must preserve their order.  This is the case also for the following
+-explict lists:
++explicit lists:
+ 
+   X: A B Y
+   Y: A B
+--- a/Source/cmTarget.cxx
++++ b/Source/cmTarget.cxx
+@@ -590,7 +590,7 @@ void cmTarget::DefineProperties(cmake *c
+      "For an executable with exports (see the ENABLE_EXPORTS property) "
+      "no default transitive link dependencies are used.  "
+      "This property replaces the default transitive link dependencies with "
+-     "an explict list.  "
++     "an explicit list.  "
+      "When the target is linked into another target the libraries "
+      "listed (and recursively their link interface libraries) will be "
+      "provided to the other target also.  "
+--- a/Modules/FindArmadillo.cmake
++++ b/Modules/FindArmadillo.cmake
+@@ -8,7 +8,7 @@
+ #  add_executable(foo foo.cc)
+ #  target_link_libraries(foo ${ARMADILLO_LIBRARIES})
+ #
+-#=============================================================================
++#===================================== ============= =========================
+ #
+ # This module sets the following variables:
+ #  ARMADILLO_FOUND - set to true if the library is found
