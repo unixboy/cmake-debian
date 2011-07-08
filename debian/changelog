@@ -1,3 +1,10 @@
+cmake (2.8.5-1) UNRELEASED; urgency=low
+
+  * New upstream release:
+    - fixes UseSWIG. (Closes: #631497)
+
+ -- Modestas Vainius <modax@debian.org>  Sat, 09 Jul 2011 00:47:19 +0300
+
 cmake (2.8.5~rc2-1) unstable; urgency=low
 
   * New upstream release.
