@@ -1,3 +1,36 @@
+Changes in CMake 2.8.5 (since 2.8.5-rc3)
+--------------------------------------------
+Brad King (1):
+      Revert "Add a new function SWIG_GET_WRAPPER_DEPENDENCIES to UseSWIG.cmake"
+      (this revert means that issue #4147 has been re-opened)
+
+Changes in CMake 2.8.5-rc3 (since 2.8.5-rc2)
+--------------------------------------------
+Bill Hoffman (4):
+      Use devenv instead of msbuild for vs2010.
+      Revert "With very long file names, VS 2010 was unable to compile files."
+      Use relative paths for custom command inputs.
+      Look for VCExpress as a possible build tool as well as devenv.
+
+Brad King (3):
+      KWSys: Recognize color TERM=screen-256color-bce (#12287)
+      find_library: Use lib->lib64 conversion in CXX-only projects (#12247,#12248)
+      libarchive: Install COPYING with CMake documentation
+
+Christoph Höger (1):
+      FindJNI: Search in Fedora arch-specific JVM location (#12276)
+
+Julien Malik (1):
+      FindSWIG: Use NAMES in find_program directives (#12280)
+
+Modestas Vainius (1):
+      Documentation: Fix spelling / formatting errors (#12287)
+
+Philip Lowman (3):
+      FindBoost: Fixes #12188
+      FindBoost: Also search for 1.46.1
+      Detect VS 2010 SP1, faster and more robust detection
+
 Changes in CMake 2.8.5-rc2 (since 2.8.5-rc1)
 --------------------------------------------
 Bill Hoffman (6):
