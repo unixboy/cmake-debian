@@ -1,4 +1,2 @@
 FindBoost_add_-lpthread_#563479.diff
-screen-256color-bce.diff
 multiarch_findgtk2_fix.diff
-spelling_formatting_fixes.diff

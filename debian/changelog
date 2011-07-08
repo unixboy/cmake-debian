@@ -2,6 +2,8 @@ cmake (2.8.5-1) UNRELEASED; urgency=low
 
   * New upstream release:
     - fixes UseSWIG. (Closes: #631497)
+  * Drop screen-256color-bce.diff - merged upstream.
+  * Drop spelling_formatting_fixes.diff - merged upstream.
 
  -- Modestas Vainius <modax@debian.org>  Sat, 09 Jul 2011 00:47:19 +0300
 
