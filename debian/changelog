@@ -1,4 +1,4 @@
-cmake (2.8.5-1) UNRELEASED; urgency=low
+cmake (2.8.5-1) unstable; urgency=low
 
   * New upstream release:
     - fixes UseSWIG. (Closes: #631497)
@@ -8,7 +8,7 @@ cmake (2.8.5-1) UNRELEASED; urgency=low
     automatic R(UN)PATH (patch multiarch_lib_dirs_should_be_implicit.diff).
   * Refresh FindBoost_add_-lpthread_#563479.diff patch.
 
- -- Modestas Vainius <modax@debian.org>  Sat, 09 Jul 2011 00:47:19 +0300
+ -- Modestas Vainius <modax@debian.org>  Sat, 09 Jul 2011 15:18:39 +0300
 
 cmake (2.8.5~rc2-1) unstable; urgency=low
 
