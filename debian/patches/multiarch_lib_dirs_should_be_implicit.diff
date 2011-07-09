@@ -1,0 +1,32 @@
+From: Modestas Vainius <modax@debian.org>
+Subject: Multiarch directories should be among implicit link directories as well
+Forwarded: yes
+Origin: vendor
+Last-Update: 2011-07-09
+
+Add multiarch library directories to the set of implicit link directories. In
+particular, this keeps /lib/<arch> out of R(UN)PATH of the binaries cmake
+builds.
+
+--- a/Source/cmComputeLinkInformation.cxx
++++ b/Source/cmComputeLinkInformation.cxx
+@@ -1603,6 +1603,19 @@ void cmComputeLinkInformation::LoadImpli
+     cmSystemTools::ExpandListArgument(implicitLinks, implicitDirVec);
+     }
+ 
++  // Append library architecture to all implicit platform directories
++  // and add them to the set
++  if(const char* libraryArch =
++     (this->Makefile->GetDefinition
++      ("CMAKE_LIBRARY_ARCHITECTURE")))
++    {
++    for (std::vector<std::string>::const_iterator i = implicitDirVec.begin();
++         i != implicitDirVec.end(); ++i)
++      {
++      this->ImplicitLinkDirs.insert(*i + "/" + libraryArch);
++      }
++    }
++
+   // Get language-specific implicit directories.
+   std::string implicitDirVar = "CMAKE_";
+   implicitDirVar += this->LinkLanguage;
