@@ -1,5 +1,6 @@
 From: Modestas Vainius <modax@debian.org>
 Subject: Multiarch directories should be among implicit link directories as well
+Bug: http://public.kitware.com/Bug/view.php?id=12326
 Forwarded: yes
 Origin: vendor
 Last-Update: 2011-07-09
