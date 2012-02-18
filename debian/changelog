@@ -7,6 +7,8 @@ cmake (2.8.7-0r1) UNRELEASED; urgency=low
   * Refresh other patches.
   * Respect CPPFLAGS environment variable when building C/C++ sources (patch
     support_cppflags.diff). (Closes: #653916)
+  * Fix various typos and formatting errors in manpages (patch
+    manpage_fixes.diff).
 
  -- Modestas Vainius <modax@debian.org>  Sat, 18 Feb 2012 12:41:16 +0200
 

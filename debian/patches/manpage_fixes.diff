@@ -1,0 +1,88 @@
+From: Modestas Vainius <modax@debian.org>
+Subject: various typo and formatting fixes in manual pages
+Bug: http://www.cmake.org/Bug/view.php?id=12975
+Forwarded: yes
+Origin: vendor
+
+The patch fixes the following lintian warnings:
+
+W: cmake-data: manpage-has-errors-from-man usr/share/man/man1/cmakemodules.1.gz 2728: warning: macro `..' not defined
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakemodules.1.gz overriden overridden
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakemodules.1.gz overriden overridden
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakemodules.1.gz explicitely explicitly
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakemodules.1.gz jave java
+W: cmake-data: manpage-has-errors-from-man usr/share/man/man1/cmakeprops.1.gz 1040: warning [p 25, 3.7i]: can't break line
+W: cmake: manpage-has-errors-from-man usr/share/man/man1/cmake.1.gz 4233: warning [p 85, 1.3i]: can't break line
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz explicitely explicitly
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz jave java
+
+--- a/Modules/CPackRPM.cmake
++++ b/Modules/CPackRPM.cmake
+@@ -143,7 +143,7 @@
+ #     The refered script file(s) will be read and directly
+ #     put after the %pre or %preun section
+ #     If CPACK_RPM_COMPONENT_INSTALL is set to ON the (un)install script for
+-#     each component can be overriden with
++#     each component can be overridden with
+ #     CPACK_RPM_<COMPONENT>_PRE_INSTALL_SCRIPT_FILE and
+ #     CPACK_RPM_<COMPONENT>_PRE_UNINSTALL_SCRIPT_FILE
+ #     One may verify which scriptlet has been included with
+@@ -156,7 +156,7 @@
+ #     The refered script file(s) will be read and directly
+ #     put after the %post or %postun section
+ #     If CPACK_RPM_COMPONENT_INSTALL is set to ON the (un)install script for
+-#     each component can be overriden with
++#     each component can be overridden with
+ #     CPACK_RPM_<COMPONENT>_POST_INSTALL_SCRIPT_FILE and
+ #     CPACK_RPM_<COMPONENT>_POST_UNINSTALL_SCRIPT_FILE
+ #     One may verify which scriptlet has been included with
+@@ -165,7 +165,7 @@
+ #  CPACK_RPM_<COMPONENT>_USER_FILELIST
+ #     Mandatory : NO
+ #     Default   : -
+-#     May be used to explicitely specify %(<directive>) file line
++#     May be used to explicitly specify %(<directive>) file line
+ #     in the spec file. Like %config(noreplace) or any other directive
+ #     that be found in the %files section. Since CPackRPM is generating
+ #     the list of files (and directories) the user specified files of
+--- a/Modules/UseJava.cmake
++++ b/Modules/UseJava.cmake
+@@ -112,7 +112,7 @@
+ #                [VERSION TRUE|FALSE]
+ #               )
+ #
+-# Create jave documentation based on files or packages. For more
++# Create java documentation based on files or packages. For more
+ # details please read the javadoc manpage.
+ #
+ # There are two main signatures for create_javadoc. The first
+--- a/Modules/FeatureSummary.cmake
++++ b/Modules/FeatureSummary.cmake
+@@ -125,7 +125,7 @@
+ #
+ #   set_package_properties(LibXml2 PROPERTIES TYPE RECOMMENDED
+ #                                             PURPOSE "Enables HTML-import in MyWordProcessor")
+-# ...
++#   ...
+ #   set_package_properties(LibXml2 PROPERTIES TYPE OPTIONAL
+ #                                             PURPOSE "Enables odt-export in MyWordProcessor")
+ #
+--- a/Source/cmTarget.cxx
++++ b/Source/cmTarget.cxx
+@@ -1055,10 +1055,10 @@ void cmTarget::DefineProperties(cmake *c
+      "Can be set to one or more UUIDs recognized by Visual Studio "
+      "to indicate the type of project. This value is copied "
+      "verbatim into the generated project file. Example for a "
+-     "managed C++ unit testing project: \""
+-     "{3AC096D0-A1C2-E12C-1390-A8335801FDAB};"
+-     "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\". UUIDs are "
+-     "semicolon-delimited.");
++     "managed C++ unit testing project:\n"
++     " {3AC096D0-A1C2-E12C-1390-A8335801FDAB};"
++     "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\n"
++     "UUIDs are semicolon-delimited.");
+   cm->DefineProperty
+     ("VS_GLOBAL_KEYWORD", cmProperty::TARGET,
+      "Visual Studio project keyword.",
