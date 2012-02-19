@@ -3,6 +3,7 @@ Subject: various typo and formatting fixes in manual pages
 Bug: http://www.cmake.org/Bug/view.php?id=12975
 Forwarded: yes
 Origin: vendor
+Applied-Upstream: 2.8.8
 
 The patch fixes the following lintian warnings:
 
