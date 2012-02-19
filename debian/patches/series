@@ -2,3 +2,4 @@ FindBoost_add_-lpthread_#563479.diff
 multiarch_findgtk2_fix.diff
 support_cppflags.diff
 manpage_fixes.diff
+mipsel_is_little_endian.diff
