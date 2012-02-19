@@ -1,11 +1,11 @@
-cmake (2.8.7-2) UNRELEASED; urgency=low
+cmake (2.8.7-2) unstable; urgency=low
 
   * Properly detect mipsel as little endian architecture. Fixes FTBFS (patch
     mipsel_is_little_endian.diff).
   * Bump debhelper compat level to 9 in order to receive build flags
     automagically.
 
- -- Modestas Vainius <modax@debian.org>  Sun, 19 Feb 2012 13:29:30 +0200
+ -- Modestas Vainius <modax@debian.org>  Sun, 19 Feb 2012 13:44:42 +0200
 
 cmake (2.8.7-1) unstable; urgency=low
 
