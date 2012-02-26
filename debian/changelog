@@ -1,4 +1,4 @@
-cmake (2.8.7-3) UNRELEASED; urgency=low
+cmake (2.8.7-3) unstable; urgency=medium
 
   * Fix some tests not to fail if absolute build path contains regex
     metacharacters like +. This makes the package binNMUable again.
@@ -6,7 +6,7 @@ cmake (2.8.7-3) UNRELEASED; urgency=low
   * Drop support_cppflags.diff patch because this particular solution was
     rejected by upstream. This reopens #653916.
 
- -- Modestas Vainius <modax@debian.org>  Sun, 26 Feb 2012 23:22:41 +0200
+ -- Modestas Vainius <modax@debian.org>  Mon, 27 Feb 2012 00:56:14 +0200
 
 cmake (2.8.7-2) unstable; urgency=low
 
