@@ -1,5 +1,8 @@
 cmake (2.8.7-3) UNRELEASED; urgency=low
 
+  * Fix some tests not to fail if absolute build path contains regex
+    metacharacters like +. This makes the package binNMUable again.
+    (patch paths_in_regex_espace_metachars.diff)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 26 Feb 2012 23:22:41 +0200
 
