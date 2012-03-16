@@ -4,6 +4,10 @@ cmake (2.8.7-4) UNRELEASED; urgency=low
     is now possible to force a specific python version via command line again.
     The interface has changed though, see NEWS entry. (Closes: #663188)
     Patch: backport_findpython_fixes.diff
+  * Backport a bunch of FindRuby improvements from cmake master. It should be
+    able to properly find ruby 1.9.1 as packaged in Debian now.
+    (Closes: #643949)
+    Patch: backport_findruby_improvements.diff
 
  -- Modestas Vainius <modax@debian.org>  Fri, 16 Mar 2012 22:10:41 +0200
 
