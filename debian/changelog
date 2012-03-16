@@ -1,5 +1,9 @@
 cmake (2.8.7-4) UNRELEASED; urgency=low
 
+  * Backport a bunch of FindPython* related commits from cmake master. It
+    is now possible to force a specific python version via command line again.
+    The interface has changed though, see NEWS entry. (Closes: #663188)
+    Patch: backport_findpython_fixes.diff
 
  -- Modestas Vainius <modax@debian.org>  Fri, 16 Mar 2012 22:10:41 +0200
 
