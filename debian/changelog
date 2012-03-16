@@ -8,6 +8,9 @@ cmake (2.8.7-4) UNRELEASED; urgency=low
     able to properly find ruby 1.9.1 as packaged in Debian now.
     (Closes: #643949)
     Patch: backport_findruby_improvements.diff
+  * Add support for CxxTest 4 in FindCxxTest (backport a patch from cmake
+    master). (Closes: #662982) Thanks to Simone Rossetto.
+    Patch: backport_support_cxxtest4.diff
 
  -- Modestas Vainius <modax@debian.org>  Fri, 16 Mar 2012 22:10:41 +0200
 

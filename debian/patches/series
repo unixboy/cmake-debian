@@ -5,3 +5,4 @@ mipsel_is_little_endian.diff
 paths_in_regex_espace_metachars.diff
 backport_findpython_fixes.diff
 backport_findruby_improvements.diff
+backport_support_cxxtest4.diff
