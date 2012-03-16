@@ -1,3 +1,8 @@
+cmake (2.8.7-4) UNRELEASED; urgency=low
+
+
+ -- Modestas Vainius <modax@debian.org>  Fri, 16 Mar 2012 22:10:41 +0200
+
 cmake (2.8.7-3) unstable; urgency=medium
 
   * Fix some tests not to fail if absolute build path contains regex
