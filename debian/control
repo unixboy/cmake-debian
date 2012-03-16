@@ -13,6 +13,7 @@ Homepage: http://cmake.org/
 
 Package: cmake
 Architecture: any
+Multi-Arch: foreign
 Depends: ${shlibs:Depends}, ${misc:Depends}, cmake-data (= ${source:Version}), procps [!hurd-any]
 Suggests: gcc, make
 Description: cross-platform, open-source make system

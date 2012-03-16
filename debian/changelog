@@ -12,6 +12,8 @@ cmake (2.8.7-4) UNRELEASED; urgency=low
     master). (Closes: #662982) Thanks to Simone Rossetto.
     Patch: backport_support_cxxtest4.diff
   * Bump Standards-Version to 3.9.3: no changes needed.
+  * Mark cmake Multi-Arch: foreign. The change was stolen from Ubuntu
+    cmake_2.8.7-0ubuntu3 package. Thanks to Steve Langasek.
 
  -- Modestas Vainius <modax@debian.org>  Fri, 16 Mar 2012 22:10:41 +0200
 
