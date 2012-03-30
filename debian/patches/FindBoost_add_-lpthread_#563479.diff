@@ -11,7 +11,7 @@ Forwarded: http://cmake.org/Bug/file_download.php?file_id=3629&type=bug
 
 --- a/Modules/FindBoost.cmake
 +++ b/Modules/FindBoost.cmake
-@@ -1128,6 +1128,9 @@ else(_boost_IN_CACHE)
+@@ -1192,6 +1192,9 @@ else(_boost_IN_CACHE)
              message (STATUS "  ${COMPONENT}")
            endif(NOT Boost_FIND_QUIETLY)
            set(Boost_LIBRARIES ${Boost_LIBRARIES} ${Boost_${UPPERCOMPONENT}_LIBRARY})

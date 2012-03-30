@@ -1,3 +1,56 @@
+cmake (2.8.7-4) unstable; urgency=low
+
+  * Backport a bunch of FindPython* related commits from cmake master. It
+    is now possible to force a specific python version via command line again.
+    The interface has changed though, see NEWS entry. (Closes: #663188)
+    Patch: backport_findpython_fixes.diff
+  * Backport a bunch of FindRuby improvements from cmake master. It should be
+    able to properly find ruby 1.9.1 as packaged in Debian now.
+    (Closes: #643949)
+    Patch: backport_findruby_improvements.diff
+  * Add support for CxxTest 4 in FindCxxTest (backport a patch from cmake
+    master). (Closes: #662982) Thanks to Simone Rossetto.
+    Patch: backport_support_cxxtest4.diff
+  * Bump Standards-Version to 3.9.3: no changes needed.
+  * Mark cmake Multi-Arch: foreign. The change was stolen from Ubuntu
+    cmake_2.8.7-0ubuntu3 package. Thanks to Steve Langasek.
+
+ -- Modestas Vainius <modax@debian.org>  Fri, 16 Mar 2012 23:49:28 +0200
+
+cmake (2.8.7-3) unstable; urgency=medium
+
+  * Fix some tests not to fail if absolute build path contains regex
+    metacharacters like +. This makes the package binNMUable again.
+    (patch paths_in_regex_espace_metachars.diff)
+  * Drop support_cppflags.diff patch because this particular solution was
+    rejected by upstream. This reopens #653916.
+
+ -- Modestas Vainius <modax@debian.org>  Mon, 27 Feb 2012 00:56:14 +0200
+
+cmake (2.8.7-2) unstable; urgency=low
+
+  * Properly detect mipsel as little endian architecture. Fixes FTBFS (patch
+    mipsel_is_little_endian.diff).
+  * Bump debhelper compat level to 9 in order to receive build flags
+    automagically.
+
+ -- Modestas Vainius <modax@debian.org>  Sun, 19 Feb 2012 13:44:42 +0200
+
+cmake (2.8.7-1) unstable; urgency=low
+
+  * New upstream release. (Closes: #658427)
+  * Disable CTestTestUpload test because it requires Internet access. Thanks to
+    Felix Geyer. (Closes: #634603)
+  * Remove multiarch_lib_dirs_should_be_implicit.diff patch, merged upstream.
+  * Refresh other patches.
+  * Respect CPPFLAGS environment variable when building C/C++ sources (patch
+    support_cppflags.diff). (Closes: #653916)
+  * Fix various typos and formatting errors in manpages (patch
+    manpage_fixes.diff).
+  * Update install files: add usr/share/aclocal/cmake.m4.
+
+ -- Modestas Vainius <modax@debian.org>  Sat, 18 Feb 2012 15:33:35 +0200
+
 cmake (2.8.5-1~bpo60+1) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.
