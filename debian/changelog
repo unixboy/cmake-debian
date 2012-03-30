@@ -1,3 +1,9 @@
+cmake (2.8.7-4~bpo60+1) squeeze-backports; urgency=low
+
+  * Rebuild for squeeze-backports.
+
+ -- Modestas Vainius <modax@debian.org>  Fri, 30 Mar 2012 20:22:09 +0300
+
 cmake (2.8.7-4) unstable; urgency=low
 
   * Backport a bunch of FindPython* related commits from cmake master. It
