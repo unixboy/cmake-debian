@@ -1,6 +1,8 @@
 cmake (2.8.8-1) UNRELEASED; urgency=low
 
-  * New upstream release.
+  * New upstream release:
+    - do not segfault when adding symbols to ZIP. (Closes: #666456)
+      Fixed by upstream commit: 768cf9183
   * Remove patches merged/backported from upstream:
     - backport_findpython_fixes.diff
     - backport_findruby_improvements.diff
