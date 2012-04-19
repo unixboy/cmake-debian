@@ -1,4 +1,4 @@
-cmake (2.8.8-1) UNRELEASED; urgency=low
+cmake (2.8.8-1) unstable; urgency=low
 
   * New upstream release:
     - do not segfault when adding symbols to ZIP. (Closes: #666456)
@@ -13,7 +13,7 @@ cmake (2.8.8-1) UNRELEASED; urgency=low
   * Refresh FindBoost_add_-lpthread_#563479.diff patch.
   * Readd manpage_fixes.diff patch with new man page fixes.
 
- -- Modestas Vainius <modax@debian.org>  Thu, 19 Apr 2012 19:04:52 +0300
+ -- Modestas Vainius <modax@debian.org>  Thu, 19 Apr 2012 22:32:10 +0300
 
 cmake (2.8.7-4) unstable; urgency=low
 
