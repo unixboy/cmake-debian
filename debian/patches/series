@@ -1,3 +1,4 @@
 FindBoost_add_-lpthread_#563479.diff
 multiarch_findgtk2_fix.diff
 manpage_fixes.diff
+backport_findpkgconfig_set_found_variable.diff
