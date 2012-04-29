@@ -1,9 +1,9 @@
-cmake (2.8.8-2) UNRELEASED; urgency=low
+cmake (2.8.8-2) unstable; urgency=low
 
   * FindPkgConfig.cmake: properly set documented PKG_CONFIG_FOUND variable
     (patch backport_findpkgconfig_set_found_variable.diff). (Closes: #669627)
 
- -- Modestas Vainius <modax@debian.org>  Sun, 29 Apr 2012 09:41:43 +0300
+ -- Modestas Vainius <modax@debian.org>  Sun, 29 Apr 2012 09:55:50 +0300
 
 cmake (2.8.8-1) unstable; urgency=low
 
