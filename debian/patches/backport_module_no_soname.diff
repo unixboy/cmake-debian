@@ -1,0 +1,468 @@
+From: Modestas Vainius <modax@debian.org>
+From: Brad King <brad.king@kitware.com>
+Bug: http://cmake.org/Bug/view.php?id=13155
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=668982
+Last-Update: 2012-05-02
+Origin: backport, commit:8df7aa54f0f78d48e4ed91001ac9ac9d39dbf535
+                  commit:fdb3f878fec158ab284130a55849ada9edbd6fd1
+                  commit:e1409ac59bce76258c054a8ddcaed75425e072b8
+Applied-Upstream: 2.8.9
+
+Support building shared libraries or modules without soname (#13155)
+
+Add a boolean target property NO_SONAME which may be used to disable
+soname for the specified shared library or module even if the platform
+supports it.  This property should be useful for private shared
+libraries or various plugins which live in private directories and have
+not been designed to be found or loaded globally.
+
+Replace references to <CMAKE_SHARED_LIBRARY_SONAME_${LANG}_FLAG> and
+hard-coded -install_name flags with a conditional <SONAME_FLAG> which is
+expanded to the value of the CMAKE_SHARED_LIBRARY_SONAME_${LANG}_FLAG
+definition as long as soname supports is enabled for the target in
+question.  Keep expanding CMAKE_SHARED_LIBRARY_SONAME_${LANG}_FLAG in
+rules in case third party projects still use it.  Such projects would
+not yet use NO_SONAME so the adjacent <TARGET_SONAME> will always be
+expanded.  Make <TARGET_INSTALLNAME_DIR> NO_SONAME aware as well.  Since
+-install_name is soname on OS X, this should not be a problem if this
+variable is expanded only if soname is enabled.
+
+The Ninja generator performs rule variable substitution only once
+globally per rule to put its own placeholders.  Final substitution is
+performed by ninja at build time.  Therefore we cannot conditionally
+replace the soname placeholders on a per-target basis.  Rather than
+omitting $SONAME from rules.ninja, simply do not write its contents for
+targets which have NO_SONAME.  Since 3 variables are affected by
+NO_SONAME ($SONAME, $SONAME_FLAG, $INSTALLNAME_DIR), set them only if
+soname is enabled.
+
+Teach the Plugin test to check that the NO_SONAME target property works
+as documented.  Check that the IMPORTED targets are written with the
+correct properties.  When readelf is available use it to check the
+actual binary files for SONAME fields.
+
+--- a/Tests/Plugin/CMakeLists.txt
++++ b/Tests/Plugin/CMakeLists.txt
+@@ -39,6 +39,50 @@ TARGET_LINK_LIBRARIES(example_exe kwsys)
+ ADD_LIBRARY(example_mod_1 MODULE src/example_mod_1.c)
+ TARGET_LINK_LIBRARIES(example_mod_1 example_exe)
+ 
++
++IF(CMAKE_SHARED_LIBRARY_SONAME_C_FLAG AND
++    "${CMAKE_C_CREATE_SHARED_MODULE}" MATCHES "SONAME_FLAG")
++  # Add a second plugin that should not have any soname.
++  ADD_LIBRARY(example_mod_2 MODULE src/example_mod_1.c)
++  TARGET_LINK_LIBRARIES(example_mod_2 example_exe)
++  SET_PROPERTY(TARGET example_mod_2 PROPERTY NO_SONAME 1)
++
++  # Verify that targets export with proper IMPORTED SONAME properties.
++  EXPORT(TARGETS example_mod_1 example_mod_2 NAMESPACE exp_
++    FILE ${CMAKE_CURRENT_BINARY_DIR}/mods.cmake)
++  INCLUDE(${CMAKE_CURRENT_BINARY_DIR}/mods.cmake)
++  GET_PROPERTY(configs TARGET exp_example_mod_1 PROPERTY IMPORTED_CONFIGURATIONS)
++  FOREACH(c ${configs})
++    STRING(TOUPPER "${c}" CONFIG)
++    GET_PROPERTY(soname1 TARGET exp_example_mod_1 PROPERTY IMPORTED_SONAME_${CONFIG})
++    GET_PROPERTY(soname2 TARGET exp_example_mod_2 PROPERTY IMPORTED_NO_SONAME_${CONFIG})
++    IF(soname1)
++      MESSAGE(STATUS "exp_example_mod_1 has IMPORTED_SONAME_${CONFIG} as expected: ${soname1}")
++    ELSE()
++      MESSAGE(SEND_ERROR "exp_example_mod_1 does not have IMPORTED_SONAME_${CONFIG} but should")
++    ENDIF()
++    IF(soname2)
++      MESSAGE(STATUS "exp_example_mod_2 has IMPORTED_NO_SONAME_${CONFIG} as expected: ${soname2}")
++    ELSE()
++      MESSAGE(SEND_ERROR "exp_example_mod_2 does not have IMPORTED_NO_SONAME_${CONFIG} but should")
++    ENDIF()
++  ENDFOREACH()
++
++  # Parse the binary to check for SONAME if possible.
++  IF("${CMAKE_EXECUTABLE_FORMAT}" MATCHES "ELF")
++    FIND_PROGRAM(READELF_EXE readelf)
++    IF(READELF_EXE)
++      ADD_CUSTOM_TARGET(check_mod_soname ALL COMMAND
++        ${CMAKE_COMMAND} -Dreadelf=${READELF_EXE}
++                         -Dmod1=$<TARGET_FILE:example_mod_1>
++                         -Dmod2=$<TARGET_FILE:example_mod_2>
++        -P ${CMAKE_CURRENT_SOURCE_DIR}/check_mod_soname.cmake
++        )
++      ADD_DEPENDENCIES(check_mod_soname example_mod_1 example_mod_2)
++    ENDIF()
++  ENDIF()
++ENDIF()
++
+ # TODO:
+ #  - create a plugin that links to a static lib
+ #  - create a plugin that links to a shared lib
+--- /dev/null
++++ b/Tests/Plugin/check_mod_soname.cmake
+@@ -0,0 +1,14 @@
++execute_process(COMMAND ${readelf} -d ${mod1} OUTPUT_FILE ${mod1}.readelf.txt)
++execute_process(COMMAND ${readelf} -d ${mod2} OUTPUT_FILE ${mod2}.readelf.txt)
++file(STRINGS ${mod1}.readelf.txt soname1 REGEX "\\(SONAME\\)")
++file(STRINGS ${mod2}.readelf.txt soname2 REGEX "\\(SONAME\\)")
++if(soname1)
++  message(STATUS "${mod1} has soname as expected: ${soname1}")
++else()
++  message(FATAL_ERROR "${mod1} has no soname but should:\n  ${soname1}")
++endif()
++if(soname2)
++  message(FATAL_ERROR "${mod2} has soname but should not:\n  ${soname2}")
++else()
++  message(STATUS "${mod2} has no soname as expected")
++endif()
+--- a/Modules/CMakeCInformation.cmake
++++ b/Modules/CMakeCInformation.cmake
+@@ -164,7 +164,7 @@ INCLUDE(CMakeCommonLanguageInclude)
+ # create a C shared library
+ IF(NOT CMAKE_C_CREATE_SHARED_LIBRARY)
+   SET(CMAKE_C_CREATE_SHARED_LIBRARY
+-      "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_C_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_C_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
++      "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_C_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+ ENDIF(NOT CMAKE_C_CREATE_SHARED_LIBRARY)
+ 
+ # create a C shared module just copy the shared library rule
+--- a/Modules/CMakeCXXInformation.cmake
++++ b/Modules/CMakeCXXInformation.cmake
+@@ -242,7 +242,7 @@ INCLUDE(CMakeCommonLanguageInclude)
+ # create a shared C++ library
+ IF(NOT CMAKE_CXX_CREATE_SHARED_LIBRARY)
+   SET(CMAKE_CXX_CREATE_SHARED_LIBRARY
+-      "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
++      "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+ ENDIF(NOT CMAKE_CXX_CREATE_SHARED_LIBRARY)
+ 
+ # create a c++ shared module copy the shared library rule by default
+--- a/Modules/CMakeFortranInformation.cmake
++++ b/Modules/CMakeFortranInformation.cmake
+@@ -171,7 +171,7 @@ INCLUDE(CMakeCommonLanguageInclude)
+ # create a Fortran shared library
+ IF(NOT CMAKE_Fortran_CREATE_SHARED_LIBRARY)
+   SET(CMAKE_Fortran_CREATE_SHARED_LIBRARY
+-      "<CMAKE_Fortran_COMPILER> <CMAKE_SHARED_LIBRARY_Fortran_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_Fortran_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_Fortran_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
++      "<CMAKE_Fortran_COMPILER> <CMAKE_SHARED_LIBRARY_Fortran_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_Fortran_FLAGS> <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+ ENDIF(NOT CMAKE_Fortran_CREATE_SHARED_LIBRARY)
+ 
+ # create a Fortran shared module just copy the shared library rule
+--- a/Modules/Compiler/XL.cmake
++++ b/Modules/Compiler/XL.cmake
+@@ -47,7 +47,7 @@ macro(__compiler_xl lang)
+     # files so that we export only the symbols actually provided by the sources.
+     set(CMAKE_${lang}_CREATE_SHARED_LIBRARY
+       "${CMAKE_XL_CreateExportList} <OBJECT_DIR>/objects.exp <OBJECTS>"
+-      "<CMAKE_${lang}_COMPILER> <CMAKE_SHARED_LIBRARY_${lang}_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_${lang}_FLAGS> -Wl,-bE:<OBJECT_DIR>/objects.exp <CMAKE_SHARED_LIBRARY_SONAME_${lang}_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>"
++      "<CMAKE_${lang}_COMPILER> <CMAKE_SHARED_LIBRARY_${lang}_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_${lang}_FLAGS> -Wl,-bE:<OBJECT_DIR>/objects.exp <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>"
+       )
+   endif()
+ endmacro()
+--- a/Modules/Platform/Darwin-icc.cmake
++++ b/Modules/Platform/Darwin-icc.cmake
+@@ -84,11 +84,11 @@ ENDIF(XCODE)
+ SET(CMAKE_MacOSX_Content_COMPILE_OBJECT "\"${CMAKE_COMMAND}\" -E copy_if_different <SOURCE> <OBJECT>")
+ 
+ SET(CMAKE_C_CREATE_SHARED_LIBRARY
+-  "<CMAKE_C_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++  "<CMAKE_C_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ SET(CMAKE_CXX_CREATE_SHARED_LIBRARY
+-  "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++  "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ SET(CMAKE_Fortran_CREATE_SHARED_LIBRARY
+-  "<CMAKE_Fortran_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_Fortran_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++  "<CMAKE_Fortran_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_Fortran_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ 
+ SET(CMAKE_CXX_CREATE_SHARED_MODULE
+       "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+--- a/Modules/Platform/Darwin.cmake
++++ b/Modules/Platform/Darwin.cmake
+@@ -207,11 +207,11 @@ ENDIF()
+ SET(CMAKE_C_CREATE_SHARED_LIBRARY_FORBIDDEN_FLAGS -w)
+ SET(CMAKE_CXX_CREATE_SHARED_LIBRARY_FORBIDDEN_FLAGS -w)
+ SET(CMAKE_C_CREATE_SHARED_LIBRARY
+-  "<CMAKE_C_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++  "<CMAKE_C_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ SET(CMAKE_CXX_CREATE_SHARED_LIBRARY
+-  "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++  "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ SET(CMAKE_Fortran_CREATE_SHARED_LIBRARY
+-  "<CMAKE_Fortran_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_Fortran_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++  "<CMAKE_Fortran_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_Fortran_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ 
+ SET(CMAKE_CXX_CREATE_SHARED_MODULE
+       "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+@@ -223,9 +223,9 @@ SET(CMAKE_Fortran_CREATE_SHARED_MODULE
+       "<CMAKE_Fortran_COMPILER>  <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_MODULE_CREATE_Fortran_FLAGS> <LINK_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+ 
+ SET(CMAKE_C_CREATE_MACOSX_FRAMEWORK
+-      "<CMAKE_C_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++      "<CMAKE_C_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ SET(CMAKE_CXX_CREATE_MACOSX_FRAMEWORK
+-      "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> -install_name <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
++      "<CMAKE_CXX_COMPILER> <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <LINK_FLAGS> -o <TARGET> <SONAME_FLAG> <TARGET_INSTALLNAME_DIR><TARGET_SONAME> <OBJECTS> <LINK_LIBRARIES>")
+ 
+ 
+  
+--- a/Modules/Platform/SunOS.cmake
++++ b/Modules/Platform/SunOS.cmake
+@@ -8,7 +8,7 @@ ENDIF(CMAKE_SYSTEM MATCHES "SunOS-4.*")
+ IF(CMAKE_COMPILER_IS_GNUCXX)
+   IF(CMAKE_COMPILER_IS_GNUCC)
+     SET(CMAKE_CXX_CREATE_SHARED_LIBRARY
+-        "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS>  <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
++        "<CMAKE_C_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS>  <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+   ELSE(CMAKE_COMPILER_IS_GNUCC)
+     # Take default rule from CMakeDefaultMakeRuleVariables.cmake.
+   ENDIF(CMAKE_COMPILER_IS_GNUCC)
+--- a/Source/cmExportFileGenerator.cxx
++++ b/Source/cmExportFileGenerator.cxx
+@@ -137,10 +137,20 @@ cmExportFileGenerator
+       (mf->IsOn("WIN32") || mf->IsOn("CYGWIN") || mf->IsOn("MINGW"));
+     if(!dll_platform)
+       {
+-      std::string soname = target->GetSOName(config);
+-      std::string prop = "IMPORTED_SONAME";
++      std::string prop;
++      std::string value;
++      if(target->HasSOName(config))
++        {
++        prop = "IMPORTED_SONAME";
++        value = target->GetSOName(config);
++        }
++      else
++        {
++        prop = "IMPORTED_NO_SONAME";
++        value = "TRUE";
++        }
+       prop += suffix;
+-      properties[prop] = soname;
++      properties[prop] = value;
+       }
+     }
+ 
+--- a/Source/cmLocalGenerator.cxx
++++ b/Source/cmLocalGenerator.cxx
+@@ -954,29 +954,27 @@ cmLocalGenerator::ExpandRuleVariable(std
+         }
+       }
+     }
+-  if(replaceValues.TargetSOName)
++  if(variable == "TARGET_SONAME" || variable == "SONAME_FLAG" ||
++     variable == "TARGET_INSTALLNAME_DIR")
+     {
+-    if(variable == "TARGET_SONAME")
++    // All these variables depend on TargetSOName
++    if(replaceValues.TargetSOName)
+       {
+-      if(replaceValues.Language)
++      if(variable == "TARGET_SONAME")
+         {
+-        std::string name = "CMAKE_SHARED_LIBRARY_SONAME_";
+-        name += replaceValues.Language;
+-        name += "_FLAG";
+-        if(this->Makefile->GetDefinition(name.c_str()))
+-          {
+-          return replaceValues.TargetSOName;
+-          }
++        return replaceValues.TargetSOName;
++        }
++      if(variable == "SONAME_FLAG" && replaceValues.SONameFlag)
++        {
++        return replaceValues.SONameFlag;
++        }
++      if(replaceValues.TargetInstallNameDir &&
++         variable == "TARGET_INSTALLNAME_DIR")
++        {
++        return replaceValues.TargetInstallNameDir;
+         }
+-      return "";
+-      }
+-    }
+-  if(replaceValues.TargetInstallNameDir)
+-    {
+-    if(variable == "TARGET_INSTALLNAME_DIR")
+-      {
+-      return replaceValues.TargetInstallNameDir;
+       }
++    return "";
+     }
+   if(replaceValues.LinkLibraries)
+     {
+--- a/Source/cmLocalGenerator.h
++++ b/Source/cmLocalGenerator.h
+@@ -228,6 +228,7 @@ public:
+     const char* ObjectDir;
+     const char* Flags;
+     const char* ObjectsQuoted;
++    const char* SONameFlag;
+     const char* TargetSOName;
+     const char* TargetInstallNameDir;
+     const char* LinkFlags;
+--- a/Source/cmMakefile.cxx
++++ b/Source/cmMakefile.cxx
+@@ -2201,6 +2201,14 @@ bool cmMakefile::PlatformIs64Bit() const
+   return false;
+ }
+ 
++const char* cmMakefile::GetSONameFlag(const char* language) const
++{
++  std::string name = "CMAKE_SHARED_LIBRARY_SONAME_";
++  name += language;
++  name += "_FLAG";
++  return GetDefinition(name.c_str());
++}
++
+ bool cmMakefile::CanIWriteThisFile(const char* fileName)
+ {
+   if ( !this->IsOn("CMAKE_DISABLE_SOURCE_CHANGES") )
+--- a/Source/cmMakefile.h
++++ b/Source/cmMakefile.h
+@@ -593,6 +593,9 @@ public:
+   /** Return whether the target platform is 64-bit.  */
+   bool PlatformIs64Bit() const;
+ 
++  /** Retrieve soname flag for the specified language if supported */
++  const char* GetSONameFlag(const char* language) const;
++
+   /**
+    * Get a list of preprocessor define flags.
+    */
+--- a/Source/cmMakefileLibraryTargetGenerator.cxx
++++ b/Source/cmMakefileLibraryTargetGenerator.cxx
+@@ -714,7 +714,11 @@ void cmMakefileLibraryTargetGenerator::W
+   std::string linkString = linklibs.str();
+   vars.LinkLibraries = linkString.c_str();
+   vars.ObjectsQuoted = buildObjs.c_str();
+-  vars.TargetSOName= targetNameSO.c_str();
++  if (this->Target->HasSOName(this->ConfigName))
++    {
++    vars.SONameFlag = this->Makefile->GetSONameFlag(linkLanguage);
++    vars.TargetSOName= targetNameSO.c_str();
++    }
+   vars.LinkFlags = linkFlags.c_str();
+ 
+   // Compute the directory portion of the install_name setting.
+--- a/Source/cmNinjaNormalTargetGenerator.cxx
++++ b/Source/cmNinjaNormalTargetGenerator.cxx
+@@ -152,6 +152,7 @@ cmNinjaNormalTargetGenerator
+                                                 cmLocalGenerator::SHELL);
+     vars.ObjectDir = objdir.c_str();
+     vars.Target = "$out";
++    vars.SONameFlag = "$SONAME_FLAG";
+     vars.TargetSOName = "$SONAME";
+     vars.TargetInstallNameDir = "$INSTALLNAME_DIR";
+     vars.TargetPDB = "$TARGET_PDB";
+@@ -366,17 +367,20 @@ void cmNinjaNormalTargetGenerator::Write
+                              this->GetTarget(),
+                              this->TargetLinkLanguage,
+                              this->GetConfigName());
+-  vars["SONAME"] = this->TargetNameSO;
+-
+-  if (targetType == cmTarget::SHARED_LIBRARY) {
+-    std::string install_name_dir =
+-      this->GetTarget()->GetInstallNameDirForBuildTree(this->GetConfigName());
+-
+-    if (!install_name_dir.empty()) {
+-      vars["INSTALLNAME_DIR"] =
+-        this->GetLocalGenerator()->Convert(install_name_dir.c_str(),
+-            cmLocalGenerator::NONE,
+-            cmLocalGenerator::SHELL, false);
++  if (this->GetTarget()->HasSOName(this->GetConfigName())) {
++    vars["SONAME_FLAG"] =
++      this->GetMakefile()->GetSONameFlag(this->TargetLinkLanguage);
++    vars["SONAME"] = this->TargetNameSO;
++    if (targetType == cmTarget::SHARED_LIBRARY) {
++      std::string install_name_dir = this->GetTarget()
++        ->GetInstallNameDirForBuildTree(this->GetConfigName());
++
++      if (!install_name_dir.empty()) {
++        vars["INSTALLNAME_DIR"] =
++          this->GetLocalGenerator()->Convert(install_name_dir.c_str(),
++              cmLocalGenerator::NONE,
++              cmLocalGenerator::SHELL, false);
++      }
+     }
+   }
+ 
+--- a/Source/cmTarget.cxx
++++ b/Source/cmTarget.cxx
+@@ -823,6 +823,19 @@ void cmTarget::DefineProperties(cmake *c
+      "CMAKE_SKIP_BUILD_RPATH if it is set when a target is created.");
+ 
+   cm->DefineProperty
++    ("NO_SONAME", cmProperty::TARGET,
++     "Whether to set \"soname\" when linking a shared library or module.",
++     "Enable this boolean property if a generated shared library or module "
++     "should not have \"soname\" set. Default is to set \"soname\" on all "
++     "shared libraries and modules as long as the platform supports it. "
++     "Generally, use this property only for leaf private libraries or "
++     "plugins. If you use it on normal shared libraries which other targets "
++     "link against, on some platforms a linker will insert a full path to "
++     "the library (as specified at link time) into the dynamic section of "
++     "the dependant binary. Therefore, once installed, dynamic linker may "
++     "eventually fail to locate the library for the binary.");
++
++  cm->DefineProperty
+     ("SOVERSION", cmProperty::TARGET,
+      "What version number is this target.",
+      "For shared libraries VERSION and SOVERSION can be used to specify "
+@@ -831,6 +844,7 @@ void cmTarget::DefineProperties(cmake *c
+      "supports symlinks and the linker supports so-names. "
+      "If only one of both is specified the missing is assumed to have "
+      "the same version number. "
++     "SOVERSION is ignored if NO_SONAME property is set. "
+      "For shared libraries and executables on Windows the VERSION "
+      "attribute is parsed to extract a \"major.minor\" version number. "
+      "These numbers are used as the image version of the binary. ");
+@@ -2995,6 +3009,17 @@ std::string cmTarget::GetPDBName(const c
+ }
+ 
+ //----------------------------------------------------------------------------
++bool cmTarget::HasSOName(const char* config)
++{
++  // soname is supported only for shared libraries and modules,
++  // and then only when the platform supports an soname flag.
++  return ((this->GetType() == cmTarget::SHARED_LIBRARY ||
++           this->GetType() == cmTarget::MODULE_LIBRARY) &&
++          !this->GetPropertyAsBool("NO_SONAME") &&
++          this->Makefile->GetSONameFlag(this->GetLinkerLanguage(config)));
++}
++
++//----------------------------------------------------------------------------
+ std::string cmTarget::GetSOName(const char* config)
+ {
+   if(this->IsImported())
+@@ -3327,22 +3352,10 @@ void cmTarget::GetLibraryNames(std::stri
+     return;
+     }
+ 
+-  // Construct the name of the soname flag variable for this language.
+-  const char* ll = this->GetLinkerLanguage(config);
+-  std::string sonameFlag = "CMAKE_SHARED_LIBRARY_SONAME";
+-  if(ll)
+-    {
+-    sonameFlag += "_";
+-    sonameFlag += ll;
+-    }
+-  sonameFlag += "_FLAG";
+-
+   // Check for library version properties.
+   const char* version = this->GetProperty("VERSION");
+   const char* soversion = this->GetProperty("SOVERSION");
+-  if((this->GetType() != cmTarget::SHARED_LIBRARY &&
+-      this->GetType() != cmTarget::MODULE_LIBRARY) ||
+-     !this->Makefile->GetDefinition(sonameFlag.c_str()) ||
++  if(!this->HasSOName(config) ||
+      this->IsFrameworkOnApple())
+     {
+     // Versioning is supported only for shared libraries and modules,
+--- a/Source/cmTarget.h
++++ b/Source/cmTarget.h
+@@ -347,6 +347,9 @@ public:
+   /** Get the name of the pdb file for the target.  */
+   std::string GetPDBName(const char* config=0);
+ 
++  /** Whether this library has soname enabled and platform supports it.  */
++  bool HasSOName(const char* config);
++
+   /** Get the soname of the target.  Allowed only for a shared library.  */
+   std::string GetSOName(const char* config);
+ 

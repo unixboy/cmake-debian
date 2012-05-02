@@ -1,5 +1,9 @@
 cmake (2.8.8-3) UNRELEASED; urgency=low
 
+  * Backport a no-soname feature from CMake (2.8.9) master tree. Just set a
+    NO_SONAME property on the shared library or module target in order to skip
+    addition of the SONAME field to the shared object. This makes it possible to
+    build Debian Python policy compliant modules with CMake. (Closes: #668982)
 
  -- Modestas Vainius <modax@debian.org>  Wed, 02 May 2012 21:35:38 +0300
 
