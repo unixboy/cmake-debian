@@ -1,3 +1,9 @@
+cmake (2.8.9~rc1-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Modestas Vainius <modax@debian.org>  Wed, 27 Jun 2012 20:53:34 +0300
+
 cmake (2.8.8-3) unstable; urgency=low
 
   * Backport a no-soname feature from CMake (2.8.9) master tree. Just set a
