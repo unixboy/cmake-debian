@@ -1,4 +1,4 @@
-cmake (2.8.9~rc1-1) UNRELEASED; urgency=low
+cmake (2.8.9~rc1-1) unstable; urgency=low
 
   * New upstream release.
   * Remove patches, merged upstream:
@@ -8,7 +8,7 @@ cmake (2.8.9~rc1-1) UNRELEASED; urgency=low
   * Drop cmake-{qt,curses}-gui.lintian-overrides, not needed with newer lintian.
   * Enable hardening flags (by appending CPPFLAGS to C(XX)FLAGS).
 
- -- Modestas Vainius <modax@debian.org>  Wed, 27 Jun 2012 20:53:34 +0300
+ -- Modestas Vainius <modax@debian.org>  Wed, 27 Jun 2012 21:34:06 +0300
 
 cmake (2.8.8-3) unstable; urgency=low
 
