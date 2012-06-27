@@ -153,14 +153,8 @@ void cmMakefileTargetGenerator::WriteTargetBuildRules()
         }
       }
     }
-  for(std::vector<cmSourceFile*>::const_iterator
-        si = this->GeneratorTarget->OSXContent.begin();
-      si != this->GeneratorTarget->OSXContent.end(); ++si)
-    {
-    cmTarget::SourceFileFlags tsFlags =
-      this->Target->GetTargetSourceFileFlags(*si);
-    this->WriteMacOSXContentRules(**si, tsFlags.MacFolder);
-    }
+  this->WriteMacOSXContentRules(this->GeneratorTarget->HeaderSources);
+  this->WriteMacOSXContentRules(this->GeneratorTarget->ExtraSources);
   for(std::vector<cmSourceFile*>::const_iterator
         si = this->GeneratorTarget->ExternalObjects.begin();
       si != this->GeneratorTarget->ExternalObjects.end(); ++si)
@@ -251,9 +245,6 @@ std::string cmMakefileTargetGenerator::GetFlags(const std::string &l)
     std::string flags;
     const char *lang = l.c_str();
 
-    bool shared = ((this->Target->GetType() == cmTarget::SHARED_LIBRARY) ||
-                   (this->Target->GetType() == cmTarget::MODULE_LIBRARY));
-
     // Add language feature flags.
     this->AddFeatureFlags(flags, lang);
 
@@ -266,8 +257,7 @@ std::string cmMakefileTargetGenerator::GetFlags(const std::string &l)
       this->AddFortranFlags(flags);
       }
 
-    // Add shared-library flags if needed.
-    this->LocalGenerator->AddSharedFlags(flags, lang, shared);
+    this->LocalGenerator->AddCMP0018Flags(flags, this->Target, lang);
 
     // Add include directory flags.
     this->AddIncludeFlags(flags, lang);
@@ -350,6 +340,22 @@ void cmMakefileTargetGenerator::WriteTargetLanguageFlags()
     this->LocalGenerator->AppendFlags
       (flags, this->Target->GetProperty("COMPILE_FLAGS"));
     *this->FlagFileStream << "# TARGET_FLAGS = " << flags << "\n\n";
+    }
+}
+
+//----------------------------------------------------------------------------
+void cmMakefileTargetGenerator::WriteMacOSXContentRules(
+  std::vector<cmSourceFile*> const& sources)
+{
+  for(std::vector<cmSourceFile*>::const_iterator
+        si = sources.begin(); si != sources.end(); ++si)
+    {
+    cmTarget::SourceFileFlags tsFlags =
+      this->Target->GetTargetSourceFileFlags(*si);
+    if(tsFlags.Type != cmTarget::SourceFileTypeNormal)
+      {
+      this->WriteMacOSXContentRules(**si, tsFlags.MacFolder);
+      }
     }
 }
 
@@ -1410,10 +1416,9 @@ class cmMakefileTargetGeneratorObjectStrings
 {
 public:
   cmMakefileTargetGeneratorObjectStrings(std::vector<std::string>& strings,
-                                         cmMakefile* mf,
                                          cmLocalUnixMakefileGenerator3* lg,
                                          std::string::size_type limit):
-    Strings(strings), Makefile(mf), LocalGenerator(lg), LengthLimit(limit)
+    Strings(strings), LocalGenerator(lg), LengthLimit(limit)
     {
     this->Space = "";
     }
@@ -1448,7 +1453,6 @@ public:
     }
 private:
   std::vector<std::string>& Strings;
-  cmMakefile* Makefile;
   cmLocalUnixMakefileGenerator3* LocalGenerator;
   std::string::size_type LengthLimit;
   std::string CurrentString;
@@ -1463,7 +1467,7 @@ cmMakefileTargetGenerator
                       std::string::size_type limit)
 {
   cmMakefileTargetGeneratorObjectStrings
-    helper(objStrings, this->Makefile, this->LocalGenerator, limit);
+    helper(objStrings, this->LocalGenerator, limit);
   for(std::vector<std::string>::const_iterator i = this->Objects.begin();
       i != this->Objects.end(); ++i)
     {
