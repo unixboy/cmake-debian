@@ -337,6 +337,8 @@ IF (WIN32)
       cmGlobalVisualStudio11Generator.cxx
       cmGlobalVisualStudio11Win64Generator.h
       cmGlobalVisualStudio11Win64Generator.cxx
+      cmGlobalVisualStudio11ARMGenerator.h
+      cmGlobalVisualStudio11ARMGenerator.cxx
       cmGlobalVisualStudioGenerator.cxx
       cmGlobalVisualStudioGenerator.h
       cmGlobalWatcomWMakeGenerator.cxx
@@ -355,18 +357,18 @@ IF (WIN32)
   ENDIF(NOT UNIX)
 ENDIF (WIN32)
 
-# turn on Ninja by default
+# Turn on Ninja by default, but disable it
+# on platforms where it does not pass all tests.
+# Enforce Ninja support by setting CMAKE_USE_NINJA
 set(_CMAKE_DEFAULT_NINJA_VALUE TRUE)
-# turn it off for platforms where it does not pass all the
-# tests
-if(WIN32 OR APPLE)
+if(APPLE)
   SET(_CMAKE_DEFAULT_NINJA_VALUE FALSE)
 endif()
 SET(CMAKE_ENABLE_NINJA ${_CMAKE_DEFAULT_NINJA_VALUE} CACHE BOOL
-    "Enable the ninja generator for CMake. currently not fully working for Windows or OSX")
+    "Enable the ninja generator for CMake. When enabled, some CMake tests still fail on OSX")
 MARK_AS_ADVANCED(CMAKE_ENABLE_NINJA)
 IF(CMAKE_ENABLE_NINJA)
-  MESSAGE(STATUS "Enable ninja generator.")
+  MESSAGE(STATUS "Ninja generator enabled.")
   SET(SRCS ${SRCS}
     cmGlobalNinjaGenerator.cxx
     cmGlobalNinjaGenerator.h
@@ -381,8 +383,13 @@ IF(CMAKE_ENABLE_NINJA)
     cmNinjaUtilityTargetGenerator.h
     )
   ADD_DEFINITIONS(-DCMAKE_USE_NINJA)
+  IF(WIN32 AND NOT CYGWIN AND NOT BORLAND)
+    SET_SOURCE_FILES_PROPERTIES(cmcldeps.cxx PROPERTIES COMPILE_DEFINITIONS _WIN32_WINNT=0x0501)
+    ADD_EXECUTABLE(cmcldeps cmcldeps.cxx)
+    INSTALL_TARGETS(/bin cmcldeps)
+  ENDIF()
 ELSE()
-  MESSAGE(STATUS "Disable ninja generator.")
+  MESSAGE(STATUS "Ninja generator disabled, enable it with -DCMAKE_ENABLE_NINJA=ON")
 ENDIF()
 
 # create a library used by the command line and the GUI
@@ -423,6 +430,9 @@ SET(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestConfigureHandler.cxx
   CTest/cmCTestCoverageCommand.cxx
   CTest/cmCTestCoverageHandler.cxx
+  CTest/cmParseMumpsCoverage.cxx
+  CTest/cmParseCacheCoverage.cxx
+  CTest/cmParseGTMCoverage.cxx
   CTest/cmParsePHPCoverage.cxx
   CTest/cmCTestEmptyBinaryDirectoryCommand.cxx
   CTest/cmCTestGenericHandler.cxx

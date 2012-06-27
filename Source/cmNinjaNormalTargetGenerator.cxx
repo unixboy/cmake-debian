@@ -47,8 +47,7 @@ cmNinjaNormalTargetGenerator(cmTarget* target)
     {
     // on Windows the output dir is already needed at compile time
     // ensure the directory exists (OutDir test)
-    std::string outpath = target->GetDirectory(this->GetConfigName());
-    cmSystemTools::MakeDirectory(outpath.c_str());
+    EnsureDirectoryExists(target->GetDirectory(this->GetConfigName()));
     }
 }
 
@@ -76,16 +75,17 @@ void cmNinjaNormalTargetGenerator::Generate()
     }
   else
     {
-    this->WriteLinkRule();
+    this->WriteLinkRule(false);
+#ifdef _WIN32 // TODO response file support only Linux
+    this->WriteLinkRule(true);
+#endif
     this->WriteLinkStatement();
     }
-
-  this->GetBuildFileStream() << "\n";
-  this->GetRulesFileStream() << "\n";
 }
 
 void cmNinjaNormalTargetGenerator::WriteLanguagesRules()
 {
+#ifdef NINJA_GEN_VERBOSE_FILES
   cmGlobalNinjaGenerator::WriteDivider(this->GetRulesFileStream());
   this->GetRulesFileStream()
     << "# Rules for each languages for "
@@ -93,6 +93,7 @@ void cmNinjaNormalTargetGenerator::WriteLanguagesRules()
     << " target "
     << this->GetTargetName()
     << "\n\n";
+#endif
 
   std::set<cmStdString> languages;
   this->GetTarget()->GetLanguages(languages);
@@ -130,28 +131,43 @@ cmNinjaNormalTargetGenerator
 
 void
 cmNinjaNormalTargetGenerator
-::WriteLinkRule()
+::WriteLinkRule(bool useResponseFile)
 {
   cmTarget::TargetType targetType = this->GetTarget()->GetType();
   std::string ruleName = this->LanguageLinkerRule();
+  if (useResponseFile)
+    ruleName += "_RSPFILE";
+
+  // Select whether to use a response file for objects.
+  std::string rspfile;
 
   if (!this->GetGlobalGenerator()->HasRule(ruleName)) {
     cmLocalGenerator::RuleVariables vars;
     vars.RuleLauncher = "RULE_LAUNCH_LINK";
     vars.CMTarget = this->GetTarget();
     vars.Language = this->TargetLinkLanguage;
-    vars.Objects = "$in";
-    std::string objdir =
-      this->GetLocalGenerator()->GetHomeRelativeOutputPath();
-    objdir += objdir.empty() ? "" : "/";
-    objdir += cmake::GetCMakeFilesDirectoryPostSlash();
-    objdir += this->GetTargetName();
-    objdir += ".dir";
-    objdir = this->GetLocalGenerator()->Convert(objdir.c_str(),
-                                                cmLocalGenerator::START_OUTPUT,
-                                                cmLocalGenerator::SHELL);
-    vars.ObjectDir = objdir.c_str();
+
+    std::string responseFlag;
+    if (!useResponseFile) {
+      vars.Objects = "$in";
+    } else {
+        // handle response file
+        std::string cmakeLinkVar = std::string("CMAKE_") +
+                        this->TargetLinkLanguage + "_RESPONSE_FILE_LINK_FLAG";
+        const char * flag = GetMakefile()->GetDefinition(cmakeLinkVar.c_str());
+        if(flag) {
+          responseFlag = flag;
+        } else {
+          responseFlag = "@";
+        }
+        rspfile = "$out.rsp";
+        responseFlag += rspfile;
+        vars.Objects = responseFlag.c_str();
+    }
+
+    vars.ObjectDir = "$OBJECT_DIR";
     vars.Target = "$out";
+    vars.SONameFlag = "$SONAME_FLAG";
     vars.TargetSOName = "$SONAME";
     vars.TargetInstallNameDir = "$INSTALLNAME_DIR";
     vars.TargetPDB = "$TARGET_PDB";
@@ -178,14 +194,15 @@ cmNinjaNormalTargetGenerator
     vars.LinkFlags = "$LINK_FLAGS";
 
     std::string langFlags;
-    this->GetLocalGenerator()->AddLanguageFlags(langFlags,
-                                                this->TargetLinkLanguage,
-                                                this->GetConfigName());
-    if (targetType != cmTarget::EXECUTABLE)
+    if (targetType != cmTarget::EXECUTABLE) {
+      this->GetLocalGenerator()->AddLanguageFlags(langFlags,
+                                                  this->TargetLinkLanguage,
+                                                  this->GetConfigName());
       langFlags += " $ARCH_FLAGS";
-    vars.LanguageCompileFlags = langFlags.c_str();
+      vars.LanguageCompileFlags = langFlags.c_str();
+    }
 
-    // Rule for linking library.
+    // Rule for linking library/executable.
     std::vector<std::string> linkCmds = this->ComputeLinkCmd();
     for(std::vector<std::string>::iterator i = linkCmds.begin();
         i != linkCmds.end();
@@ -198,17 +215,19 @@ cmNinjaNormalTargetGenerator
     std::string linkCmd =
       this->GetLocalGenerator()->BuildCommandLine(linkCmds);
 
-    // Write the linker rule.
-    std::ostringstream comment;
+    // Write the linker rule with response file if needed.
+    cmOStringStream comment;
     comment << "Rule for linking " << this->TargetLinkLanguage << " "
             << this->GetVisibleTypeName() << ".";
-    std::ostringstream description;
+    cmOStringStream description;
     description << "Linking " << this->TargetLinkLanguage << " "
                 << this->GetVisibleTypeName() << " $out";
     this->GetGlobalGenerator()->AddRule(ruleName,
                                         linkCmd,
                                         description.str(),
-                                        comment.str());
+                                        comment.str(),
+                                        /*depfile*/ "",
+                                        rspfile);
   }
 
   if (this->TargetNameOut != this->TargetNameReal) {
@@ -337,7 +356,7 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
                                    /*implib=*/true).c_str());
 
   // Compute the comment.
-  std::ostringstream comment;
+  cmOStringStream comment;
   comment << "Link the " << this->GetVisibleTypeName() << " "
           << targetOutputReal;
 
@@ -359,34 +378,61 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
   // Compute architecture specific link flags.  Yes, these go into a different
   // variable for executables, probably due to a mistake made when duplicating
   // code between the Makefile executable and library generators.
-  this->GetLocalGenerator()
-      ->AddArchitectureFlags(targetType == cmTarget::EXECUTABLE
+  std::string flags = (targetType == cmTarget::EXECUTABLE
                                ? vars["FLAGS"]
-                               : vars["ARCH_FLAGS"],
+                               : vars["ARCH_FLAGS"]);
+  this->GetLocalGenerator()->AddArchitectureFlags(flags,
                              this->GetTarget(),
                              this->TargetLinkLanguage,
                              this->GetConfigName());
-  vars["SONAME"] = this->TargetNameSO;
+  if (targetType == cmTarget::EXECUTABLE) {
+    vars["FLAGS"] = flags;
+  } else {
+    vars["ARCH_FLAGS"] = flags;
+  }
+  if (this->GetTarget()->HasSOName(this->GetConfigName())) {
+    vars["SONAME_FLAG"] =
+      this->GetMakefile()->GetSONameFlag(this->TargetLinkLanguage);
+    vars["SONAME"] = this->TargetNameSO;
+    if (targetType == cmTarget::SHARED_LIBRARY) {
+      std::string install_name_dir = this->GetTarget()
+        ->GetInstallNameDirForBuildTree(this->GetConfigName());
 
-  if (targetType == cmTarget::SHARED_LIBRARY) {
-    std::string install_name_dir =
-      this->GetTarget()->GetInstallNameDirForBuildTree(this->GetConfigName());
-
-    if (!install_name_dir.empty()) {
-      vars["INSTALLNAME_DIR"] =
-        this->GetLocalGenerator()->Convert(install_name_dir.c_str(),
-            cmLocalGenerator::NONE,
-            cmLocalGenerator::SHELL, false);
+      if (!install_name_dir.empty()) {
+        vars["INSTALLNAME_DIR"] =
+          this->GetLocalGenerator()->Convert(install_name_dir.c_str(),
+              cmLocalGenerator::NONE,
+              cmLocalGenerator::SHELL, false);
+      }
     }
   }
 
+  std::string path;
   if (!this->TargetNameImport.empty()) {
-    vars["TARGET_IMPLIB"] = this->GetLocalGenerator()->ConvertToOutputFormat(
-      targetOutputImplib.c_str(), cmLocalGenerator::SHELL);
+    path = this->GetLocalGenerator()->ConvertToOutputFormat(
+                    targetOutputImplib.c_str(), cmLocalGenerator::SHELL);
+    vars["TARGET_IMPLIB"] = path;
+    EnsureParentDirectoryExists(path);
   }
 
-  vars["TARGET_PDB"] = this->GetLocalGenerator()->ConvertToOutputFormat(
-    this->GetTargetPDB().c_str(), cmLocalGenerator::SHELL);
+  // TODO move to GetTargetPDB
+  cmMakefile* mf = this->GetMakefile();
+  if (mf->GetDefinition("MSVC_C_ARCHITECTURE_ID") ||
+      mf->GetDefinition("MSVC_CXX_ARCHITECTURE_ID"))
+    {
+    path = this->GetTargetPDB();
+    vars["TARGET_PDB"] = this->GetLocalGenerator()->ConvertToOutputFormat(
+                          ConvertToNinjaPath(path.c_str()).c_str(),
+                          cmLocalGenerator::SHELL);
+    EnsureParentDirectoryExists(path);
+    }
+
+  if (mf->IsOn("CMAKE_COMPILER_IS_MINGW"))
+    {
+    path = GetTarget()->GetSupportDirectory();
+    vars["OBJECT_DIR"] = ConvertToNinjaPath(path.c_str());
+    EnsureDirectoryExists(path);
+    }
 
   std::vector<cmCustomCommand> *cmdLists[3] = {
     &this->GetTarget()->GetPreBuildCommands(),
@@ -413,7 +459,7 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
   // If we have any PRE_LINK commands, we need to go back to HOME_OUTPUT for
   // the link commands.
   if (!preLinkCmdLines.empty()) {
-    std::string path = this->GetLocalGenerator()->ConvertToOutputFormat(
+    path = this->GetLocalGenerator()->ConvertToOutputFormat(
       this->GetMakefile()->GetHomeOutputDirectory(),
       cmLocalGenerator::SHELL);
     preLinkCmdLines.push_back("cd " + path);
@@ -432,6 +478,13 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
     symlinkVars["POST_BUILD"] = postBuildCmdLine;
   }
 
+  int cmdLineLimit;
+#ifdef _WIN32
+  cmdLineLimit = 8000;
+#else
+  cmdLineLimit = -1; // TODO
+#endif
+
   // Write the build statement for this target.
   cmGlobalNinjaGenerator::WriteBuild(this->GetBuildFileStream(),
                                      comment.str(),
@@ -440,7 +493,8 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
                                      explicitDeps,
                                      implicitDeps,
                                      emptyDeps,
-                                     vars);
+                                     vars,
+                                     cmdLineLimit);
 
   if (targetOutput != targetOutputReal) {
     if (targetType == cmTarget::EXECUTABLE) {

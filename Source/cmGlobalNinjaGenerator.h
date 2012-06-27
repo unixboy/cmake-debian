@@ -16,6 +16,8 @@
 #  include "cmGlobalGenerator.h"
 #  include "cmNinjaTypes.h"
 
+//#define NINJA_GEN_VERBOSE_FILES
+
 class cmLocalGenerator;
 class cmGeneratedFileStream;
 class cmGeneratorTarget;
@@ -81,7 +83,8 @@ public:
                          const cmNinjaDeps& explicitDeps,
                          const cmNinjaDeps& implicitDeps,
                          const cmNinjaDeps& orderOnlyDeps,
-                         const cmNinjaVars& variables);
+                         const cmNinjaVars& variables,
+                         int cmdLineLimit = -1);
 
   /**
    * Helper to write a build statement with the special 'phony' rule.
@@ -113,6 +116,7 @@ public:
                         const std::string& description,
                         const std::string& comment = "",
                         const std::string& depfile = "",
+                        const std::string& rspfile = ""					,
                         bool restat = false,
                         bool generator = false);
 
@@ -142,6 +146,9 @@ public:
   static void WriteDefault(std::ostream& os,
                            const cmNinjaDeps& targets,
                            const std::string& comment = "");
+
+
+  static bool IsMinGW() { return UsingMinGW; }
 
 public:
   /// Default constructor.
@@ -213,6 +220,9 @@ public:
   cmGeneratedFileStream* GetRulesFileStream() const
   { return this->RulesFileStream; }
 
+  void AddCXXCompileCommand(const std::string &commandLine,
+                            const std::string &sourceFile);
+
   /**
    * Add a rule to the generated build system.
    * Call WriteRule() behind the scene but perform some check before like:
@@ -223,6 +233,7 @@ public:
                const std::string& description,
                const std::string& comment = "",
                const std::string& depfile = "",
+               const std::string& rspfile = "",
                bool restat = false,
                bool generator = false);
 
@@ -254,6 +265,8 @@ private:
   void OpenBuildFileStream();
   void CloseBuildFileStream();
 
+  void CloseCompileCommandsStream();
+
   void OpenRulesFileStream();
   void CloseRulesFileStream();
 
@@ -273,6 +286,8 @@ private:
   void WriteBuiltinTargets(std::ostream& os);
   void WriteTargetAll(std::ostream& os);
   void WriteTargetRebuildManifest(std::ostream& os);
+  void WriteTargetClean(std::ostream& os);
+  void WriteTargetHelp(std::ostream& os);
 
   /// Called when we have seen the given custom command.  Returns true
   /// if we has seen it before.
@@ -302,6 +317,8 @@ private:
     ASD.insert(deps.begin(), deps.end());
   }
 
+  std::string ninjaCmd() const;
+
 private:
   /// The file containing the build statement. (the relation ship of the
   /// compilation DAG).
@@ -309,6 +326,7 @@ private:
   /// The file containing the rule statements. (The action attached to each
   /// edge of the compilation DAG).
   cmGeneratedFileStream* RulesFileStream;
+  cmGeneratedFileStream* CompileCommandsStream;
 
   /// The type used to store the set of rules added to the generated build
   /// system.
@@ -333,6 +351,9 @@ private:
   TargetAliasMap TargetAliases;
 
   static cmLocalGenerator* LocalGenerator;
+
+  static bool UsingMinGW;
+
 };
 
 #endif // ! cmGlobalNinjaGenerator_h
