@@ -5,6 +5,7 @@ cmake (2.8.9~rc1-1) UNRELEASED; urgency=low
     - backport_findpkgconfig_set_found_variable.diff;
     - backport_module_no_soname.diff;
     - manpage_fixes.diff.
+  * Drop cmake-{qt,curses}-gui.lintian-overrides, not needed with newer lintian.
 
  -- Modestas Vainius <modax@debian.org>  Wed, 27 Jun 2012 20:53:34 +0300
 
