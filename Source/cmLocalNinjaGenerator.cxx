@@ -61,7 +61,7 @@ void cmLocalNinjaGenerator::Generate()
       tg->Generate();
       // Add the target to "all" if required.
       if (!this->GetGlobalNinjaGenerator()->IsExcluded(
-            this->GetGlobalNinjaGenerator()->LocalGenerators[0],
+            this->GetGlobalNinjaGenerator()->GetLocalGenerators()[0],
             t->second))
         this->GetGlobalNinjaGenerator()->AddDependencyToAll(&t->second);
       delete tg;
@@ -272,7 +272,7 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
   // don't use POST_BUILD.
   if (cmdLines.empty())
 #ifdef _WIN32
-    return "cd.";
+    return "cd .";
 #else
     return ":";
 #endif
