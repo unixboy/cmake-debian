@@ -2,6 +2,8 @@ cmake (2.8.9~rc3-1) UNRELEASED; urgency=low
 
   * New upstream release:
     - fixes COMPONENT option. (Closes: #681428)
+  * Remove obsolete /etc/emacs/site-start.d/50cmake.el conffile (predates
+    squeeze). (Closes: #681625)
 
  -- Modestas Vainius <modax@debian.org>  Sat, 04 Aug 2012 10:26:34 +0300
 
