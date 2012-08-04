@@ -1,3 +1,10 @@
+cmake (2.8.9~rc3-1) UNRELEASED; urgency=low
+
+  * New upstream release:
+    - fixes COMPONENT option. (Closes: #681428)
+
+ -- Modestas Vainius <modax@debian.org>  Sat, 04 Aug 2012 10:26:34 +0300
+
 cmake (2.8.9~rc1-1) unstable; urgency=low
 
   * New upstream release.
