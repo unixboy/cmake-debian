@@ -4,6 +4,7 @@ cmake (2.8.9-1) UNRELEASED; urgency=low
   * Make FindPostgreSQL find headers on Debian. Thanks to Pere Nubiola i
     Radigales and Gregor Jasny. (Closes: #665721)
     Patch: FindPostgreSQL_665721.diff
+  * Refresh patches.
 
  -- Modestas Vainius <modax@debian.org>  Sat, 18 Aug 2012 22:36:44 +0300
 
