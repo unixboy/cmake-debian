@@ -1,4 +1,4 @@
-cmake (2.8.9-1) UNRELEASED; urgency=low
+cmake (2.8.9-1) unstable; urgency=low
 
   * New upstream release (no upstream changes since RC3).
   * Make FindPostgreSQL find headers on Debian. Thanks to Pere Nubiola i
@@ -9,7 +9,7 @@ cmake (2.8.9-1) UNRELEASED; urgency=low
     to John Stamp (Closes: #684956)
     Patch: install_to_multiarch_libdir_on_kfreebsd_hurd.diff
 
- -- Modestas Vainius <modax@debian.org>  Sat, 18 Aug 2012 22:36:44 +0300
+ -- Modestas Vainius <modax@debian.org>  Sat, 18 Aug 2012 23:13:37 +0300
 
 cmake (2.8.9~rc3-1) unstable; urgency=low
 
