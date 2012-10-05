@@ -1,3 +1,8 @@
+cmake (2.8.9-2) UNRELEASED; urgency=low
+
+
+ -- Modestas Vainius <modax@debian.org>  Fri, 05 Oct 2012 21:00:55 +0300
+
 cmake (2.8.9-1) unstable; urgency=low
 
   * New upstream release (no upstream changes since RC3).
