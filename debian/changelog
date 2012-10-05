@@ -1,6 +1,7 @@
 cmake (2.8.9-2) UNRELEASED; urgency=low
 
   * Make cmake recommend make and gcc rather than suggest them.
+  * Make cmake suggest codeblocks and eclipse.
 
  -- Modestas Vainius <modax@debian.org>  Fri, 05 Oct 2012 21:00:55 +0300
 
