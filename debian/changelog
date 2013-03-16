@@ -1,4 +1,4 @@
-cmake (2.8.11~rc1-1) UNRELEASED; urgency=low
+cmake (2.8.11~rc1-1) experimental; urgency=low
 
   * New upstream release. (Closes: #700225)
   * Make cmake recommend make and gcc rather than suggest them.
@@ -11,7 +11,7 @@ cmake (2.8.11~rc1-1) UNRELEASED; urgency=low
   * Drop FindPostgreSQL_665721.diff patch, merged upstream.
   * Refresh multiarch_findgtk2_fix.diff patch.
 
- -- Modestas Vainius <modax@debian.org>  Fri, 05 Oct 2012 21:00:55 +0300
+ -- Modestas Vainius <modax@debian.org>  Sat, 16 Mar 2013 20:41:24 +0200
 
 cmake (2.8.9-1) unstable; urgency=low
 
