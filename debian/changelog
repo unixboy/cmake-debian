@@ -5,6 +5,7 @@ cmake (2.8.11~rc1-1) UNRELEASED; urgency=low
   * Make cmake suggest codeblocks and eclipse.
   * Drop XMLrpc support. It has been disabled upstream for a while now.
     (Closes: #687326)
+  * Bump Standards-Version to 3.9.4: no changes needed.
 
  -- Modestas Vainius <modax@debian.org>  Fri, 05 Oct 2012 21:00:55 +0300
 
