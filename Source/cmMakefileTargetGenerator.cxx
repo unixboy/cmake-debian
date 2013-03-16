@@ -259,7 +259,7 @@ std::string cmMakefileTargetGenerator::GetFlags(const std::string &l)
     // Add language feature flags.
     this->AddFeatureFlags(flags, lang);
 
-    this->LocalGenerator->AddArchitectureFlags(flags, this->Target,
+    this->LocalGenerator->AddArchitectureFlags(flags, this->GeneratorTarget,
                                                lang, this->ConfigName);
 
     // Fortran-specific flags computed for this target.
@@ -268,7 +268,8 @@ std::string cmMakefileTargetGenerator::GetFlags(const std::string &l)
       this->AddFortranFlags(flags);
       }
 
-    this->LocalGenerator->AddCMP0018Flags(flags, this->Target, lang);
+    this->LocalGenerator->AddCMP0018Flags(flags, this->Target,
+                                          lang, this->ConfigName);
 
     // Add include directory flags.
     this->AddIncludeFlags(flags, lang);
@@ -292,28 +293,26 @@ std::string cmMakefileTargetGenerator::GetDefines(const std::string &l)
   ByLanguageMap::iterator i = this->DefinesByLanguage.find(l);
   if (i == this->DefinesByLanguage.end())
     {
-    std::string defines;
+    std::set<std::string> defines;
     const char *lang = l.c_str();
     // Add the export symbol definition for shared library objects.
     if(const char* exportMacro = this->Target->GetExportMacro())
       {
-      this->LocalGenerator->AppendDefines(defines, exportMacro, lang);
+      this->LocalGenerator->AppendDefines(defines, exportMacro);
       }
 
     // Add preprocessor definitions for this target and configuration.
     this->LocalGenerator->AppendDefines
-      (defines, this->Makefile->GetProperty("COMPILE_DEFINITIONS"), lang);
-    this->LocalGenerator->AppendDefines
-      (defines, this->Target->GetProperty("COMPILE_DEFINITIONS"), lang);
-    std::string defPropName = "COMPILE_DEFINITIONS_";
-    defPropName +=
-      cmSystemTools::UpperCase(this->LocalGenerator->ConfigurationName);
-    this->LocalGenerator->AppendDefines
-      (defines, this->Makefile->GetProperty(defPropName.c_str()), lang);
-    this->LocalGenerator->AppendDefines
-      (defines, this->Target->GetProperty(defPropName.c_str()), lang);
+      (defines, this->Target->GetCompileDefinitions());
 
-    ByLanguageMap::value_type entry(l, defines);
+    this->LocalGenerator->AppendDefines
+      (defines, this->Target->GetCompileDefinitions(
+                            this->LocalGenerator->ConfigurationName.c_str()));
+
+    std::string definesString;
+    this->LocalGenerator->JoinDefines(defines, definesString, lang);
+
+    ByLanguageMap::value_type entry(l, definesString);
     i = this->DefinesByLanguage.insert(entry).first;
     }
   return i->second;
@@ -587,14 +586,12 @@ cmMakefileTargetGenerator
     }
 
   // Add language-specific defines.
-  std::string defines = "$(";
-  defines += lang;
-  defines += "_DEFINES)";
+  std::set<std::string> defines;
 
   // Add source-sepcific preprocessor definitions.
   if(const char* compile_defs = source.GetProperty("COMPILE_DEFINITIONS"))
     {
-    this->LocalGenerator->AppendDefines(defines, compile_defs, lang);
+    this->LocalGenerator->AppendDefines(defines, compile_defs);
     *this->FlagFileStream << "# Custom defines: "
                           << relativeObj << "_DEFINES = "
                           << compile_defs << "\n"
@@ -607,7 +604,7 @@ cmMakefileTargetGenerator
   if(const char* config_compile_defs =
      source.GetProperty(defPropName.c_str()))
     {
-    this->LocalGenerator->AppendDefines(defines, config_compile_defs, lang);
+    this->LocalGenerator->AppendDefines(defines, config_compile_defs);
     *this->FlagFileStream
       << "# Custom defines: "
       << relativeObj << "_DEFINES_" << configUpper
@@ -651,7 +648,7 @@ cmMakefileTargetGenerator
      this->Target->GetType() == cmTarget::SHARED_LIBRARY ||
      this->Target->GetType() == cmTarget::MODULE_LIBRARY)
     {
-    targetFullPathPDB = this->Target->GetDirectory(this->ConfigName);
+    targetFullPathPDB = this->Target->GetPDBDirectory(this->ConfigName);
     targetFullPathPDB += "/";
     targetFullPathPDB += this->Target->GetPDBName(this->ConfigName);
     }
@@ -676,7 +673,14 @@ cmMakefileTargetGenerator
                             cmLocalGenerator::SHELL);
   vars.ObjectDir = objectDir.c_str();
   vars.Flags = flags.c_str();
-  vars.Defines = defines.c_str();
+
+  std::string definesString = "$(";
+  definesString += lang;
+  definesString += "_DEFINES)";
+
+  this->LocalGenerator->JoinDefines(defines, definesString, lang);
+
+  vars.Defines = definesString.c_str();
 
   bool lang_is_c_or_cxx = ((strcmp(lang, "C") == 0) ||
                            (strcmp(lang, "CXX") == 0));
@@ -1053,7 +1057,11 @@ void cmMakefileTargetGenerator::WriteTargetDependRules()
   *this->InfoFileStream
     << "SET(CMAKE_C_TARGET_INCLUDE_PATH\n";
   std::vector<std::string> includes;
-  this->LocalGenerator->GetIncludeDirectories(includes, this->Target);
+
+  const char *config = this->Makefile->GetDefinition("CMAKE_BUILD_TYPE");
+  this->LocalGenerator->GetIncludeDirectories(includes,
+                                              this->GeneratorTarget,
+                                              "C", config);
   for(std::vector<std::string>::iterator i = includes.begin();
       i != includes.end(); ++i)
     {
@@ -1538,11 +1546,15 @@ std::string cmMakefileTargetGenerator::GetFrameworkFlags()
   emitted.insert("/System/Library/Frameworks");
 #endif
   std::vector<std::string> includes;
-  this->LocalGenerator->GetIncludeDirectories(includes, this->Target);
-  std::vector<std::string>::iterator i;
+
+  const char *config = this->Makefile->GetDefinition("CMAKE_BUILD_TYPE");
+  this->LocalGenerator->GetIncludeDirectories(includes,
+                                              this->GeneratorTarget,
+                                              "C", config);
   // check all include directories for frameworks as this
   // will already have added a -F for the framework
-  for(i = includes.begin(); i != includes.end(); ++i)
+  for(std::vector<std::string>::iterator i = includes.begin();
+      i != includes.end(); ++i)
     {
     if(this->Target->NameResolvesToFramework(i->c_str()))
       {
@@ -1554,17 +1566,21 @@ std::string cmMakefileTargetGenerator::GetFrameworkFlags()
     }
 
   std::string flags;
-  std::vector<std::string>& frameworks = this->Target->GetFrameworks();
-  for(i = frameworks.begin();
-      i != frameworks.end(); ++i)
+  const char* cfg = this->LocalGenerator->ConfigurationName.c_str();
+  if(cmComputeLinkInformation* cli = this->Target->GetLinkInformation(cfg))
     {
-    if(emitted.insert(*i).second)
+    std::vector<std::string> const& frameworks = cli->GetFrameworkPaths();
+    for(std::vector<std::string>::const_iterator i = frameworks.begin();
+        i != frameworks.end(); ++i)
       {
-      flags += "-F";
-      flags += this->Convert(i->c_str(),
-                             cmLocalGenerator::START_OUTPUT,
-                             cmLocalGenerator::SHELL, true);
-      flags += " ";
+      if(emitted.insert(*i).second)
+        {
+        flags += "-F";
+        flags += this->Convert(i->c_str(),
+                               cmLocalGenerator::START_OUTPUT,
+                               cmLocalGenerator::SHELL, true);
+        flags += " ";
+        }
       }
     }
   return flags;
@@ -1842,7 +1858,10 @@ void cmMakefileTargetGenerator::AddIncludeFlags(std::string& flags,
 
 
   std::vector<std::string> includes;
-  this->LocalGenerator->GetIncludeDirectories(includes, this->Target, lang);
+  const char *config = this->Makefile->GetDefinition("CMAKE_BUILD_TYPE");
+  this->LocalGenerator->GetIncludeDirectories(includes,
+                                              this->GeneratorTarget,
+                                              lang, config);
 
   std::string includeFlags =
     this->LocalGenerator->GetIncludeFlags(includes, lang, useResponseFile);
@@ -1945,7 +1964,10 @@ void cmMakefileTargetGenerator::AddFortranFlags(std::string& flags)
      this->Makefile->GetDefinition("CMAKE_Fortran_MODPATH_FLAG"))
     {
     std::vector<std::string> includes;
-    this->LocalGenerator->GetIncludeDirectories(includes, this->Target);
+    const char *config = this->Makefile->GetDefinition("CMAKE_BUILD_TYPE");
+    this->LocalGenerator->GetIncludeDirectories(includes,
+                                                this->GeneratorTarget,
+                                                "C", config);
     for(std::vector<std::string>::const_iterator idi = includes.begin();
         idi != includes.end(); ++idi)
       {
