@@ -9,6 +9,7 @@ cmake (2.8.11~rc1-1) UNRELEASED; urgency=low
   * Replace FindBoost_add_-lpthread_#563479.diff patch with a better version
     from upstream BTS and make it apply to current FindBoost.
   * Drop FindPostgreSQL_665721.diff patch, merged upstream.
+  * Refresh multiarch_findgtk2_fix.diff patch.
 
  -- Modestas Vainius <modax@debian.org>  Fri, 05 Oct 2012 21:00:55 +0300
 
