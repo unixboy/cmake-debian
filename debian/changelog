@@ -1,3 +1,9 @@
+cmake (2.8.11~rc3-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+
+ -- Modestas Vainius <modax@debian.org>  Sun, 21 Apr 2013 10:36:03 +0300
+
 cmake (2.8.11~rc1-1) experimental; urgency=low
 
   * New upstream release. (Closes: #700225)
