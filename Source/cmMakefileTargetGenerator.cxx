@@ -303,9 +303,6 @@ std::string cmMakefileTargetGenerator::GetDefines(const std::string &l)
 
     // Add preprocessor definitions for this target and configuration.
     this->LocalGenerator->AppendDefines
-      (defines, this->Target->GetCompileDefinitions());
-
-    this->LocalGenerator->AppendDefines
       (defines, this->Target->GetCompileDefinitions(
                             this->LocalGenerator->ConfigurationName.c_str()));
 
@@ -640,18 +637,25 @@ cmMakefileTargetGenerator
       (commands, buildEcho.c_str(), cmLocalUnixMakefileGenerator3::EchoBuild);
     }
 
+  std::string targetOutPathReal;
   std::string targetOutPathPDB;
   {
+  std::string targetFullPathReal;
   std::string targetFullPathPDB;
   if(this->Target->GetType() == cmTarget::EXECUTABLE ||
      this->Target->GetType() == cmTarget::STATIC_LIBRARY ||
      this->Target->GetType() == cmTarget::SHARED_LIBRARY ||
      this->Target->GetType() == cmTarget::MODULE_LIBRARY)
     {
+    targetFullPathReal =
+      this->Target->GetFullPath(this->ConfigName, false, true);
     targetFullPathPDB = this->Target->GetPDBDirectory(this->ConfigName);
     targetFullPathPDB += "/";
     targetFullPathPDB += this->Target->GetPDBName(this->ConfigName);
     }
+  targetOutPathReal = this->Convert(targetFullPathReal.c_str(),
+                                    cmLocalGenerator::START_OUTPUT,
+                                    cmLocalGenerator::SHELL);
   targetOutPathPDB =
     this->Convert(targetFullPathPDB.c_str(),cmLocalGenerator::NONE,
                   cmLocalGenerator::SHELL);
@@ -660,6 +664,7 @@ cmMakefileTargetGenerator
   vars.RuleLauncher = "RULE_LAUNCH_COMPILE";
   vars.CMTarget = this->Target;
   vars.Language = lang;
+  vars.Target = targetOutPathReal.c_str();
   vars.TargetPDB = targetOutPathPDB.c_str();
   vars.Source = sourceFile.c_str();
   std::string shellObj =

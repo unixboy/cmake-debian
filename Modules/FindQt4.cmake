@@ -187,7 +187,8 @@
 #
 #  Below is a detailed list of variables that FindQt4.cmake sets.
 #  QT_FOUND         If false, don't try to use Qt.
-#  QT4_FOUND        If false, don't try to use Qt 4.
+#  Qt4_FOUND        If false, don't try to use Qt 4.
+#  QT4_FOUND        If false, don't try to use Qt 4. This variable is for compatibility only.
 #
 #  QT_VERSION_MAJOR The major version of Qt found.
 #  QT_VERSION_MINOR The minor version of Qt found.
@@ -685,7 +686,14 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
       find_path(QT_QTCORE_INCLUDE_DIR QtCore
                 HINTS ${qt_headers} ${QT_LIBRARY_DIR}
                 PATH_SUFFIXES QtCore qt4/QtCore
+                NO_DEFAULT_PATH
         )
+      if(NOT QT_QTCORE_INCLUDE_DIR)
+        find_path(QT_QTCORE_INCLUDE_DIR QtCore
+                  HINTS ${qt_headers} ${QT_LIBRARY_DIR}
+                  PATH_SUFFIXES QtCore qt4/QtCore
+          )
+      endif()
 
       # Set QT_HEADERS_DIR based on finding QtCore header
       if(QT_QTCORE_INCLUDE_DIR)
@@ -1021,6 +1029,12 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
     INTERFACE_INCLUDE_DIRECTORIES
       "${QT_MKSPECS_DIR}/default"
       ${QT_INCLUDE_DIR}
+  )
+  set_property(TARGET Qt4::QtCore PROPERTY
+    INTERFACE_QT_MAJOR_VERSION 4
+  )
+  set_property(TARGET Qt4::QtCore APPEND PROPERTY
+    COMPATIBLE_INTERFACE_STRING QT_MAJOR_VERSION
   )
 
   foreach(QT_MODULE ${QT_MODULES})
@@ -1358,7 +1372,7 @@ if (NOT QT_VERSION_MAJOR EQUAL 4)
       endif()
     endif()
 else()
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS(Qt4
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(Qt4 FOUND_VAR Qt4_FOUND
     REQUIRED_VARS ${_QT4_FOUND_REQUIRED_VARS}
     VERSION_VAR QTVERSION
     )
@@ -1373,5 +1387,6 @@ endif()
 set (QT_MOC_EXE ${QT_MOC_EXECUTABLE} )
 set (QT_UIC_EXE ${QT_UIC_EXECUTABLE} )
 set( QT_QT_LIBRARY "")
-set(QT_FOUND ${QT4_FOUND})
+set(QT4_FOUND ${Qt4_FOUND})
+set(QT_FOUND ${Qt4_FOUND})
 
