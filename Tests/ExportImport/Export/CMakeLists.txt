@@ -148,6 +148,10 @@ set_property(TARGET testLibRequired APPEND PROPERTY
     $<BUILD_INTERFACE:$<TARGET_PROPERTY:testLibIncludeRequired4,INTERFACE_INCLUDE_DIRECTORIES>>
     $<BUILD_INTERFACE:$<TARGET_PROPERTY:testLibIncludeRequired5,INTERFACE_INCLUDE_DIRECTORIES>>
     $<INSTALL_INTERFACE:$<TARGET_PROPERTY:testLibIncludeRequired6,INTERFACE_INCLUDE_DIRECTORIES>>
+    # The BUILD_INTERFACE entry from above is duplicated below. This is to test that
+    # the INSTALL_INTERFACE entry bound by a BUILD_INTERFACE entry on either side is
+    # preprocessed correctly on install(EXPORT).
+    $<BUILD_INTERFACE:$<TARGET_PROPERTY:testLibIncludeRequired5,INTERFACE_INCLUDE_DIRECTORIES>>
     # Test that the below is non-fatal
     $<$<STREQUAL:one,two>:$<TARGET_PROPERTY:not_a_target,INTERFACE_INCLUDE_DIRECTORIES>>
 )
@@ -170,9 +174,14 @@ set_property(TARGET testSharedLibRequired
 set_property(TARGET testSharedLibRequired APPEND PROPERTY
   INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}"
 )
+install(FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/testSharedLibRequired.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/testsharedlibrequired_export.h"
+    DESTINATION include/testSharedLibRequired
+)
 set_property(TARGET testSharedLibRequired APPEND PROPERTY
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}"
-                                "${CMAKE_CURRENT_SOURCE_DIR}"
+  INTERFACE_INCLUDE_DIRECTORIES "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/testSharedLibRequired>"
+                                "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR};${CMAKE_CURRENT_SOURCE_DIR}>"
 )
 set_property(TARGET testSharedLibRequired
   APPEND PROPERTY
@@ -200,6 +209,15 @@ generate_export_header(testSharedLibDepends)
 set_property(TARGET testSharedLibDepends APPEND PROPERTY
   INTERFACE_INCLUDE_DIRECTORIES
     $<TARGET_PROPERTY:testSharedLibRequired,INTERFACE_INCLUDE_DIRECTORIES>
+)
+install(FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/testSharedLibDepends.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/testsharedlibdepends_export.h"
+    DESTINATION include/testSharedLibDepends
+)
+set_property(TARGET testSharedLibDepends APPEND PROPERTY
+  INTERFACE_INCLUDE_DIRECTORIES "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/testSharedLibDepends>"
+                                "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR};${CMAKE_CURRENT_SOURCE_DIR}>"
 )
 set_property(TARGET testSharedLibDepends APPEND PROPERTY
   LINK_INTERFACE_LIBRARIES
@@ -287,7 +305,7 @@ if(WIN32)
   install(TARGETS testLib5 RUNTIME DESTINATION bin)
 endif()
 
-add_subdirectory(sublib) # For CMAKE_BUILD_INTERFACE_INCLUDES test.
+add_subdirectory(sublib) # For CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE test.
 
 # Export from build tree.
 export(TARGETS testExe1 testLib1 testLib2 testLib3

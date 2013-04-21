@@ -131,11 +131,13 @@ public:
   SourceEntriesType SourceEntries;
 
   struct IncludeDirectoriesEntry {
-    IncludeDirectoriesEntry(cmsys::auto_ptr<cmCompiledGeneratorExpression> cge)
-      : ge(cge)
+    IncludeDirectoriesEntry(cmsys::auto_ptr<cmCompiledGeneratorExpression> cge,
+      const std::string &targetName = std::string())
+      : ge(cge), TargetName(targetName)
     {}
     const cmsys::auto_ptr<cmCompiledGeneratorExpression> ge;
     std::vector<std::string> CachedIncludes;
+    const std::string TargetName;
   };
   std::vector<IncludeDirectoriesEntry*> IncludeDirectoriesEntries;
   std::vector<cmValueWithOrigin> LinkInterfaceIncludeDirectoriesEntries;
@@ -193,7 +195,8 @@ void cmTarget::DefineProperties(cmake *cm)
      "Should the target be processed with automoc (for Qt projects).",
      "AUTOMOC is a boolean specifying whether CMake will handle "
      "the Qt moc preprocessor automatically, i.e. without having to use "
-     "the QT4_WRAP_CPP() macro. Currently Qt4 is supported. "
+     "the QT4_WRAP_CPP() or QT5_WRAP_CPP() macro. Currently Qt4 and Qt5 are "
+     "supported.  "
      "When this property is set to TRUE, CMake will scan the source files "
      "at build time and invoke moc accordingly. "
      "If an #include statement like #include \"moc_foo.cpp\" is found, "
@@ -2744,7 +2747,7 @@ void cmTarget::AppendBuildInterfaceIncludes()
     }
   this->BuildInterfaceIncludesAppended = true;
 
-  if (this->Makefile->IsOn("CMAKE_BUILD_INTERFACE_INCLUDES"))
+  if (this->Makefile->IsOn("CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE"))
     {
     const char *binDir = this->Makefile->GetStartOutputDirectory();
     const char *srcDir = this->Makefile->GetStartDirectory();
@@ -2817,6 +2820,42 @@ static void processIncludeDirectories(cmTarget *tgt,
     for(std::vector<std::string>::iterator
           li = entryIncludes.begin(); li != entryIncludes.end(); ++li)
       {
+      cmTarget *dependentTarget =
+                              mf->FindTargetToUse((*it)->TargetName.c_str());
+
+      const bool fromImported = dependentTarget
+                             && dependentTarget->IsImported();
+
+      if (fromImported && !cmSystemTools::FileExists(li->c_str()))
+        {
+        cmOStringStream e;
+        e << "Imported target \"" << (*it)->TargetName << "\" includes "
+             "non-existent path\n  \"" << *li << "\"\nin its "
+             "INTERFACE_INCLUDE_DIRECTORIES. Possible reasons include:\n"
+             "* The path was deleted, renamed, or moved to another "
+             "location.\n"
+             "* An install or uninstall procedure did not complete "
+             "successfully.\n"
+             "* The installation package was faulty and references files it "
+             "does not provide.\n";
+        tgt->GetMakefile()->IssueMessage(cmake::FATAL_ERROR, e.str().c_str());
+        return;
+        }
+
+      if (!cmSystemTools::FileIsFullPath(li->c_str()))
+        {
+        if (!(*it)->TargetName.empty())
+          {
+          cmOStringStream e;
+          e << "Target \"" << (*it)->TargetName << "\" contains relative "
+            "path in its INTERFACE_INCLUDE_DIRECTORIES:\n"
+            "  \"" << *li << "\" ";
+          tgt->GetMakefile()->IssueMessage(cmake::FATAL_ERROR,
+                                           e.str().c_str());
+          return;
+          }
+        }
+
       if (testIsOff && !cmSystemTools::IsOff(li->c_str()))
         {
         cmSystemTools::ConvertToUnixSlashes(*li);
@@ -2912,7 +2951,8 @@ std::vector<std::string> cmTarget::GetIncludeDirectories(const char *config)
                               it->Value + ",INTERFACE_INCLUDE_DIRECTORIES>");
 
       this->Internal->CachedLinkInterfaceIncludeDirectoriesEntries.push_back(
-                        new cmTargetInternals::IncludeDirectoriesEntry(cge));
+                        new cmTargetInternals::IncludeDirectoriesEntry(cge,
+                                                              it->Value));
       }
     }
 
@@ -2941,29 +2981,33 @@ std::vector<std::string> cmTarget::GetIncludeDirectories(const char *config)
 //----------------------------------------------------------------------------
 std::string cmTarget::GetCompileDefinitions(const char *config)
 {
-  std::string defPropName = "COMPILE_DEFINITIONS";
+  const char *configProp = 0;
   if (config)
     {
-    defPropName += "_" + cmSystemTools::UpperCase(config);
+    std::string configPropName;
+    configPropName = "COMPILE_DEFINITIONS_" + cmSystemTools::UpperCase(config);
+    configProp = this->GetProperty(configPropName.c_str());
     }
 
-  const char *prop = this->GetProperty(defPropName.c_str());
+  const char *noconfigProp = this->GetProperty("COMPILE_DEFINITIONS");
   cmListFileBacktrace lfbt;
   cmGeneratorExpressionDAGChecker dagChecker(lfbt,
                                             this->GetName(),
-                                            defPropName, 0, 0);
+                                            "COMPILE_DEFINITIONS", 0, 0);
 
-  std::string result;
-  if (prop)
+  std::string defsString = (noconfigProp ? noconfigProp : "");
+  if (configProp && noconfigProp)
     {
-    cmGeneratorExpression ge(lfbt);
-
-    result = ge.Parse(prop)->Evaluate(this->Makefile,
-                                  config,
-                                  false,
-                                  this,
-                                  &dagChecker);
+    defsString += ";";
     }
+  defsString += (configProp ? configProp : "");
+
+  cmGeneratorExpression ge(lfbt);
+  std::string result = ge.Parse(defsString.c_str())->Evaluate(this->Makefile,
+                                config,
+                                false,
+                                this,
+                                &dagChecker);
 
   std::vector<std::string> libs;
   this->GetDirectLinkLibraries(config, libs, this);
