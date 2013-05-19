@@ -1,5 +1,7 @@
 Description: Python.h and pyconfig.h can be in different locations
 Author: Dmitrijs Ledkovs <dmitrijs.ledkovs@canonical.com>
+Bug: http://public.kitware.com/Bug/view.php?id=14156
+Forwarded: yes
 Origin: vendor
 
 --- a/Modules/FindPythonLibs.cmake

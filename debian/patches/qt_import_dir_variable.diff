@@ -1,7 +1,9 @@
 From: Jonathan Riddell <jriddell@ubuntu.com>
 Subject: FindQt4: define QT_IMPORTS_DIR variable even if it is not present on the system.
 Date: 2012-01-18 16:00:49 UTC
+Bug: http://public.kitware.com/Bug/view.php?id=14155
 Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/cmake/+bug/894805
+Forwarded: yes
 Origin: vendor
 
 This happens when there are no plugins currently installed.
