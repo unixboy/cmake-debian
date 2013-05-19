@@ -1,6 +1,8 @@
 cmake (2.8.11-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Add multiarch-python-include-dirs.diff to support multi-arch capable
+    python. Stolen from Ubuntu.
 
  -- Modestas Vainius <modax@debian.org>  Sun, 19 May 2013 12:12:26 +0300
 
