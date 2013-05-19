@@ -28,6 +28,7 @@ $(BUILD_FLAGS_FILE) verify-build-flags:
 	$(call $(flag_action),BUILD_QtDialog,ON,"Build Qt4 GUI")
 #	$(call $(flag_action),BUILD_DOCUMENTATION,ON)
 	$(call $(flag_action),CMAKE_USE_SYSTEM_LIBARCHIVE,ON)
+	$(call $(flag_action),CMAKE_USE_SYSTEM_BZIP2,ON)
 
 $(BUILD_FLAGS_FILE): flag_action := set_build_flag
 verify-build-flags: flag_action := verify_build_flag
