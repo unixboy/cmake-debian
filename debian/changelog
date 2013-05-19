@@ -1,3 +1,70 @@
+cmake (2.8.9-1) unstable; urgency=low
+
+  * New upstream release (no upstream changes since RC3).
+  * Make FindPostgreSQL find headers on Debian. Thanks to Pere Nubiola i
+    Radigales and Gregor Jasny. (Closes: #665721)
+    Patch: FindPostgreSQL_665721.diff
+  * Refresh patches.
+  * Install to multiarch libdir on kFreeBSD and Hurd like on Linux. Thanks
+    to John Stamp (Closes: #684956)
+    Patch: install_to_multiarch_libdir_on_kfreebsd_hurd.diff
+
+ -- Modestas Vainius <modax@debian.org>  Sat, 18 Aug 2012 23:13:37 +0300
+
+cmake (2.8.9~rc3-1) unstable; urgency=low
+
+  * New upstream release:
+    - fixes COMPONENT option. (Closes: #681428)
+  * Remove obsolete /etc/emacs/site-start.d/50cmake.el conffile (predates
+    squeeze). (Closes: #681625)
+
+ -- Modestas Vainius <modax@debian.org>  Sat, 04 Aug 2012 10:41:40 +0300
+
+cmake (2.8.9~rc1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Remove patches, merged upstream:
+    - backport_findpkgconfig_set_found_variable.diff;
+    - backport_module_no_soname.diff;
+    - manpage_fixes.diff.
+  * Drop cmake-{qt,curses}-gui.lintian-overrides, not needed with newer lintian.
+  * Enable hardening flags (by appending CPPFLAGS to C(XX)FLAGS).
+
+ -- Modestas Vainius <modax@debian.org>  Wed, 27 Jun 2012 21:34:06 +0300
+
+cmake (2.8.8-3) unstable; urgency=low
+
+  * Backport a no-soname feature from CMake (2.8.9) master tree. Just set a
+    NO_SONAME property on the shared library or module target in order to skip
+    addition of the SONAME field to the shared object. This makes it possible to
+    build Debian Python policy compliant modules with CMake. (Closes: #668982)
+
+ -- Modestas Vainius <modax@debian.org>  Wed, 02 May 2012 21:50:09 +0300
+
+cmake (2.8.8-2) unstable; urgency=low
+
+  * FindPkgConfig.cmake: properly set documented PKG_CONFIG_FOUND variable
+    (patch backport_findpkgconfig_set_found_variable.diff). (Closes: #669627)
+
+ -- Modestas Vainius <modax@debian.org>  Sun, 29 Apr 2012 09:55:50 +0300
+
+cmake (2.8.8-1) unstable; urgency=low
+
+  * New upstream release:
+    - do not segfault when adding symbols to ZIP. (Closes: #666456)
+      Fixed by upstream commit: 768cf9183
+  * Remove patches merged/backported from upstream:
+    - backport_findpython_fixes.diff
+    - backport_findruby_improvements.diff
+    - backport_support_cxxtest4.diff
+    - manpage_fixes.diff
+    - mipsel_is_little_endian.diff
+    - paths_in_regex_espace_metachars.diff
+  * Refresh FindBoost_add_-lpthread_#563479.diff patch.
+  * Readd manpage_fixes.diff patch with new man page fixes.
+
+ -- Modestas Vainius <modax@debian.org>  Thu, 19 Apr 2012 22:32:10 +0300
+
 cmake (2.8.7-4~bpo60+1) squeeze-backports; urgency=low
 
   * Rebuild for squeeze-backports.
@@ -56,13 +123,6 @@ cmake (2.8.7-1) unstable; urgency=low
   * Update install files: add usr/share/aclocal/cmake.m4.
 
  -- Modestas Vainius <modax@debian.org>  Sat, 18 Feb 2012 15:33:35 +0200
-
-cmake (2.8.5-1~bpo60+1) squeeze-backports; urgency=low
-
-  * Rebuild for squeeze-backports.
-  * No other source changes needed.
-
- -- Modestas Vainius <modax@debian.org>  Sat, 30 Jul 2011 18:26:13 +0300
 
 cmake (2.8.5-1) unstable; urgency=low
 

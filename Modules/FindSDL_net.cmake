@@ -39,8 +39,6 @@ FIND_PATH(SDLNET_INCLUDE_DIR SDL_net.h
   /usr/local/include/SDL11 # FreeBSD ports
   /usr/include/SDL12
   /usr/include/SDL11
-  /usr/local/include
-  /usr/include
   /sw/include/SDL # Fink
   /sw/include
   /opt/local/include/SDL # DarwinPorts
@@ -59,16 +57,13 @@ FIND_LIBRARY(SDLNET_LIBRARY
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
-  /usr/local
-  /usr
   /sw
   /opt/local
   /opt/csw
   /opt
 )
 
-SET(SDLNET_FOUND "NO")
-IF(SDLNET_LIBRARY AND SDLNET_INCLUDE_DIR)
-  SET(SDLNET_FOUND "YES")
-ENDIF(SDLNET_LIBRARY AND SDLNET_INCLUDE_DIR)
+INCLUDE(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
 
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDLNET
+                                  REQUIRED_VARS SDLNET_LIBRARY SDLNET_INCLUDE_DIR)

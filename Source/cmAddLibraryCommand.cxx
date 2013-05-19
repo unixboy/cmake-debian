@@ -31,6 +31,7 @@ bool cmAddLibraryCommand
     }
   bool excludeFromAll = false;
   bool importTarget = false;
+  bool importGlobal = false;
 
   std::vector<std::string>::const_iterator s = args.begin();
 
@@ -63,6 +64,12 @@ bool cmAddLibraryCommand
       type = cmTarget::MODULE_LIBRARY;
       haveSpecifiedType = true;
       }
+    else if(libType == "OBJECT")
+      {
+      ++s;
+      type = cmTarget::OBJECT_LIBRARY;
+      haveSpecifiedType = true;
+      }
     else if(libType == "UNKNOWN")
       {
       ++s;
@@ -79,6 +86,11 @@ bool cmAddLibraryCommand
       ++s;
       importTarget = true;
       }
+    else if(importTarget && *s == "GLOBAL")
+      {
+      ++s;
+      importGlobal = true;
+      }
     else
       {
       break;
@@ -90,16 +102,17 @@ bool cmAddLibraryCommand
     STATIC. But at this point we know only the name of the target, but not
     yet its linker language. */
   if ((type != cmTarget::STATIC_LIBRARY) &&
+      (type != cmTarget::OBJECT_LIBRARY) &&
        (this->Makefile->GetCMakeInstance()->GetPropertyAsBool(
                                       "TARGET_SUPPORTS_SHARED_LIBS") == false))
     {
-    std::string msg = "ADD_LIBRARY for library ";
-    msg += args[0];
-    msg += " is used with the ";
-    msg += type==cmTarget::SHARED_LIBRARY ? "SHARED" : "MODULE";
-    msg += " option, but the target platform supports only STATIC libraries. "
-           "Building it STATIC instead. This may lead to problems.";
-    cmSystemTools::Message(msg.c_str() ,"Warning");
+    cmOStringStream w;
+    w <<
+      "ADD_LIBRARY called with " <<
+      (type==cmTarget::SHARED_LIBRARY ? "SHARED" : "MODULE") <<
+      " option but the target platform does not support dynamic linking. "
+      "Building a STATIC library instead. This may lead to problems.";
+    this->Makefile->IssueMessage(cmake::AUTHOR_WARNING, w.str());
     type = cmTarget::STATIC_LIBRARY;
     }
 
@@ -111,6 +124,14 @@ bool cmAddLibraryCommand
       {
       this->SetError("called with IMPORTED argument but no library type.");
       return false;
+      }
+    if(type == cmTarget::OBJECT_LIBRARY)
+      {
+      this->Makefile->IssueMessage(
+        cmake::FATAL_ERROR,
+        "The OBJECT library type may not be used for IMPORTED libraries."
+        );
+      return true;
       }
 
     // Make sure the target does not already exist.
@@ -124,7 +145,7 @@ bool cmAddLibraryCommand
       }
 
     // Create the imported target.
-    this->Makefile->AddImportedTarget(libName.c_str(), type);
+    this->Makefile->AddImportedTarget(libName.c_str(), type, importGlobal);
     return true;
     }
 

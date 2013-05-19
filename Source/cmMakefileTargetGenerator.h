@@ -13,10 +13,12 @@
 #define cmMakefileTargetGenerator_h
 
 #include "cmLocalUnixMakefileGenerator3.h"
+#include "cmOSXBundleGenerator.h"
 
 class cmCustomCommand;
 class cmDependInformation;
 class cmDepends;
+class cmGeneratorTarget;
 class cmGeneratedFileStream;
 class cmGlobalUnixMakefileGenerator3;
 class cmLocalUnixMakefileGenerator3;
@@ -33,7 +35,7 @@ class cmMakefileTargetGenerator
 public:
   // constructor to set the ivars
   cmMakefileTargetGenerator(cmTarget* target);
-  virtual ~cmMakefileTargetGenerator() {};
+  virtual ~cmMakefileTargetGenerator();
 
   // construct using this factory call
   static cmMakefileTargetGenerator *New(cmTarget *tgt);
@@ -49,6 +51,7 @@ public:
     { return this->ProgressFileNameFull; }
 
   cmTarget* GetTarget() { return this->Target;}
+
 protected:
 
   // create the file and directory etc
@@ -72,7 +75,18 @@ protected:
   void WriteTargetDependRules();
 
   // write rules for Mac OS X Application Bundle content.
-  void WriteMacOSXContentRules(cmSourceFile& source, const char* pkgloc);
+  struct MacOSXContentGeneratorType :
+    cmOSXBundleGenerator::MacOSXContentGeneratorType
+  {
+    MacOSXContentGeneratorType(cmMakefileTargetGenerator* gen) :
+      Generator(gen) {}
+
+    void operator()(cmSourceFile& source, const char* pkgloc);
+
+  private:
+    cmMakefileTargetGenerator* Generator;
+  };
+  friend struct MacOSXContentGeneratorType;
 
   // write the rules for an object
   void WriteObjectRuleFiles(cmSourceFile& source);
@@ -117,6 +131,9 @@ protected:
   // append intertarget dependencies
   void AppendTargetDepends(std::vector<std::string>& depends);
 
+  // Append object file dependencies.
+  void AppendObjectDepends(std::vector<std::string>& depends);
+
   // Append link rule dependencies (objects, etc.).
   void AppendLinkDepends(std::vector<std::string>& depends);
 
@@ -157,6 +174,7 @@ protected:
   void RemoveForbiddenFlags(const char* flagVar, const char* linkLang,
                             std::string& linkFlags);
   cmTarget *Target;
+  cmGeneratorTarget* GeneratorTarget;
   cmLocalUnixMakefileGenerator3 *LocalGenerator;
   cmGlobalUnixMakefileGenerator3 *GlobalGenerator;
   cmMakefile *Makefile;
@@ -198,9 +216,6 @@ protected:
   std::vector<std::string> Objects;
   std::vector<std::string> ExternalObjects;
 
-  // The windows module definition source file (.def), if any.
-  std::string ModuleDefinitionFile;
-
   // Set of object file names that will be built in this directory.
   std::set<cmStdString> ObjectFiles;
 
@@ -220,6 +235,8 @@ protected:
   // Mac OS X content info.
   std::string MacContentDirectory;
   std::set<cmStdString> MacContentFolders;
+  cmOSXBundleGenerator* OSXBundleGenerator;
+  MacOSXContentGeneratorType* MacOSXContentGenerator;
 
   typedef std::map<cmStdString, cmStdString> ByLanguageMap;
   std::string GetFlags(const std::string &l);

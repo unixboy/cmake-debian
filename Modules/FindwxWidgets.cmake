@@ -167,9 +167,9 @@ SET(wxWidgets_CXX_FLAGS    "")
 #   http://www.cmake.org/pipermail/cmake/2008-April/021115.html
 #   http://www.cmake.org/pipermail/cmake/2008-April/021146.html
 #
-IF(APPLE)
+IF(APPLE OR CMAKE_CXX_PLATFORM_ID MATCHES "OpenBSD")
   SET(wxWidgets_INCLUDE_DIRS_NO_SYSTEM 1)
-ENDIF(APPLE)
+ENDIF()
 
 # DEPRECATED: This is a patch to support the DEPRECATED use of
 # wxWidgets_USE_LIBS.
@@ -312,7 +312,7 @@ IF(wxWidgets_FIND_STYLE STREQUAL "win32")
 
     # Find wxWidgets multilib libraries.
     FOREACH(LIB core adv aui html media xrc dbgrid gl qa richtext
-                stc ribbon propgrid)
+                stc ribbon propgrid webview)
       FIND_LIBRARY(WX_${LIB}${_DBG}
         NAMES
         wxmsw${_UNV}29${_UCD}${_DBG}_${LIB}

@@ -175,20 +175,22 @@ public:
                                 cmTarget::CustomCommandType type,
                                 const char* comment, const char* workingDir,
                                 bool escapeOldStyle = true);
-  void AddCustomCommandToOutput(const std::vector<std::string>& outputs,
-                                const std::vector<std::string>& depends,
-                                const char* main_dependency,
-                                const cmCustomCommandLines& commandLines,
-                                const char* comment, const char* workingDir,
-                                bool replace = false,
-                                bool escapeOldStyle = true);
-  void AddCustomCommandToOutput(const char* output,
-                                const std::vector<std::string>& depends,
-                                const char* main_dependency,
-                                const cmCustomCommandLines& commandLines,
-                                const char* comment, const char* workingDir,
-                                bool replace = false,
-                                bool escapeOldStyle = true);
+  cmSourceFile* AddCustomCommandToOutput(
+    const std::vector<std::string>& outputs,
+    const std::vector<std::string>& depends,
+    const char* main_dependency,
+    const cmCustomCommandLines& commandLines,
+    const char* comment, const char* workingDir,
+    bool replace = false,
+    bool escapeOldStyle = true);
+  cmSourceFile* AddCustomCommandToOutput(
+    const char* output,
+    const std::vector<std::string>& depends,
+    const char* main_dependency,
+    const cmCustomCommandLines& commandLines,
+    const char* comment, const char* workingDir,
+    bool replace = false,
+    bool escapeOldStyle = true);
   void AddCustomCommandOldStyle(const char* target,
                                 const std::vector<std::string>& outputs,
                                 const std::vector<std::string>& depends,
@@ -203,7 +205,8 @@ public:
   void RemoveDefineFlag(const char* definition);
 
   /** Create a new imported target with the name and type given.  */
-  cmTarget* AddImportedTarget(const char* name, cmTarget::TargetType type);
+  cmTarget* AddImportedTarget(const char* name, cmTarget::TargetType type,
+                              bool global);
 
   cmTarget* AddNewTarget(cmTarget::TargetType type, const char* name);
 
@@ -521,22 +524,6 @@ public:
   cmTarget* FindTargetToUse(const char* name);
 
   /**
-   * Get a list of include directories in the build.
-   */
-  std::vector<std::string>& GetIncludeDirectories()
-    {
-      return this->IncludeDirectories;
-    }
-  const std::vector<std::string>& GetIncludeDirectories() const
-    {
-      return this->IncludeDirectories;
-    }
-  void SetIncludeDirectories(const std::vector<std::string>& vec)
-    {
-      this->IncludeDirectories = vec;
-    }
-
-  /**
    * Mark include directories as system directories.
    */
   void AddSystemIncludeDirectory(const char* dir);
@@ -608,6 +595,9 @@ public:
   /** Return whether the target platform is 64-bit.  */
   bool PlatformIs64Bit() const;
 
+  /** Retrieve soname flag for the specified language if supported */
+  const char* GetSONameFlag(const char* language) const;
+
   /**
    * Get a list of preprocessor define flags.
    */
@@ -618,12 +608,6 @@ public:
    * Make sure CMake can write this file
    */
   bool CanIWriteThisFile(const char* fileName);
-
-  /**
-   * Get the vector of used command instances.
-   */
-  const std::vector<cmCommand*>& GetUsedCommands() const
-    {return this->UsedCommands;}
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
   /**
@@ -715,6 +699,11 @@ public:
   cmSourceGroup& FindSourceGroup(const char* source,
                                  std::vector<cmSourceGroup> &groups);
 #endif
+
+  /**
+   * Print a command's invocation
+   */
+  void PrintCommandTrace(const cmListFileFunction& lff);
 
   /**
    * Execute a single CMake command.  Returns true if the command
@@ -879,9 +868,7 @@ protected:
   // Tests
   std::map<cmStdString, cmTest*> Tests;
 
-  // The include and link-library paths.  These may have order
-  // dependency, so they must be vectors (not set).
-  std::vector<std::string> IncludeDirectories;
+  // The link-library paths.  Order matters, use std::vector (not std::set).
   std::vector<std::string> LinkDirectories;
 
   // The set of include directories that are marked as system include
@@ -912,7 +899,7 @@ protected:
   std::vector<cmSourceGroup> SourceGroups;
 #endif
 
-  std::vector<cmCommand*> UsedCommands;
+  std::vector<cmCommand*> FinalPassCommands;
   cmLocalGenerator* LocalGenerator;
   bool IsFunctionBlocked(const cmListFileFunction& lff,
                          cmExecutionStatus &status);

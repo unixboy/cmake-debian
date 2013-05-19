@@ -30,8 +30,8 @@ class cmSystemTools: public cmsys::SystemTools
 public:
   typedef cmsys::SystemTools Superclass;
 
-  /** Expand out any arguements in the vector that have ; separated
-   *  strings into multiple arguements.  A new vector is created
+  /** Expand out any arguments in the vector that have ; separated
+   *  strings into multiple arguments.  A new vector is created
    *  containing the expanded versions of all arguments in argsIn.
    */
   static void ExpandList(std::vector<std::string> const& argsIn,
@@ -48,6 +48,11 @@ public:
 
   ///! Escape quotes in a string.
   static std::string EscapeQuotes(const char* str);
+
+  /**
+   * Returns a string that has whitespace removed from the start and the end.
+   */
+  static std::string TrimWhitespace(const std::string& s);
 
   typedef  void (*ErrorCallback)(const char*, const char*, bool&, void*);
   /**
@@ -78,6 +83,11 @@ public:
   ///! Send a string to stderr. Stdout callbacks will not be invoced.
   static void Stderr(const char* s, int length);
 
+
+  typedef bool (*InterruptCallback)(void*);
+  static void SetInterruptCallback(InterruptCallback f, void* clientData=0);
+  static bool GetInterruptFlag();
+
   ///! Return true if there was an error at any point.
   static bool GetErrorOccuredFlag()
     {
@@ -96,7 +106,7 @@ public:
  ///! Return true if there was an error at any point.
   static bool GetFatalErrorOccured()
     {
-      return cmSystemTools::s_FatalErrorOccured;
+      return cmSystemTools::s_FatalErrorOccured || GetInterruptFlag();
     }
 
   ///! Set the error occured flag and fatal error back to false
@@ -361,16 +371,8 @@ public:
   /** Get the list of all environment variables */
   static std::vector<std::string> GetEnvironmentVariables();
 
-  /** Append multiple variables to the current environment.
-      Return the original environment, as it was before the
-      append. */
-  static std::vector<std::string> AppendEnv(
-    std::vector<std::string>* env);
-
-  /** Restore the full environment to "env" - use after
-      AppendEnv to put the environment back to the way it
-      was. */
-  static void RestoreEnv(const std::vector<std::string>& env);
+  /** Append multiple variables to the current environment. */
+  static void AppendEnv(std::vector<std::string> const& env);
 
   /** Helper class to save and restore the environment.
       Instantiate this class as an automatic variable on
@@ -467,8 +469,10 @@ private:
   static bool s_DisableRunCommandOutput;
   static ErrorCallback s_ErrorCallback;
   static StdoutCallback s_StdoutCallback;
+  static InterruptCallback s_InterruptCallback;
   static void* s_ErrorCallbackClientData;
   static void* s_StdoutCallbackClientData;
+  static void* s_InterruptCallbackClientData;
 
   static std::string s_Windows9xComspecSubstitute;
 };

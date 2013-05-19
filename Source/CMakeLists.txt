@@ -185,6 +185,8 @@ SET(SRCS
   cmGeneratedFileStream.cxx
   cmGeneratorExpression.cxx
   cmGeneratorExpression.h
+  cmGeneratorTarget.cxx
+  cmGeneratorTarget.h
   cmGlobalGenerator.cxx
   cmGlobalGenerator.h
   cmGlobalUnixMakefileGenerator3.cxx
@@ -217,6 +219,8 @@ SET(SRCS
   cmMakefileExecutableTargetGenerator.cxx
   cmMakefileLibraryTargetGenerator.cxx
   cmMakefileUtilityTargetGenerator.cxx
+  cmOSXBundleGenerator.cxx
+  cmOSXBundleGenerator.h
   cmNewLineStyle.h
   cmNewLineStyle.cxx
   cmOrderDirectories.cxx
@@ -335,6 +339,8 @@ IF (WIN32)
       cmGlobalVisualStudio11Generator.cxx
       cmGlobalVisualStudio11Win64Generator.h
       cmGlobalVisualStudio11Win64Generator.cxx
+      cmGlobalVisualStudio11ARMGenerator.h
+      cmGlobalVisualStudio11ARMGenerator.cxx
       cmGlobalVisualStudioGenerator.cxx
       cmGlobalVisualStudioGenerator.h
       cmGlobalWatcomWMakeGenerator.cxx
@@ -352,6 +358,27 @@ IF (WIN32)
       )
   ENDIF(NOT UNIX)
 ENDIF (WIN32)
+
+# Ninja support
+SET(SRCS ${SRCS}
+  cmGlobalNinjaGenerator.cxx
+  cmGlobalNinjaGenerator.h
+  cmNinjaTypes.h
+  cmLocalNinjaGenerator.cxx
+  cmLocalNinjaGenerator.h
+  cmNinjaTargetGenerator.cxx
+  cmNinjaTargetGenerator.h
+  cmNinjaNormalTargetGenerator.cxx
+  cmNinjaNormalTargetGenerator.h
+  cmNinjaUtilityTargetGenerator.cxx
+  cmNinjaUtilityTargetGenerator.h
+  )
+IF(WIN32 AND NOT CYGWIN AND NOT BORLAND)
+  SET_SOURCE_FILES_PROPERTIES(cmcldeps.cxx PROPERTIES COMPILE_DEFINITIONS _WIN32_WINNT=0x0501)
+  ADD_EXECUTABLE(cmcldeps cmcldeps.cxx)
+  TARGET_LINK_LIBRARIES(cmcldeps CMakeLib)
+  INSTALL_TARGETS(/bin cmcldeps)
+ENDIF()
 
 # create a library used by the command line and the GUI
 ADD_LIBRARY(CMakeLib ${SRCS})
@@ -391,6 +418,9 @@ SET(CTEST_SRCS cmCTest.cxx
   CTest/cmCTestConfigureHandler.cxx
   CTest/cmCTestCoverageCommand.cxx
   CTest/cmCTestCoverageHandler.cxx
+  CTest/cmParseMumpsCoverage.cxx
+  CTest/cmParseCacheCoverage.cxx
+  CTest/cmParseGTMCoverage.cxx
   CTest/cmParsePHPCoverage.cxx
   CTest/cmCTestEmptyBinaryDirectoryCommand.cxx
   CTest/cmCTestGenericHandler.cxx
@@ -449,6 +479,8 @@ SET(CPACK_SRCS
   CPack/cmCPackTarBZip2Generator.cxx
   CPack/cmCPackTarCompressGenerator.cxx
   CPack/cmCPackZIPGenerator.cxx
+  CPack/cmCPackDocumentVariables.cxx
+  CPack/cmCPackDocumentMacros.cxx
   )
 
 IF(CYGWIN)

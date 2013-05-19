@@ -26,6 +26,7 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
   const char* sourceDirectory = argv[2].c_str();
   const char* projectName = 0;
   const char* targetName = 0;
+  char targetNameBuf[64];
   int extraArgs = 0;
 
   // look for CMAKE_FLAGS and store them
@@ -152,11 +153,11 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
     std::string ccFile = this->BinaryDirectory + "/CMakeCache.txt";
     cmSystemTools::RemoveFile(ccFile.c_str());
 
-    // we need to create a directory and CMakeList file etc...
+    // we need to create a directory and CMakeLists file etc...
     // first create the directories
     sourceDirectory = this->BinaryDirectory.c_str();
 
-    // now create a CMakeList.txt file in that directory
+    // now create a CMakeLists.txt file in that directory
     FILE *fout = fopen(outFileName.c_str(),"w");
     if (!fout)
       {
@@ -280,17 +281,25 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
       flag += this->Makefile->GetSafeDefinition("CMAKE_OSX_DEPLOYMENT_TARGET");
       cmakeFlags.push_back(flag);
       }
+    if(this->Makefile->GetDefinition("CMAKE_POSITION_INDEPENDENT_CODE")!=0)
+      {
+      fprintf(fout, "SET(CMAKE_POSITION_INDEPENDENT_CODE \"ON\")\n");
+      }
+
+    /* Use a random file name to avoid rapid creation and deletion
+       of the same executable name (some filesystems fail on that).  */
+    sprintf(targetNameBuf, "cmTryCompileExec%u",
+            cmSystemTools::RandomSeed());
+    targetName = targetNameBuf;
 
     /* Put the executable at a known location (for COPY_FILE).  */
     fprintf(fout, "SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY \"%s\")\n",
             this->BinaryDirectory.c_str());
     /* Create the actual executable.  */
-    fprintf(fout, "ADD_EXECUTABLE(cmTryCompileExec \"%s\")\n",source.c_str());
-    fprintf(fout,
-            "TARGET_LINK_LIBRARIES(cmTryCompileExec ${LINK_LIBRARIES})\n");
+    fprintf(fout, "ADD_EXECUTABLE(%s \"%s\")\n", targetName, source.c_str());
+    fprintf(fout, "TARGET_LINK_LIBRARIES(%s ${LINK_LIBRARIES})\n",targetName);
     fclose(fout);
     projectName = "CMAKE_TRY_COMPILE";
-    targetName = "cmTryCompileExec";
     // if the source is not in CMakeTmp
     if(source.find("CMakeTmp") == source.npos)
       {
@@ -399,6 +408,7 @@ void cmCoreTryCompile::CleanupFiles(const char* binDir)
         if(cmSystemTools::FileIsDirectory(fullPath.c_str()))
           {
           this->CleanupFiles(fullPath.c_str());
+          cmSystemTools::RemoveADirectory(fullPath.c_str());
           }
         else
           {

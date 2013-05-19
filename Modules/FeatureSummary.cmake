@@ -125,7 +125,7 @@
 #
 #   set_package_properties(LibXml2 PROPERTIES TYPE RECOMMENDED
 #                                             PURPOSE "Enables HTML-import in MyWordProcessor")
-# ...
+#   ...
 #   set_package_properties(LibXml2 PROPERTIES TYPE OPTIONAL
 #                                             PURPOSE "Enables odt-export in MyWordProcessor")
 #
@@ -318,7 +318,7 @@ FUNCTION(_FS_GET_FEATURE_SUMMARY _property _var _includeQuiet)
 
         GET_PROPERTY(_info  GLOBAL PROPERTY _CMAKE_${_currentFeature}_PURPOSE)
         FOREACH(_purpose ${_info})
-          SET(_currentFeatureText "${_currentFeatureText}\n   * ${_purpose}")
+          SET(_currentFeatureText "${_currentFeatureText}\n   ${_purpose}")
         ENDFOREACH()
 
       ENDIF(includeThisOne)
@@ -399,7 +399,7 @@ FUNCTION(FEATURE_SUMMARY)
       SET(_tmp)
       _FS_GET_FEATURE_SUMMARY( ${part} _tmp ${_FS_INCLUDE_QUIET_PACKAGES})
       IF(_tmp)
-        SET(_fullText "${_fullText}\n\n-- ${title_${part}}\n${_tmp}")
+        SET(_fullText "${_fullText}\n-- ${title_${part}}\n${_tmp}\n")
         IF("${part}" STREQUAL "REQUIRED_PACKAGES_NOT_FOUND")
           SET(requiredPackagesNotFound TRUE)
         ENDIF()
