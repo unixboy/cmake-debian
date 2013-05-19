@@ -1,4 +1,4 @@
-cmake (2.8.11-1) UNRELEASED; urgency=low
+cmake (2.8.11-1) unstable; urgency=low
 
   * New upstream release.
   * Add multiarch-python-include-dirs.diff to support multi-arch capable
@@ -7,7 +7,7 @@ cmake (2.8.11-1) UNRELEASED; urgency=low
     the system (i.e. there are no plugins currently installed). Stolen
     from Ubuntu. Patch qt_import_dir_variable.diff.
 
- -- Modestas Vainius <modax@debian.org>  Sun, 19 May 2013 12:12:26 +0300
+ -- Modestas Vainius <modax@debian.org>  Sun, 19 May 2013 12:38:26 +0300
 
 cmake (2.8.11~rc3-1) experimental; urgency=low
 
