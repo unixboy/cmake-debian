@@ -3,6 +3,9 @@ cmake (2.8.11-1) UNRELEASED; urgency=low
   * New upstream release.
   * Add multiarch-python-include-dirs.diff to support multi-arch capable
     python. Stolen from Ubuntu.
+  * FindQt4: define QT_IMPORTS_DIR variable even if it is not present on
+    the system (i.e. there are no plugins currently installed). Stolen
+    from Ubuntu. Patch qt_import_dir_variable.diff.
 
  -- Modestas Vainius <modax@debian.org>  Sun, 19 May 2013 12:12:26 +0300
 
