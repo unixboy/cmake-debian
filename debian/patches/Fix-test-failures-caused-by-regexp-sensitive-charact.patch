@@ -1,0 +1,224 @@
+From: Modestas Vainius <modax@debian.org>
+Date: Sun, 2 Jun 2013 15:47:05 +0200
+Subject: [PATCH 1/2] Fix test failures caused by regexp-sensitive characters
+ in the build paths
+Origin: backport, commit: 30b246ded16774a2cce792d24b51edca3c8e4996 (adapted)
+Forwarded: yes
+Bug: http://cmake.org/Bug/view.php?id=14183
+Applied-Upstream: 2.8.12
+
+Checkout [1] as an example of the test failures. In that particular cases, the
+failures is caused by the plus sign in the path being pass unescaped
+(buildd-cmake_2.8.9-1~bpo60+1-armel-3Lvkef) to the regexp.
+
+[1] https://buildd.debian.org/status/fetch.php?pkg=cmake&arch=armel&ver=2.8.9-1~bpo60%2B1&stamp=1369243896
+
+--- a/Tests/CMakeLists.txt
++++ b/Tests/CMakeLists.txt
+@@ -16,10 +16,7 @@ MACRO(ADD_TEST_MACRO NAME COMMAND)
+   LIST(APPEND TEST_BUILD_DIRS "${CMake_BINARY_DIR}/Tests/${dir}")
+ ENDMACRO(ADD_TEST_MACRO)
+ 
+-MACRO(REGEX_ESCAPE_STRING _OUT _IN)
+-    # Escape special regex metacharacters with a backslash
+-    string(REGEX REPLACE "([$^.[|*+?()]|])" "\\\\\\1" ${_OUT} "${_IN}")
+-ENDMACRO(REGEX_ESCAPE_STRING _OUT _IN)
++include(${CMAKE_CURRENT_SOURCE_DIR}/RegexEscapeString.cmake)
+ 
+ INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CheckFortran.cmake)
+ 
+--- a/Tests/CMakeTests/GetPropertyTest.cmake.in
++++ b/Tests/CMakeTests/GetPropertyTest.cmake.in
+@@ -1,28 +1,31 @@
+ include("@CMAKE_CURRENT_SOURCE_DIR@/CheckCMakeTest.cmake")
+ 
++include("@CMAKE_CURRENT_SOURCE_DIR@/../RegexEscapeString.cmake")
++REGEX_ESCAPE_STRING(CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@")
++
+ set(Missing-Argument-RESULT 1)
+-set(Missing-Argument-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Missing-Argument.cmake:1 \\(get_property\\):.*get_property called with incorrect number of arguments.*")
++set(Missing-Argument-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Missing-Argument.cmake:1 \\(get_property\\):.*get_property called with incorrect number of arguments.*")
+ 
+ check_cmake_test(GetProperty
+   Missing-Argument
+ )
+ 
+ set(Bad-Scope-RESULT 1)
+-set(Bad-Scope-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Bad-Scope.cmake:1 \\(get_property\\):.*get_property given invalid scope FOO\\..*")
++set(Bad-Scope-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Bad-Scope.cmake:1 \\(get_property\\):.*get_property given invalid scope FOO\\..*")
+ 
+ check_cmake_test(GetProperty
+   Bad-Scope
+ )
+ 
+ set(Bad-Argument-RESULT 1)
+-set(Bad-Argument-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Bad-Argument.cmake:1 \\(get_property\\):.*get_property given invalid argument \"FOO\"\\..*")
++set(Bad-Argument-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Bad-Argument.cmake:1 \\(get_property\\):.*get_property given invalid argument \"FOO\"\\..*")
+ 
+ check_cmake_test(GetProperty
+   Bad-Argument
+ )
+ 
+ set(No-Property-RESULT 1)
+-set(No-Property-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-No-Property.cmake:1 \\(get_property\\):.*get_property not given a PROPERTY <name> argument\\..*")
++set(No-Property-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-No-Property.cmake:1 \\(get_property\\):.*get_property not given a PROPERTY <name> argument\\..*")
+ 
+ check_cmake_test(GetProperty
+   No-Property
+@@ -35,63 +38,63 @@ check_cmake_test(GetProperty
+ )
+ 
+ set(Global-Name-RESULT 1)
+-set(Global-Name-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Global-Name.cmake:1 \\(get_property\\):.*get_property given name for GLOBAL scope\\..*")
++set(Global-Name-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Global-Name.cmake:1 \\(get_property\\):.*get_property given name for GLOBAL scope\\..*")
+ 
+ check_cmake_test(GetProperty
+   Global-Name
+ )
+ 
+ set(Bad-Directory-RESULT 1)
+-set(Bad-Directory-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Bad-Directory.cmake:1 \\(get_property\\):.*get_property DIRECTORY scope provided but requested directory was not.*found\\..*")
++set(Bad-Directory-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Bad-Directory.cmake:1 \\(get_property\\):.*get_property DIRECTORY scope provided but requested directory was not.*found\\..*")
+ 
+ check_cmake_test(GetProperty
+   Bad-Directory
+ )
+ 
+ set(No-Target-RESULT 1)
+-set(No-Target-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-No-Target.cmake:1 \\(get_property\\):.*get_property not given name for TARGET scope\\..*")
++set(No-Target-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-No-Target.cmake:1 \\(get_property\\):.*get_property not given name for TARGET scope\\..*")
+ 
+ check_cmake_test(GetProperty
+   No-Target
+ )
+ 
+ set(Bad-Target-RESULT 1)
+-set(Bad-Target-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Bad-Target.cmake:1 \\(get_property\\):.*get_property could not find TARGET FOO\\..*")
++set(Bad-Target-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Bad-Target.cmake:1 \\(get_property\\):.*get_property could not find TARGET FOO\\..*")
+ 
+ check_cmake_test(GetProperty
+   Bad-Target
+ )
+ 
+ set(No-Source-RESULT 1)
+-set(No-Source-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-No-Source.cmake:1 \\(get_property\\):.*get_property not given name for SOURCE scope\\..*")
++set(No-Source-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-No-Source.cmake:1 \\(get_property\\):.*get_property not given name for SOURCE scope\\..*")
+ 
+ check_cmake_test(GetProperty
+   No-Source
+ )
+ 
+ set(No-Test-RESULT 1)
+-set(No-Test-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-No-Test.cmake:1 \\(get_property\\):.*get_property not given name for TEST scope\\..*")
++set(No-Test-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-No-Test.cmake:1 \\(get_property\\):.*get_property not given name for TEST scope\\..*")
+ 
+ check_cmake_test(GetProperty
+   No-Test
+ )
+ 
+ set(Bad-Test-RESULT 1)
+-set(Bad-Test-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Bad-Test.cmake:1 \\(get_property\\):.*get_property given TEST name that does not exist: FOO.*")
++set(Bad-Test-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Bad-Test.cmake:1 \\(get_property\\):.*get_property given TEST name that does not exist: FOO.*")
+ 
+ check_cmake_test(GetProperty
+   Bad-Test
+ )
+ 
+ set(Variable-Name-RESULT 1)
+-set(Variable-Name-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-Variable-Name.cmake:1 \\(get_property\\):.*get_property given name for VARIABLE scope\\..*")
++set(Variable-Name-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-Variable-Name.cmake:1 \\(get_property\\):.*get_property given name for VARIABLE scope\\..*")
+ 
+ check_cmake_test(GetProperty
+   Variable-Name
+ )
+ 
+ set(No-Cache-RESULT 1)
+-set(No-Cache-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?GetProperty-No-Cache.cmake:1 \\(get_property\\):.*get_property not given name for CACHE scope\\..*")
++set(No-Cache-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?GetProperty-No-Cache.cmake:1 \\(get_property\\):.*get_property not given name for CACHE scope\\..*")
+ 
+ check_cmake_test(GetProperty
+   No-Cache
+--- a/Tests/CMakeTests/IfTest.cmake.in
++++ b/Tests/CMakeTests/IfTest.cmake.in
+@@ -7,6 +7,9 @@ foreach(_arg "" 0 1 2 ${TRUE_NAMES} ${FA
+   set(VAR_${_arg} "${_arg}")
+ endforeach()
+ 
++include("@CMAKE_CURRENT_SOURCE_DIR@/../RegexEscapeString.cmake")
++REGEX_ESCAPE_STRING(CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@")
++
+ macro(test_vars _old)
+   # Variables set to false or not set.
+   foreach(_var "" 0 ${FALSE_NAMES} UNDEFINED)
+@@ -158,7 +161,7 @@ endforeach()
+ test_vars("")
+ 
+ set(Invalid-Argument-RESULT 1)
+-set(Invalid-Argument-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?If-Invalid-Argument.cmake:1 \\(if\\):.*Unknown arguments specified.*")
++set(Invalid-Argument-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?If-Invalid-Argument.cmake:1 \\(if\\):.*Unknown arguments specified.*")
+ 
+ include("@CMAKE_CURRENT_SOURCE_DIR@/CheckCMakeTest.cmake")
+ check_cmake_test(If
+--- a/Tests/CMakeTests/WhileTest.cmake.in
++++ b/Tests/CMakeTests/WhileTest.cmake.in
+@@ -1,6 +1,9 @@
+ set(NUMBERS "")
+ set(COUNT 0)
+ 
++include("@CMAKE_CURRENT_SOURCE_DIR@/../RegexEscapeString.cmake")
++REGEX_ESCAPE_STRING(CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@")
++
+ while(COUNT LESS 200)
+     set(NUMBERS "${NUMBERS} ${COUNT}")
+     set(COUNT "2${COUNT}")
+@@ -16,8 +19,9 @@ if(NOT NUMBERS STREQUAL " 0 3 30 20 3 30
+     message(SEND_ERROR "while loop nesting error, result: '${NUMBERS}'")
+ endif()
+ 
++
+ set(Missing-Argument-RESULT 1)
+-set(Missing-Argument-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?While-Missing-Argument.cmake:1 \\(while\\):.*while called with incorrect number of arguments.*")
++set(Missing-Argument-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Missing-Argument.cmake:1 \\(while\\):.*while called with incorrect number of arguments.*")
+ 
+ include("@CMAKE_CURRENT_SOURCE_DIR@/CheckCMakeTest.cmake")
+ check_cmake_test(While
+@@ -25,28 +29,28 @@ check_cmake_test(While
+ )
+ 
+ set(Missing-Endwhile-RESULT 1)
+-set(Missing-Endwhile-STDERR ".*CMake Error in (@CMAKE_CURRENT_SOURCE_DIR@/)?While-Missing-Endwhile.cmake:.*A logical block opening on the line.*(@CMAKE_CURRENT_SOURCE_DIR@/)?While-Missing-Endwhile.cmake:1 \\(while\\).*is not closed\\..*")
++set(Missing-Endwhile-STDERR ".*CMake Error in (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Missing-Endwhile.cmake:.*A logical block opening on the line.*(${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Missing-Endwhile.cmake:1 \\(while\\).*is not closed\\..*")
+ 
+ check_cmake_test(While
+   Missing-Endwhile
+ )
+ 
+ set(Endwhile-Mismatch-RESULT 0)
+-set(Endwhile-Mismatch-STDERR ".*CMake Warning \\(dev\\) in (@CMAKE_CURRENT_SOURCE_DIR@/)?While-Endwhile-Mismatch.cmake:.*A logical block opening on the line.*(@CMAKE_CURRENT_SOURCE_DIR@/)?While-Endwhile-Mismatch.cmake:1 \\(while\\).*with mis-matching arguments\\..*")
++set(Endwhile-Mismatch-STDERR ".*CMake Warning \\(dev\\) in (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Endwhile-Mismatch.cmake:.*A logical block opening on the line.*(${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Endwhile-Mismatch.cmake:1 \\(while\\).*with mis-matching arguments\\..*")
+ 
+ check_cmake_test(While
+   Endwhile-Mismatch
+ )
+ 
+ set(Endwhile-Alone-RESULT 1)
+-set(Endwhile-Alone-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?While-Endwhile-Alone.cmake:1 \\(endwhile\\):.*An ENDWHILE command was found outside of a proper WHILE ENDWHILE.*structure\\.\n.*$")
++set(Endwhile-Alone-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Endwhile-Alone.cmake:1 \\(endwhile\\):.*An ENDWHILE command was found outside of a proper WHILE ENDWHILE.*structure\\.\n.*$")
+ 
+ check_cmake_test(While
+   Endwhile-Alone
+ )
+ 
+ set(Endwhile-Alone-Args-RESULT 1)
+-set(Endwhile-Alone-Args-STDERR ".*CMake Error at (@CMAKE_CURRENT_SOURCE_DIR@/)?While-Endwhile-Alone-Args.cmake:1 \\(endwhile\\):.*An ENDWHILE command was found outside of a proper WHILE ENDWHILE.*structure\\.  Or its arguments did not.*$")
++set(Endwhile-Alone-Args-STDERR ".*CMake Error at (${CTEST_ESCAPED_CMAKE_CURRENT_SOURCE_DIR}/)?While-Endwhile-Alone-Args.cmake:1 \\(endwhile\\):.*An ENDWHILE command was found outside of a proper WHILE ENDWHILE.*structure\\.  Or its arguments did not.*$")
+ 
+ check_cmake_test(While
+   Endwhile-Alone-Args
+--- /dev/null
++++ b/Tests/RegexEscapeString.cmake
+@@ -0,0 +1,4 @@
++macro(REGEX_ESCAPE_STRING _OUT _IN)
++    # Escape special regex metacharacters with a backslash
++    string(REGEX REPLACE "([$^.[|*+?()]|])" "\\\\\\1" ${_OUT} "${_IN}")
++endmacro()
