@@ -3,3 +3,5 @@ multiarch_findgtk2_fix.diff
 install_to_multiarch_libdir_on_kfreebsd_hurd.diff
 multiarch-python-include-dirs.diff
 qt_import_dir_variable.diff
+0001-Fix-test-failures-caused-by-regexp-sensitive-charact.patch
+tests-fix-Memcheck-tests-in-a-dir-with-regex-special.patch

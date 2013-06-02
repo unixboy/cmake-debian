@@ -1,5 +1,10 @@
 cmake (2.8.11-3) UNRELEASED; urgency=low
 
+  * Make tests pass when cmake build path contains regex metacharacters (e.g.
+    in case of BPO builds on the buildds).
+    Backported (from future 2.8.12) and adapted patches:
+    - 0001-Fix-test-failures-caused-by-regexp-sensitive-charact.patch
+    - tests-fix-Memcheck-tests-in-a-dir-with-regex-special.patch
 
  -- Modestas Vainius <modax@debian.org>  Sat, 01 Jun 2013 03:33:25 +0300
 
