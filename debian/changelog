@@ -1,11 +1,11 @@
-cmake (2.8.11.1-1) UNRELEASED; urgency=low
+cmake (2.8.11.1-1) unstable; urgency=low
 
   * New upstream tweak release:
     - this release fixes tests which used to fail when cmake build path
       contained regex metacharacters. As a result, cmake should no longer FTBFS
       on Debian buildds which have '+' symbol in the build path.
 
- -- Modestas Vainius <modax@debian.org>  Sat, 01 Jun 2013 03:33:25 +0300
+ -- Modestas Vainius <modax@debian.org>  Sun, 16 Jun 2013 00:58:09 +0300
 
 cmake (2.8.11-2) unstable; urgency=low
 
