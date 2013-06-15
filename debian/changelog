@@ -1,11 +1,9 @@
 cmake (2.8.11.1-1) UNRELEASED; urgency=low
 
-  * New upstream tweak release.
-  * Make tests pass when cmake build path contains regex metacharacters (e.g.
-    in case of BPO builds on the buildds).
-    Backported (from future 2.8.12) and adapted patches:
-    - 0001-Fix-test-failures-caused-by-regexp-sensitive-charact.patch
-    - tests-fix-Memcheck-tests-in-a-dir-with-regex-special.patch
+  * New upstream tweak release:
+    - this release fixes tests which used to fail when cmake build path
+      contained regex metacharacters. As a result, cmake should no longer FTBFS
+      on Debian buildds which have '+' symbol in the build path.
 
  -- Modestas Vainius <modax@debian.org>  Sat, 01 Jun 2013 03:33:25 +0300
 
