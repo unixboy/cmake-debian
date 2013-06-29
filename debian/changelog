@@ -1,3 +1,9 @@
+cmake (2.8.11.1-1~bpo70+1) wheezy-backports; urgency=low
+
+  * Rebuild for wheezy-backports.
+
+ -- Modestas Vainius <modax@debian.org>  Sat, 29 Jun 2013 12:29:04 +0300
+
 cmake (2.8.11.1-1) unstable; urgency=low
 
   * New upstream tweak release:
