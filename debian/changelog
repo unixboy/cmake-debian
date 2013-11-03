@@ -10,6 +10,9 @@ cmake (2.8.12-0r1) UNRELEASED; urgency=low
     (Closes: #716798)
   * Follow emacsen policy 5C and link cmake-mode.el source file next to
     compiled one. Thanks to Kevin Ryde. (Closes: #710570)
+  * Add compiled cmake-mode.elc to load-path and do not barf in emacs if
+    cmake-data was removed but not purged. Thanks to Kevin Ryde.
+    (Closes: #710573)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
