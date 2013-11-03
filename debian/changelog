@@ -4,6 +4,10 @@ cmake (2.8.12-0r1) UNRELEASED; urgency=low
     - no longer contains workaround for GCC 2.96 bugs; (Closes: #717144)
     - cmake -E touch no longer truncates time to seconds. (Closes: #699657)
   * Enable bash-completion. (Closes: #722236)
+  * Switch to using libcurl4-openssl-dev rather than GnuTLS variant. cmake and
+    all its dependencies appear to be licence compatible. The main reason for
+    the switch is that OpenSSL variant appear to be less troublesome.
+    (Closes: #716798)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
