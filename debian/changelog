@@ -1,4 +1,4 @@
-cmake (2.8.12-0r1) UNRELEASED; urgency=low
+cmake (2.8.12-0r2) UNRELEASED; urgency=low
 
   * New upstream release:
     - no longer contains workaround for GCC 2.96 bugs; (Closes: #717144)
