@@ -15,6 +15,8 @@ cmake (2.8.12-0r2) UNRELEASED; urgency=low
     (Closes: #710573)
   * Remove the whole emacs compiled directory rather than just .elc file.
     Thanks to Kevin Ryde. (Closes: #710572)
+  * Fix a code typo in PHP4 (patch FindPHP4_fix_typo.diff). Thanks to Mathieu
+    Malaterre for the patch. (Closes: #722475)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
