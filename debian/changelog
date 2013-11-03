@@ -8,6 +8,8 @@ cmake (2.8.12-0r1) UNRELEASED; urgency=low
     all its dependencies appear to be licence compatible. The main reason for
     the switch is that OpenSSL variant appear to be less troublesome.
     (Closes: #716798)
+  * Follow emacsen policy 5C and link cmake-mode.el source file next to
+    compiled one. Thanks to Kevin Ryde. (Closes: #710570)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
