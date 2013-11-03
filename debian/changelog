@@ -3,6 +3,7 @@ cmake (2.8.12-0r1) UNRELEASED; urgency=low
   * New upstream release:
     - no longer contains workaround for GCC 2.96 bugs; (Closes: #717144)
     - cmake -E touch no longer truncates time to seconds. (Closes: #699657)
+  * Enable bash-completion. (Closes: #722236)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
