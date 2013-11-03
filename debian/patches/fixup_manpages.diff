@@ -1,0 +1,50 @@
+From: Modestas Vainius <modax@debian.org>
+Subject: Small fixes to manpages
+Origin: vendor
+
+The patch fixes these problems:
+
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakeprops.1.gz overriden overridden
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakeprops.1.gz overriden overridden
+I: cmake-data: spelling-error-in-manpage usr/share/man/man1/cmakeprops.1.gz overriden overridden
+I: cmake-qt-gui: spelling-error-in-binary usr/bin/cmake-gui overriden overridden
+I: cmake: spelling-error-in-binary usr/bin/cmake overriden overridden
+I: cmake: spelling-error-in-binary usr/bin/cpack overriden overridden
+I: cmake: spelling-error-in-binary usr/bin/ctest overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cmake.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cpack.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cpack.1.gz overriden overridden
+I: cmake: spelling-error-in-manpage usr/share/man/man1/cpack.1.gz overriden overridden
+I: cmake-curses-gui: spelling-error-in-binary usr/bin/ccmake overriden overridden
+
+--- a/Source/cmTarget.cxx
++++ b/Source/cmTarget.cxx
+@@ -833,7 +833,7 @@ void cmTarget::DefineProperties(cmake *c
+      "CMAKE_LINK_INTERFACE_LIBRARIES if it is set when a target is "
+      "created.  "
+      "This property is ignored for STATIC libraries.\n"
+-     "This property is overriden by the INTERFACE_LINK_LIBRARIES property if "
++     "This property is overridden by the INTERFACE_LINK_LIBRARIES property if "
+      "policy CMP0022 is NEW.\n"
+      "This property is deprecated. Use INTERFACE_LINK_LIBRARIES instead.");
+ 
+@@ -844,7 +844,7 @@ void cmTarget::DefineProperties(cmake *c
+      "LINK_INTERFACE_LIBRARIES.  "
+      "If set, this property completely overrides the generic property "
+      "for the named configuration.\n"
+-     "This property is overriden by the INTERFACE_LINK_LIBRARIES property if "
++     "This property is overridden by the INTERFACE_LINK_LIBRARIES property if "
+      "policy CMP0022 is NEW.\n"
+      "This property is deprecated. Use INTERFACE_LINK_LIBRARIES instead.");
+ 
+@@ -855,7 +855,7 @@ void cmTarget::DefineProperties(cmake *c
+      "When the target is linked into another target the libraries "
+      "listed (and recursively their link interface libraries) will be "
+      "provided to the other target also.  "
+-     "This property is overriden by the LINK_INTERFACE_LIBRARIES or "
++     "This property is overridden by the LINK_INTERFACE_LIBRARIES or "
+      "LINK_INTERFACE_LIBRARIES_<CONFIG> property if "
+      "policy CMP0022 is OLD or unset.\n"
+      "\n"
