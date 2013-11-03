@@ -4,3 +4,4 @@ install_to_multiarch_libdir_on_kfreebsd_hurd.diff
 multiarch-python-include-dirs.diff
 qt_import_dir_variable.diff
 FindPHP4_fix_typo.diff
+FindJNI_amd64_ppc_biarch.diff

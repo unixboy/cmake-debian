@@ -17,6 +17,8 @@ cmake (2.8.12-0r2) UNRELEASED; urgency=low
     Thanks to Kevin Ryde. (Closes: #710572)
   * Fix a code typo in PHP4 (patch FindPHP4_fix_typo.diff). Thanks to Mathieu
     Malaterre for the patch. (Closes: #722475)
+  * Properly find Java when kernel is 64bit, userland - 32bit (amd64/ppc64).
+    (patch: FindJNI_amd64_ppc_biarch.diff) (Closes: #718290)
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
