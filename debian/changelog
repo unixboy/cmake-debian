@@ -19,6 +19,7 @@ cmake (2.8.12-0r2) UNRELEASED; urgency=low
     Malaterre for the patch. (Closes: #722475)
   * Properly find Java when kernel is 64bit, userland - 32bit (amd64/ppc64).
     (patch: FindJNI_amd64_ppc_biarch.diff) (Closes: #718290)
+  * Bump Standards-Version to 3.9.5: no further changes needed.
 
  -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 12:28:06 +0200
 
