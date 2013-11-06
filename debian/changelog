@@ -1,4 +1,4 @@
-cmake (2.8.12.1-1) UNRELEASED; urgency=low
+cmake (2.8.12.1-1) unstable; urgency=low
 
   * New upstream release:
     - Automoc no longer ignores ADD_DEFINITIONS. (Closes: #728793)
@@ -6,7 +6,7 @@ cmake (2.8.12.1-1) UNRELEASED; urgency=low
     emacsen-common but pretty recent debhelper is needed at build time.
   * Drop fixup_manpages.diff patch: merged upstream.
 
- -- Modestas Vainius <modax@debian.org>  Mon, 04 Nov 2013 23:55:47 +0200
+ -- Modestas Vainius <modax@debian.org>  Thu, 07 Nov 2013 00:56:52 +0200
 
 cmake (2.8.12-2) unstable; urgency=low
 
