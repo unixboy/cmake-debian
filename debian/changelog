@@ -1,5 +1,7 @@
-cmake (2.8.12-3) UNRELEASED; urgency=low
+cmake (2.8.12.1-1) UNRELEASED; urgency=low
 
+  * New upstream release:
+    - Automoc no longer ignores ADD_DEFINITIONS. (Closes: #728793)
   * Migrate to emacs policy v2.0: cmake-data no longer needs to depend on
     emacsen-common but pretty recent debhelper is needed at build time.
 
