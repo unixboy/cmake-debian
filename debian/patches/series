@@ -7,3 +7,4 @@ FindPHP4_fix_typo.diff
 FindJNI_amd64_ppc_biarch.diff
 fix-ftbfs-on-kfreebsd.patch
 fix-FindFreetype.diff
+FindRuby_support_Ruby_2.diff
