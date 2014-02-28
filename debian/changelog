@@ -1,3 +1,11 @@
+cmake (2.8.12.1-1.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * Make sure to find freetype headers in their new location (without an
+    extra freetype/ directory, fix-FindFreetype.diff). (Closes: #731089)
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 15 Dec 2013 10:30:54 +0000
+
 cmake (2.8.12.1-1) unstable; urgency=low
 
   * New upstream release:

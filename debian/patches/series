@@ -6,3 +6,4 @@ qt_import_dir_variable.diff
 FindPHP4_fix_typo.diff
 FindJNI_amd64_ppc_biarch.diff
 fix-ftbfs-on-kfreebsd.patch
+fix-FindFreetype.diff
