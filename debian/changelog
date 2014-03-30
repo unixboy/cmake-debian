@@ -1,10 +1,10 @@
-cmake (2.8.12.1-1.2) UNRELEASED; urgency=low
+cmake (2.8.12.1-1.2) unstable; urgency=low
 
   * Non-maintainer upload.
   * Backport patch to support Ruby 2.0 and 2.1 in FindRuby.cmake.
     (closes: #739826)
 
- -- Bas Couwenberg <sebastic@xs4all.nl>  Fri, 28 Feb 2014 15:42:54 +0100
+ -- Bas Couwenberg <sebastic@xs4all.nl>  Sun, 30 Mar 2014 21:57:27 +0200
 
 cmake (2.8.12.1-1.1) unstable; urgency=high
 
