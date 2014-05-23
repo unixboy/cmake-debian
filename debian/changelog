@@ -1,3 +1,12 @@
+cmake (2.8.12.1-1.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * multiarch-python-include-dirs.diff has bad side-effects
+    Drop multiarch-python-include-dirs.diff
+    Closes: #735248
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Fri, 23 May 2014 09:25:22 +0100
+
 cmake (2.8.12.1-1.2) unstable; urgency=low
 
   * Non-maintainer upload.
