@@ -8,3 +8,6 @@ fix-ftbfs-on-kfreebsd.patch
 fix-FindFreetype.diff
 FindRuby_support_Ruby_2.diff
 FindJNI.cmake.mips.patch
+fix-FindImageMagick-1.diff
+fix-FindImageMagick-2.diff
+fix-FindFreetype-version.diff

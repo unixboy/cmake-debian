@@ -1,3 +1,14 @@
+cmake (2.8.12.1-1.5) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Detect the version string of Freetype 2.5. (Closes: #732182)
+    - Add fix-FindFreetype-version.diff, cherry-picked from upstream.
+  * Detect the multi-arch ImageMagick include dirs. (Closes: #747907)
+    - Add fix-FindImageMagick-1.diff and fix-FindImageMagick-2.diff,
+      cherry-picked from upstream.
+
+ -- Felix Geyer <fgeyer@debian.org>  Tue, 22 Jul 2014 21:18:39 +0200
+
 cmake (2.8.12.1-1.4) unstable; urgency=medium
 
   * Non-maintainer upload.
