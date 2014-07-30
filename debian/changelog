@@ -1,3 +1,10 @@
+cmake (2.8.12.1-1.6) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix HDF5 macro for HL and Fortran_HL components (closes: #756108).
+
+ -- Gilles Filippini <pini@debian.org>  Wed, 30 Jul 2014 12:51:57 +0200
+
 cmake (2.8.12.1-1.5) unstable; urgency=medium
 
   * Non-maintainer upload.

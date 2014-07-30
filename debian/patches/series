@@ -11,3 +11,4 @@ FindJNI.cmake.mips.patch
 fix-FindImageMagick-1.diff
 fix-FindImageMagick-2.diff
 fix-FindFreetype-version.diff
+fix-hdf5-hl.patch
