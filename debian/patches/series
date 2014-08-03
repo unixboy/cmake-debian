@@ -7,3 +7,5 @@ fix-FindImageMagick-1.diff
 fix-FindImageMagick-2.diff
 fix-hdf5-hl.patch
 FindJNI_ppc64le.diff
+fix-bootstrap-test-1.diff
+fix-bootstrap-test-2.diff
