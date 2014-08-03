@@ -1,5 +1,6 @@
-cmake (2.8.12.1-2) UNRELEASED; urgency=medium
+cmake (2.8.12.2-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
   * Add Lisandro and myself to uploaders.
   * Correctly pass CXXFLAGS with CPPFLAGS to bootstrap.
   * Suggest ninja-build as cmake provides a generator for ninja.
