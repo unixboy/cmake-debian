@@ -14,6 +14,8 @@ cmake (3.0.0-1) UNRELEASED; urgency=medium
   * Fix running the test suite.
     - Cherry-pick upstream fix in fix-bootstrap-test-1.diff and
       fix-bootstrap-test-2.diff
+  * Build the sphinx documentation and man pages.
+    - Build-depend on python-sphinx.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 

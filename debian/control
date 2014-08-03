@@ -6,7 +6,7 @@ Uploaders: A. Maitland Bottoms <bottoms@debian.org>, Kai Wasserbäch <curan@debi
  Lisandro Damián Nicanor Pérez Meyer <lisandro@debian.org>, Felix Geyer <fgeyer@debian.org>
 Build-Depends: debhelper (>= 9.20131104), libcurl4-openssl-dev, libexpat1-dev, zlib1g-dev,
  libncurses5-dev, libqt4-dev (>= 4.4.0), procps [!hurd-any], libarchive-dev (>= 2.8.0),
- libbz2-dev, bash-completion
+ libbz2-dev, bash-completion, python-sphinx
 Standards-Version: 3.9.5
 Vcs-Git: git://anonscm.debian.org/collab-maint/cmake.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=collab-maint/cmake.git;a=summary
