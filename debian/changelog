@@ -1,6 +1,16 @@
 cmake (3.0.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Drop patches (fixed upstream):
+    - install_to_multiarch_libdir_on_kfreebsd_hurd.diff
+    - FindPHP4_fix_typo.diff
+    - FindJNI_amd64_ppc_biarch.diff
+    - fix-FindFreetype.diff
+    - FindRuby_support_Ruby_2.diff
+    - fix-FindFreetype-version.diff
+  * Refresh patches:
+    - FindJNI.cmake.mips.patch
+    - FindJNI_ppc64le.diff
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 
