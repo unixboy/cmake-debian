@@ -17,6 +17,7 @@ cmake (3.0.0-1) UNRELEASED; urgency=medium
   * Build the sphinx documentation and man pages.
     - Build-depend on python-sphinx.
   * Update install files.
+  * Pass --list-missing to dh_install.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 
