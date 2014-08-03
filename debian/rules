@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-export DEB_CPPFLAGS_MAINT_APPEND := $(shell dpkg-buildflags --get CPPFLAGS)
+export DEB_CXXFLAGS_MAINT_APPEND := $(shell dpkg-buildflags --get CPPFLAGS)
 export DEB_CFLAGS_MAINT_APPEND := $(shell dpkg-buildflags --get CPPFLAGS)
 
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
@@ -22,7 +22,7 @@ $(BUILD_FLAGS_FILE) verify-build-flags:
 	$(call $(flag_action),CMAKE_USE_RELATIVE_PATHS,ON,"Use relative paths")
 	$(call $(flag_action),CMAKE_VERBOSE_MAKEFILE,ON,"Verbose build")
 	$(call $(flag_action),CMAKE_C_FLAGS,"$(CFLAGS)","C flags")
-	$(call $(flag_action),CMAKE_CXX_FLAGS,"$(CFLAGS)","C++ flags")
+	$(call $(flag_action),CMAKE_CXX_FLAGS,"$(CXXFLAGS)","C++ flags")
 	$(call $(flag_action),CMAKE_SKIP_BOOTSTRAP_TEST,ON,"Skip BootstrapTest")
 	$(call $(flag_action),BUILD_CursesDialog,ON,"Build curses GUI")
 	$(call $(flag_action),BUILD_QtDialog,ON,"Build Qt4 GUI")
