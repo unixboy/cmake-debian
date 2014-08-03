@@ -4,6 +4,8 @@ cmake (2.8.12.1-2) UNRELEASED; urgency=medium
   * Correctly pass CXXFLAGS with CPPFLAGS to bootstrap.
   * Suggest ninja-build as cmake provides a generator for ninja.
     (Closes: #743229)
+  * Fix JNI detection on ppc64el.
+    - Add FindJNI_ppc64le.diff, cherry-picked from upstream.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 10:02:57 +0200
 
