@@ -27,8 +27,6 @@ $(BUILD_FLAGS_FILE) verify-build-flags:
 	$(call $(flag_action),BUILD_CursesDialog,ON,"Build curses GUI")
 	$(call $(flag_action),BUILD_QtDialog,ON,"Build Qt4 GUI")
 #	$(call $(flag_action),BUILD_DOCUMENTATION,ON)
-	$(call $(flag_action),CMAKE_USE_SYSTEM_LIBARCHIVE,ON)
-	$(call $(flag_action),CMAKE_USE_SYSTEM_BZIP2,ON)
 
 $(BUILD_FLAGS_FILE): flag_action := set_build_flag
 verify-build-flags: flag_action := verify_build_flag
@@ -37,7 +35,7 @@ verify-build-flags: flag_action := verify_build_flag
 override_dh_auto_configure: $(BUILD_FLAGS_FILE)
 	rm -rf Build && mkdir -p Build
 	cd Build && ../bootstrap --prefix=/usr --docdir=/share/doc/cmake --mandir=/share/man \
-	                         --init=../$(BUILD_FLAGS_FILE) --system-libs $(CONFIGURE_PARALLEL) \
+	                         --init=../$(BUILD_FLAGS_FILE) --system-libs \
 	                         $(BOOTSTRAP_PARALLEL) --verbose
 
 override_dh_auto_test:
