@@ -20,6 +20,7 @@ cmake (3.0.0-1) UNRELEASED; urgency=medium
   * Pass --list-missing to dh_install.
   * Use sphinxdoc debhelper sequence.
   * Add -Wl,--as-needed to LDFLAGS to avoid overlinking.
+  * Drop custom cmake-gui manpage, upstream provides one now.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 
