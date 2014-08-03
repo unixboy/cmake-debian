@@ -2,6 +2,8 @@ cmake (2.8.12.1-2) UNRELEASED; urgency=medium
 
   * Add Lisandro and myself to uploaders.
   * Correctly pass CXXFLAGS with CPPFLAGS to bootstrap.
+  * Suggest ninja-build as cmake provides a generator for ninja.
+    (Closes: #743229)
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 10:02:57 +0200
 
