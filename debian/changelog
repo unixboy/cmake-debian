@@ -1,6 +1,13 @@
 cmake (3.0.0-1) UNRELEASED; urgency=medium
 
-  * New upstream release.
+  * New upstream release. (Closes: #743231)
+    - Uses multiarch libdir only when prefix is /usr. (Closes:  #739876)
+    - Doesn't crash on bad generator name. (Closes: #747306)
+    - Provides a FindLua module that supports versions 5.0 - 5.3.
+      (Closes: #739285)
+    - Fixes parsing CMakeLists.txt in UTF-8 with BOM encoding. (Closes: #593327)
+    - Call cmake-gui for edit_cache when using the ninja generator.
+      (Closes: #712241)
   * Drop patches (fixed upstream):
     - install_to_multiarch_libdir_on_kfreebsd_hurd.diff
     - FindPHP4_fix_typo.diff
