@@ -21,6 +21,7 @@ cmake (3.0.0-1) UNRELEASED; urgency=medium
   * Use sphinxdoc debhelper sequence.
   * Add -Wl,--as-needed to LDFLAGS to avoid overlinking.
   * Drop custom cmake-gui manpage, upstream provides one now.
+  * Build cmake-qt-gui against Qt 5.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 
