@@ -23,6 +23,7 @@ cmake (3.0.0-1) UNRELEASED; urgency=medium
   * Drop custom cmake-gui manpage, upstream provides one now.
   * Build cmake-qt-gui against Qt 5.
   * Drop obsolete lintian override cmake-data: extra-license-file.
+  * Update the copyright file.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 
