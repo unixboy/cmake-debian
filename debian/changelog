@@ -48,6 +48,7 @@ cmake (2.8.12.2-1) UNRELEASED; urgency=medium
     These are just binary test files used by the test suite to verify that
     changing the RPATH works fine.
   * Drop some redundant build options from debian/rules.
+  * Drop multiarch_findgtk2_fix.diff, was already fixed upstream in 2.8.11.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 10:02:57 +0200
 
