@@ -1,5 +1,4 @@
 FindBoost_add_-lpthread_#563479.diff
-multiarch_findgtk2_fix.diff
 install_to_multiarch_libdir_on_kfreebsd_hurd.diff
 qt_import_dir_variable.diff
 FindPHP4_fix_typo.diff
