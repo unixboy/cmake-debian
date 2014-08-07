@@ -34,7 +34,7 @@ cmake (3.0.0-1) UNRELEASED; urgency=medium
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 20:21:55 +0200
 
-cmake (2.8.12.2-1) UNRELEASED; urgency=medium
+cmake (2.8.12.2-1) unstable; urgency=medium
 
   [ Felix Geyer ]
   * New upstream release.
@@ -54,7 +54,7 @@ cmake (2.8.12.2-1) UNRELEASED; urgency=medium
   [ Lisandro Damián Nicanor Pérez Meyer ]
   * Update debian/copyright.
 
- -- Felix Geyer <fgeyer@debian.org>  Sun, 03 Aug 2014 10:02:57 +0200
+ -- Felix Geyer <fgeyer@debian.org>  Thu, 07 Aug 2014 20:16:56 +0200
 
 cmake (2.8.12.1-1.6) unstable; urgency=low
 
