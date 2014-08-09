@@ -1,11 +1,11 @@
-cmake (3.0.1-1) UNRELEASED; urgency=medium
+cmake (3.0.1-1) experimental; urgency=medium
 
   * New upstream release.
   * Drop patches (fixed upstream):
     - fix-bootstrap-test-1.diff
     - fix-bootstrap-test-2.diff
 
- -- Felix Geyer <fgeyer@debian.org>  Fri, 08 Aug 2014 17:53:01 +0200
+ -- Felix Geyer <fgeyer@debian.org>  Sat, 09 Aug 2014 21:11:50 +0200
 
 cmake (3.0.0-1) experimental; urgency=medium
 
