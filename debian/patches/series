@@ -12,3 +12,4 @@ fix-FindImageMagick-2.diff
 fix-FindFreetype-version.diff
 fix-hdf5-hl.patch
 FindJNI_ppc64le.diff
+search_for_python3.4.diff
