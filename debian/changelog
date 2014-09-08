@@ -4,6 +4,7 @@ cmake (2.8.12.2-2) UNRELEASED; urgency=medium
     - Add search_for_python3.4.diff
   * Don't create docs symlinks from arch-dep to arch-indep packages.
     (Closes: #760823)
+  * Move the rm_conffile calls to cmake.maintscript.
 
  -- Felix Geyer <fgeyer@debian.org>  Sun, 31 Aug 2014 21:27:28 +0200
 
