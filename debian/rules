@@ -45,7 +45,11 @@ override_dh_auto_clean:
 	dh_auto_clean
 	rm -f $(BUILD_FLAGS_FILE)
 
-override_dh_installdocs:
+override_dh_installdocs-arch:
+	# dh_installdocs --link-doc generates binNMU unsafe deps (Bug #747141)
+	dh_installdocs
+
+override_dh_installdocs-indep:
 	dh_installdocs --link-doc=cmake-data
 
 %:
