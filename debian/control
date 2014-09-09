@@ -25,6 +25,7 @@ Homepage: http://cmake.org/
 Package: cmake
 Architecture: any
 Multi-Arch: foreign
+Pre-Depends: dpkg (>= 1.17.5~)
 Depends: cmake-data (= ${source:Version}),
          procps [!hurd-any],
          ${misc:Depends},
@@ -57,6 +58,7 @@ Description: CMake data files (modules, templates and documentation)
 
 Package: cmake-curses-gui
 Architecture: any
+Pre-Depends: dpkg (>= 1.17.5~)
 Depends: cmake (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Description: curses based user interface for CMake (ccmake)
  CMake is used to control the software compilation process using simple
@@ -71,6 +73,7 @@ Description: curses based user interface for CMake (ccmake)
 
 Package: cmake-qt-gui
 Architecture: any
+Pre-Depends: dpkg (>= 1.17.5~)
 Depends: cmake (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Provides: cmake-gui
 Description: Qt4 based user interface for CMake (cmake-gui)
@@ -87,7 +90,7 @@ Description: Qt4 based user interface for CMake (cmake-gui)
 Package: cmake-doc
 Architecture: all
 Section: doc
-Depends: ${misc:Depends}, ${sphinxdoc:Depends}
+Depends: ${misc:Depends}, ${sphinxdoc:Depends}, cmake-data (= ${source:Version})
 Recommends: doc-base
 Breaks: cmake (<= 2.8.2-1),
         cmake-curses-gui (<= 2.8.2-1),
@@ -111,6 +114,7 @@ Package: cmake-dbg
 Architecture: any
 Section: debug
 Priority: extra
+Pre-Depends: dpkg (>= 1.17.5~)
 Depends: cmake (= ${binary:Version}), ${misc:Depends}
 Description: debugging symbols for CMake
  CMake is used to control the software compilation process using simple

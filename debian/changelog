@@ -45,6 +45,16 @@ cmake (3.0.0-1) experimental; urgency=medium
 
  -- Felix Geyer <fgeyer@debian.org>  Thu, 07 Aug 2014 23:38:00 +0200
 
+cmake (2.8.12.2-2) unstable; urgency=high
+
+  * Search for Python 3.4 in FindPython{Interp,Libs}.
+    - Add search_for_python3.4.diff
+  * Don't create docs symlinks from arch-dep to arch-indep packages.
+    (Closes: #760823)
+  * Move the rm_conffile calls to cmake.maintscript.
+
+ -- Felix Geyer <fgeyer@debian.org>  Mon, 08 Sep 2014 22:18:32 +0200
+
 cmake (2.8.12.2-1) unstable; urgency=medium
 
   [ Felix Geyer ]
