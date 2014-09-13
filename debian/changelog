@@ -1,3 +1,10 @@
+cmake (3.0.2-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+    - Adds support for OpenRISC (or1k). (Closes: #749004)
+
+ -- Felix Geyer <fgeyer@debian.org>  Sat, 13 Sep 2014 15:31:25 +0200
+
 cmake (3.0.1-1) experimental; urgency=medium
 
   * New upstream release.
