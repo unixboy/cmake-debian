@@ -1,4 +1,4 @@
-cmake (3.0.2-1) UNRELEASED; urgency=medium
+cmake (3.0.2-1) unstable; urgency=medium
 
   * New upstream release.
     - Adds support for OpenRISC (or1k). (Closes: #749004)
@@ -7,7 +7,7 @@ cmake (3.0.2-1) UNRELEASED; urgency=medium
   * Revert cmake-qt-gui to Qt 4 for now as qtbase 5 fails to build on some
     architectures.
 
- -- Felix Geyer <fgeyer@debian.org>  Sat, 13 Sep 2014 15:31:25 +0200
+ -- Felix Geyer <fgeyer@debian.org>  Sun, 14 Sep 2014 19:16:38 +0200
 
 cmake (3.0.1-1) experimental; urgency=medium
 
