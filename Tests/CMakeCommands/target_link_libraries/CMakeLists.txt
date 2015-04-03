@@ -32,7 +32,7 @@ generate_export_header(depA)
 add_library(depB SHARED depB.cpp)
 generate_export_header(depB)
 
-target_link_libraries(depB LINK_PRIVATE depA)
+target_link_libraries(depB LINK_PRIVATE depA LINK_PRIVATE depA)
 
 add_library(libgenex SHARED libgenex.cpp)
 generate_export_header(libgenex)
@@ -44,11 +44,11 @@ set_property(TARGET depB APPEND PROPERTY
 add_library(depC SHARED depC.cpp)
 generate_export_header(depC)
 
-target_link_libraries(depC LINK_PUBLIC depA)
+target_link_libraries(depC LINK_PUBLIC depA LINK_PUBLIC depA)
 
 assert_property(depA LINK_INTERFACE_LIBRARIES "")
 assert_property(depB LINK_INTERFACE_LIBRARIES "")
-assert_property(depC LINK_INTERFACE_LIBRARIES "depA")
+assert_property(depC LINK_INTERFACE_LIBRARIES "depA;depA")
 
 add_executable(targetA targetA.cpp)
 
@@ -114,3 +114,19 @@ endif()
 # shortcutting of the evaluation by returning an empty string.
 set(_exe_test $<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>)
 target_link_libraries(targetC $<$<AND:${_exe_test},${_exe_test}>:depG>)
+
+add_library(libConsumer empty.cpp)
+# This line causes $<$<CONFIG:Debug>:depA> to be used when
+# determining the include directories for libConsumer based on the
+# interface properties of its LINK_LIBRARIES. Because the above expression
+# evaluates to the empty string in non-Debug cases, ensure that that causes
+# no problems.
+target_link_libraries(libConsumer debug depA)
+
+add_subdirectory(cmp0022)
+
+add_executable(newsignature1 newsignature1.cpp)
+target_link_libraries(newsignature1 PRIVATE depC INTERFACE depD PUBLIC depB PRIVATE subdirlib INTERFACE INTERFACE PUBLIC)
+
+assert_property(newsignature1 INTERFACE_LINK_LIBRARIES "depD;depB")
+assert_property(newsignature1 LINK_LIBRARIES "depC;depB;subdirlib")

@@ -32,6 +32,7 @@
 #include <cmsys/Directory.hxx>
 #include <cmsys/Glob.hxx>
 #include <cmsys/RegularExpression.hxx>
+#include <cmsys/FStream.hxx>
 
 // Table of permissions flags.
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -167,6 +168,10 @@ bool cmFileCommand
     {
     return this->HandleTimestampCommand(args);
     }
+  else if ( subCommand == "GENERATE" )
+    {
+    return this->HandleGenerateCommand(args);
+    }
 
   std::string e = "does not recognize sub-command "+subCommand;
   this->SetError(e.c_str());
@@ -224,7 +229,7 @@ bool cmFileCommand::HandleWriteCommand(std::vector<std::string> const& args,
     }
   // If GetPermissions fails, pretend like it is ok. File open will fail if
   // the file is not writable
-  std::ofstream file(fileName.c_str(), append?std::ios::app: std::ios::out);
+  cmsys::ofstream file(fileName.c_str(), append?std::ios::app: std::ios::out);
   if ( !file )
     {
     std::string error = "Internal CMake error when trying to open file: ";
@@ -279,10 +284,10 @@ bool cmFileCommand::HandleReadCommand(std::vector<std::string> const& args)
 
   // Open the specified file.
 #if defined(_WIN32) || defined(__CYGWIN__)
-  std::ifstream file(fileName.c_str(), std::ios::in |
+  cmsys::ifstream file(fileName.c_str(), std::ios::in |
                (hexOutputArg.IsEnabled() ? std::ios::binary : std::ios::in));
 #else
-  std::ifstream file(fileName.c_str(), std::ios::in);
+  cmsys::ifstream file(fileName.c_str(), std::ios::in);
 #endif
 
   if ( !file )
@@ -573,9 +578,9 @@ bool cmFileCommand::HandleStringsCommand(std::vector<std::string> const& args)
 
   // Open the specified file.
 #if defined(_WIN32) || defined(__CYGWIN__)
-  std::ifstream fin(fileName.c_str(), std::ios::in | std::ios::binary);
+  cmsys::ifstream fin(fileName.c_str(), std::ios::in | std::ios::binary);
 #else
-  std::ifstream fin(fileName.c_str(), std::ios::in);
+  cmsys::ifstream fin(fileName.c_str(), std::ios::in);
 #endif
   if(!fin)
     {
@@ -1970,7 +1975,7 @@ bool cmFileInstaller
   else
     {
     cmOStringStream e;
-    e << "Option TYPE given uknown value \"" << stype << "\".";
+    e << "Option TYPE given unknown value \"" << stype << "\".";
     this->FileCommand->SetError(e.str().c_str());
     return false;
     }
@@ -1985,7 +1990,7 @@ bool cmFileInstaller::HandleInstallDestination()
   // allow for / to be a valid destination
   if ( destination.size() < 2 && destination != "/" )
     {
-    this->FileCommand->SetError("called with inapropriate arguments. "
+    this->FileCommand->SetError("called with inappropriate arguments. "
         "No DESTINATION provided or .");
     return false;
     }
@@ -2485,8 +2490,8 @@ namespace {
   cmWriteToFileCallback(void *ptr, size_t size, size_t nmemb,
                         void *data)
     {
-    register int realsize = (int)(size * nmemb);
-    std::ofstream* fout = static_cast<std::ofstream*>(data);
+    int realsize = (int)(size * nmemb);
+    cmsys::ofstream* fout = static_cast<cmsys::ofstream*>(data);
     const char* chPtr = static_cast<char*>(ptr);
     fout->write(chPtr, realsize);
     return realsize;
@@ -2497,7 +2502,7 @@ namespace {
   cmWriteToMemoryCallback(void *ptr, size_t size, size_t nmemb,
                           void *data)
     {
-    register int realsize = (int)(size * nmemb);
+    int realsize = (int)(size * nmemb);
     cmFileCommandVectorOfChar *vec
       = static_cast<cmFileCommandVectorOfChar*>(data);
     const char* chPtr = static_cast<char*>(ptr);
@@ -2834,7 +2839,7 @@ cmFileCommand::HandleDownloadCommand(std::vector<std::string> const& args)
     return false;
     }
 
-  std::ofstream fout(file.c_str(), std::ios::binary);
+  cmsys::ofstream fout(file.c_str(), std::ios::binary);
   if(!fout)
     {
     this->SetError("DOWNLOAD cannot open file for write.");
@@ -2978,6 +2983,8 @@ cmFileCommand::HandleDownloadCommand(std::vector<std::string> const& args)
         << "  for file: [" << file << "]" << std::endl
         << "    expected hash: [" << expectedHash << "]" << std::endl
         << "      actual hash: [" << actualHash << "]" << std::endl
+        << "           status: [" << (int)res << ";\""
+          << ::curl_easy_strerror(res) << "\"]" << std::endl
         ;
       this->SetError(oss.str().c_str());
       return false;
@@ -3090,7 +3097,7 @@ cmFileCommand::HandleUploadCommand(std::vector<std::string> const& args)
 
   // Open file for reading:
   //
-  FILE *fin = fopen(filename.c_str(), "rb");
+  FILE *fin = cmsys::SystemTools::Fopen(filename.c_str(), "rb");
   if(!fin)
     {
     std::string errStr = "UPLOAD cannot open file '";
@@ -3247,6 +3254,80 @@ cmFileCommand::HandleUploadCommand(std::vector<std::string> const& args)
   this->SetError("UPLOAD not supported by bootstrap cmake.");
   return false;
 #endif
+}
+
+//----------------------------------------------------------------------------
+void cmFileCommand::AddEvaluationFile(const std::string &inputName,
+                                      const std::string &outputExpr,
+                                      const std::string &condition,
+                                      bool inputIsContent
+                                     )
+{
+  cmListFileBacktrace lfbt;
+  this->Makefile->GetBacktrace(lfbt);
+
+  cmGeneratorExpression outputGe(lfbt);
+  cmsys::auto_ptr<cmCompiledGeneratorExpression> outputCge
+                                                = outputGe.Parse(outputExpr);
+
+  cmGeneratorExpression conditionGe(lfbt);
+  cmsys::auto_ptr<cmCompiledGeneratorExpression> conditionCge
+                                              = conditionGe.Parse(condition);
+
+  this->Makefile->GetLocalGenerator()
+                ->GetGlobalGenerator()->AddEvaluationFile(inputName,
+                                                          outputCge,
+                                                          this->Makefile,
+                                                          conditionCge,
+                                                          inputIsContent);
+}
+
+//----------------------------------------------------------------------------
+bool cmFileCommand::HandleGenerateCommand(
+  std::vector<std::string> const& args)
+{
+  if (args.size() < 5)
+    {
+    this->SetError("Incorrect arguments to GENERATE subcommand.");
+    return false;
+    }
+  if (args[1] != "OUTPUT")
+    {
+    this->SetError("Incorrect arguments to GENERATE subcommand.");
+    return false;
+    }
+  std::string condition;
+  if (args.size() > 5)
+    {
+    if (args[5] != "CONDITION")
+      {
+      this->SetError("Incorrect arguments to GENERATE subcommand.");
+      return false;
+      }
+    if (args.size() != 7)
+      {
+      this->SetError("Incorrect arguments to GENERATE subcommand.");
+      return false;
+      }
+    condition = args[6];
+    if (condition.empty())
+      {
+      this->SetError("CONDITION of sub-command GENERATE must not be empty if "
+        "specified.");
+      return false;
+      }
+    }
+  std::string output = args[2];
+  const bool inputIsContent = args[3] != "INPUT";
+  if (inputIsContent && args[3] != "CONTENT")
+    {
+    this->SetError("Incorrect arguments to GENERATE subcommand.");
+    return false;
+    }
+  std::string input = args[4];
+
+  this->AddEvaluationFile(input, output, condition, inputIsContent);
+  return true;
 }
 
 //----------------------------------------------------------------------------

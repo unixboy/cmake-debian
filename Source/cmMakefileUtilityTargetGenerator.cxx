@@ -20,16 +20,13 @@
 
 //----------------------------------------------------------------------------
 cmMakefileUtilityTargetGenerator
-::cmMakefileUtilityTargetGenerator(cmTarget* target):
-  cmMakefileTargetGenerator(target)
+::cmMakefileUtilityTargetGenerator(cmGeneratorTarget* target):
+  cmMakefileTargetGenerator(target->Target)
 {
   this->CustomCommandDriver = OnUtility;
-  this->OSXBundleGenerator = new cmOSXBundleGenerator(this->Target,
-                                                      this->TargetNameOut,
+  this->OSXBundleGenerator = new cmOSXBundleGenerator(target,
                                                       this->ConfigName);
   this->OSXBundleGenerator->SetMacContentFolders(&this->MacContentFolders);
-  this->MacContentDirectory =
-    this->OSXBundleGenerator->GetMacContentDirectory();
 }
 
 //----------------------------------------------------------------------------

@@ -19,6 +19,7 @@
 #include <cmsys/Base64.h>
 #include <cmsys/Directory.hxx>
 #include <cmsys/SystemInformation.hxx>
+#include <cmsys/FStream.hxx>
 #include "cmDynamicLoader.h"
 #include "cmGeneratedFileStream.h"
 #include "cmXMLSafe.h"
@@ -53,12 +54,8 @@
 #include <cm_zlib.h>
 #include <cmsys/Base64.h>
 
-#if defined(__BEOS__)
+#if defined(__BEOS__) || defined(__HAIKU__)
 #include <be/kernel/OS.h>   /* disable_debugger() API. */
-#endif
-
-#if defined(__HAIKU__)
-#include <os/kernel/OS.h>   /* disable_debugger() API. */
 #endif
 
 
@@ -175,7 +172,7 @@ std::string cmCTest::GetCostDataFile()
 static size_t
 HTTPResponseCallback(void *ptr, size_t size, size_t nmemb, void *data)
 {
-  register int realsize = (int)(size * nmemb);
+  int realsize = (int)(size * nmemb);
 
   std::string *response
     = static_cast<std::string*>(data);
@@ -211,7 +208,7 @@ int cmCTest::HTTPRequest(std::string url, HTTPMethod method,
         return -1;
         }
       ::curl_easy_setopt(curl, CURLOPT_PUT, 1);
-      file = ::fopen(putFile.c_str(), "rb");
+      file = cmsys::SystemTools::Fopen(putFile.c_str(), "rb");
       ::curl_easy_setopt(curl, CURLOPT_INFILE, file);
       //fall through to append GET fields
     case cmCTest::HTTP_GET:
@@ -294,6 +291,7 @@ cmCTest::cmCTest()
 {
   this->LabelSummary           = true;
   this->ParallelLevel          = 1;
+  this->ParallelLevelSetInCli  = false;
   this->SubmitIndex            = 0;
   this->Failover               = false;
   this->BatchJobs              = false;
@@ -552,7 +550,7 @@ int cmCTest::Initialize(const char* binary_dir, cmCTestStartCommand* command)
       }
 
     std::string tagfile = testingDir + "/TAG";
-    std::ifstream tfin(tagfile.c_str());
+    cmsys::ifstream tfin(tagfile.c_str());
     std::string tag;
 
     if (createNewTag)
@@ -607,7 +605,7 @@ int cmCTest::Initialize(const char* binary_dir, cmCTestStartCommand* command)
                 lctime->tm_hour,
                 lctime->tm_min);
         tag = datestring;
-        std::ofstream ofs(tagfile.c_str());
+        cmsys::ofstream ofs(tagfile.c_str());
         if ( ofs )
           {
           ofs << tag << std::endl;
@@ -766,7 +764,7 @@ bool cmCTest::UpdateCTestConfiguration()
     cmCTestLog(this, HANDLER_VERBOSE_OUTPUT, "Parse Config file:"
                << fileName.c_str() << "\n");
     // parse the dart test file
-    std::ifstream fin(fileName.c_str());
+    cmsys::ifstream fin(fileName.c_str());
 
     if(!fin)
       {
@@ -1134,11 +1132,11 @@ int cmCTest::GetTestModelFromString(const char* str)
     return cmCTest::EXPERIMENTAL;
     }
   std::string rstr = cmSystemTools::LowerCase(str);
-  if ( strncmp(rstr.c_str(), "cont", 4) == 0 )
+  if ( cmHasLiteralPrefix(rstr.c_str(), "cont") )
     {
     return cmCTest::CONTINUOUS;
     }
-  if ( strncmp(rstr.c_str(), "nigh", 4) == 0 )
+  if ( cmHasLiteralPrefix(rstr.c_str(), "nigh") )
     {
     return cmCTest::NIGHTLY;
     }
@@ -1152,7 +1150,7 @@ int cmCTest::GetTestModelFromString(const char* str)
 
 //----------------------------------------------------------------------
 int cmCTest::RunMakeCommand(const char* command, std::string* output,
-  int* retVal, const char* dir, int timeout, std::ofstream& ofs)
+  int* retVal, const char* dir, int timeout, std::ostream& ofs)
 {
   // First generate the command and arguments
   std::vector<cmStdString> args = cmSystemTools::ParseArguments(command);
@@ -1301,7 +1299,8 @@ int cmCTest::RunTest(std::vector<const char*> argv,
     }
   cmCTestLog(this, HANDLER_VERBOSE_OUTPUT,
              "Test timeout computed to be: " << timeout << "\n");
-  if(cmSystemTools::SameFile(argv[0], this->CTestSelf.c_str()) &&
+  if(cmSystemTools::SameFile(
+       argv[0], cmSystemTools::GetCTestCommand().c_str()) &&
      !this->ForceNewCTestProcess)
     {
     cmCTest inst;
@@ -1613,7 +1612,7 @@ int cmCTest::GenerateCTestNotesOutput(std::ostream& os,
       << "<Time>" << cmSystemTools::GetTime() << "</Time>\n"
       << "<DateTime>" << note_time << "</DateTime>\n"
       << "<Text>" << std::endl;
-    std::ifstream ifs(it->c_str());
+    cmsys::ifstream ifs(it->c_str());
     if ( ifs )
       {
       std::string line;
@@ -1694,7 +1693,7 @@ std::string cmCTest::Base64GzipEncodeFile(std::string file)
 std::string cmCTest::Base64EncodeFile(std::string file)
 {
   long len = cmSystemTools::FileLength(file.c_str());
-  std::ifstream ifs(file.c_str(), std::ios::in
+  cmsys::ifstream ifs(file.c_str(), std::ios::in
 #ifdef _WIN32
     | std::ios::binary
 #endif
@@ -1999,11 +1998,13 @@ void cmCTest::HandleCommandLineArguments(size_t &i,
     i++;
     int plevel = atoi(args[i].c_str());
     this->SetParallelLevel(plevel);
+    this->ParallelLevelSetInCli = true;
     }
   else if(arg.find("-j") == 0)
     {
     int plevel = atoi(arg.substr(2).c_str());
     this->SetParallelLevel(plevel);
+    this->ParallelLevelSetInCli = true;
     }
 
   if(this->CheckArgument(arg, "--no-compress-output"))
@@ -2184,6 +2185,12 @@ void cmCTest::HandleCommandLineArguments(size_t &i,
     this->GetHandler("memcheck")->
       SetPersistentOption("ExcludeRegularExpression", args[i].c_str());
     }
+
+  if(this->CheckArgument(arg, "--rerun-failed"))
+    {
+    this->GetHandler("test")->SetPersistentOption("RerunFailed", "true");
+    this->GetHandler("memcheck")->SetPersistentOption("RerunFailed", "true");
+    }
 }
 
 //----------------------------------------------------------------------
@@ -2252,7 +2259,6 @@ bool cmCTest::AddVariableDefinition(const std::string &arg)
 // the main entry point of ctest, called from main
 int cmCTest::Run(std::vector<std::string> &args, std::string* output)
 {
-  this->FindRunningCMake();
   const char* ctestExec = "ctest";
   bool cmakeAndTest = false;
   bool executeTests = true;
@@ -2398,6 +2404,14 @@ int cmCTest::Run(std::vector<std::string> &args, std::string* output)
       }
     } // the close of the for argument loop
 
+  if (!this->ParallelLevelSetInCli)
+    {
+    if (const char *parallel = cmSystemTools::GetEnv("CTEST_PARALLEL_LEVEL"))
+      {
+      int plevel = atoi(parallel);
+      this->SetParallelLevel(plevel);
+      }
+    }
 
   // now what sould cmake do? if --build-and-test was specified then
   // we run the build and test handler and return
@@ -2413,7 +2427,7 @@ int cmCTest::Run(std::vector<std::string> &args, std::string* output)
 #endif
     if(retv != 0)
       {
-      cmCTestLog(this, DEBUG, "build and test failing returing: " << retv
+      cmCTestLog(this, DEBUG, "build and test failing returning: " << retv
                  << std::endl);
       }
     return retv;
@@ -2482,29 +2496,6 @@ int cmCTest::Run(std::vector<std::string> &args, std::string* output)
     }
 
   return 1;
-}
-
-//----------------------------------------------------------------------
-void cmCTest::FindRunningCMake()
-{
-  // Find our own executable.
-  this->CTestSelf = cmSystemTools::GetExecutableDirectory();
-  this->CTestSelf += "/ctest";
-  this->CTestSelf += cmSystemTools::GetExecutableExtension();
-  if(!cmSystemTools::FileExists(this->CTestSelf.c_str()))
-    {
-    cmSystemTools::Error("CTest executable cannot be found at ",
-                         this->CTestSelf.c_str());
-    }
-
-  this->CMakeSelf = cmSystemTools::GetExecutableDirectory();
-  this->CMakeSelf += "/cmake";
-  this->CMakeSelf += cmSystemTools::GetExecutableExtension();
-  if(!cmSystemTools::FileExists(this->CMakeSelf.c_str()))
-    {
-    cmSystemTools::Error("CMake executable cannot be found at ",
-                         this->CMakeSelf.c_str());
-    }
 }
 
 //----------------------------------------------------------------------

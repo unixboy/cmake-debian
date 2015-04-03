@@ -1,8 +1,195 @@
-cmake (2.8.11.1-1~bpo70+1) wheezy-backports; urgency=low
+cmake (3.0.2-1) unstable; urgency=medium
 
-  * Rebuild for wheezy-backports.
+  * New upstream release.
+    - Adds support for OpenRISC (or1k). (Closes: #749004)
+  * Detect the processor when running on Hurd. (Closes: #761060)
+    - Add hurd_host_system_processor.diff, cherry-picked from upstream.
+  * Revert cmake-qt-gui to Qt 4 for now as qtbase 5 fails to build on some
+    architectures.
 
- -- Modestas Vainius <modax@debian.org>  Sat, 29 Jun 2013 12:29:04 +0300
+ -- Felix Geyer <fgeyer@debian.org>  Sun, 14 Sep 2014 19:16:38 +0200
+
+cmake (3.0.1-1) experimental; urgency=medium
+
+  * New upstream release.
+  * Drop patches (fixed upstream):
+    - fix-bootstrap-test-1.diff
+    - fix-bootstrap-test-2.diff
+
+ -- Felix Geyer <fgeyer@debian.org>  Sat, 09 Aug 2014 21:11:50 +0200
+
+cmake (3.0.0-1) experimental; urgency=medium
+
+  * New upstream release. (Closes: #743231)
+    - Uses multiarch libdir only when prefix is /usr. (Closes:  #739876)
+    - Doesn't crash on bad generator name. (Closes: #747306)
+    - Provides a FindLua module that supports versions 5.0 - 5.3.
+      (Closes: #739285)
+    - Fixes parsing CMakeLists.txt in UTF-8 with BOM encoding. (Closes: #593327)
+    - Call cmake-gui for edit_cache when using the ninja generator.
+      (Closes: #712241)
+  * Drop patches (fixed upstream):
+    - install_to_multiarch_libdir_on_kfreebsd_hurd.diff
+    - FindPHP4_fix_typo.diff
+    - FindJNI_amd64_ppc_biarch.diff
+    - fix-FindFreetype.diff
+    - FindRuby_support_Ruby_2.diff
+    - fix-FindFreetype-version.diff
+  * Refresh patches:
+    - FindJNI.cmake.mips.patch
+    - FindJNI_ppc64le.diff
+  * Fix running the test suite.
+    - Cherry-pick upstream fix in fix-bootstrap-test-1.diff and
+      fix-bootstrap-test-2.diff
+  * Build the sphinx documentation and man pages.
+    - Build-depend on python-sphinx.
+  * Update install files.
+  * Pass --list-missing to dh_install.
+  * Use sphinxdoc debhelper sequence.
+  * Add -Wl,--as-needed to LDFLAGS to avoid overlinking.
+  * Drop custom cmake-gui manpage, upstream provides one now.
+  * Build cmake-qt-gui against Qt 5.
+  * Drop obsolete lintian override cmake-data: extra-license-file.
+
+  [ Lisandro Damián Nicanor Pérez Meyer ]
+  * Update debian/copyright.
+
+ -- Felix Geyer <fgeyer@debian.org>  Thu, 07 Aug 2014 23:38:00 +0200
+
+cmake (2.8.12.2-2) unstable; urgency=high
+
+  * Search for Python 3.4 in FindPython{Interp,Libs}.
+    - Add search_for_python3.4.diff
+  * Don't create docs symlinks from arch-dep to arch-indep packages.
+    (Closes: #760823)
+  * Move the rm_conffile calls to cmake.maintscript.
+
+ -- Felix Geyer <fgeyer@debian.org>  Mon, 08 Sep 2014 22:18:32 +0200
+
+cmake (2.8.12.2-1) unstable; urgency=medium
+
+  [ Felix Geyer ]
+  * New upstream release.
+  * Add Lisandro and myself to uploaders.
+  * Correctly pass CXXFLAGS with CPPFLAGS to bootstrap.
+  * Suggest ninja-build as cmake provides a generator for ninja.
+    (Closes: #743229)
+  * Fix JNI detection on ppc64el.
+    - Add FindJNI_ppc64le.diff, cherry-picked from upstream.
+  * Drop ancient Breaks/Replaces.
+  * Add lintian override for source-is-missing tags.
+    These are just binary test files used by the test suite to verify that
+    changing the RPATH works fine.
+  * Drop some redundant build options from debian/rules.
+  * Drop multiarch_findgtk2_fix.diff, was already fixed upstream in 2.8.11.
+
+  [ Lisandro Damián Nicanor Pérez Meyer ]
+  * Update debian/copyright.
+
+ -- Felix Geyer <fgeyer@debian.org>  Thu, 07 Aug 2014 20:16:56 +0200
+
+cmake (2.8.12.1-1.6) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix HDF5 macro for HL and Fortran_HL components (closes: #756108).
+
+ -- Gilles Filippini <pini@debian.org>  Wed, 30 Jul 2014 12:51:57 +0200
+
+cmake (2.8.12.1-1.5) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Detect the version string of Freetype 2.5. (Closes: #732182)
+    - Add fix-FindFreetype-version.diff, cherry-picked from upstream.
+  * Detect the multi-arch ImageMagick include dirs. (Closes: #747907)
+    - Add fix-FindImageMagick-1.diff and fix-FindImageMagick-2.diff,
+      cherry-picked from upstream.
+
+ -- Felix Geyer <fgeyer@debian.org>  Tue, 22 Jul 2014 21:18:39 +0200
+
+cmake (2.8.12.1-1.4) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Add support for mips64 mips64el mipsn32 mipsn32el in 
+    Modules/FindJNI.cmake.
+    Add FindJNI.cmake.mips.patch.
+    Patch by Yunqiang Su.
+    Closes: #747174.
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 26 May 2014 12:34:45 +0100
+
+cmake (2.8.12.1-1.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * multiarch-python-include-dirs.diff has bad side-effects
+    Drop multiarch-python-include-dirs.diff
+    Closes: #735248
+
+ -- Anibal Monsalve Salazar <anibal@debian.org>  Fri, 23 May 2014 09:25:22 +0100
+
+cmake (2.8.12.1-1.2) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Backport patch to support Ruby 2.0 and 2.1 in FindRuby.cmake.
+    (closes: #739826, #730095)
+
+ -- Bas Couwenberg <sebastic@xs4all.nl>  Sun, 30 Mar 2014 21:57:27 +0200
+
+cmake (2.8.12.1-1.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * Make sure to find freetype headers in their new location (without an
+    extra freetype/ directory, fix-FindFreetype.diff). (Closes: #731089)
+
+ -- Cyril Brulebois <kibi@debian.org>  Sun, 15 Dec 2013 10:30:54 +0000
+
+cmake (2.8.12.1-1) unstable; urgency=low
+
+  * New upstream release:
+    - Automoc no longer ignores ADD_DEFINITIONS. (Closes: #728793)
+  * Migrate to emacs policy v2.0: cmake-data no longer needs to depend on
+    emacsen-common but pretty recent debhelper is needed at build time.
+  * Drop fixup_manpages.diff patch: merged upstream.
+
+ -- Modestas Vainius <modax@debian.org>  Thu, 07 Nov 2013 00:56:52 +0200
+
+cmake (2.8.12-2) unstable; urgency=low
+
+  * Fix FTBFS on kFreeBSD (fix-ftbfs-on-kfreebsd.patch).
+
+ -- Modestas Vainius <modax@debian.org>  Mon, 04 Nov 2013 00:31:57 +0200
+
+cmake (2.8.12-1) unstable; urgency=low
+
+  * New upstream release:
+    - no longer contains workaround for GCC 2.96 bugs; (Closes: #717144)
+    - cmake -E touch no longer truncates time to seconds. (Closes: #699657)
+  * Enable bash-completion. (Closes: #722236)
+  * Switch to using libcurl4-openssl-dev rather than GnuTLS variant. cmake and
+    all its dependencies appear to be licence compatible. The main reason for
+    the switch is that OpenSSL variant appear to be less troublesome.
+    (Closes: #716798)
+  * Follow emacsen policy 5C and link cmake-mode.el source file next to
+    compiled one. Thanks to Kevin Ryde. (Closes: #710570)
+  * Add compiled cmake-mode.elc to load-path and do not barf in emacs if
+    cmake-data was removed but not purged. Thanks to Kevin Ryde.
+    (Closes: #710573)
+  * Remove the whole emacs compiled directory rather than just .elc file.
+    Thanks to Kevin Ryde. (Closes: #710572)
+  * Fix a code typo in PHP4 (patch FindPHP4_fix_typo.diff). Thanks to Mathieu
+    Malaterre for the patch. (Closes: #722475)
+  * Properly find Java when kernel is 64bit, userland - 32bit (amd64/ppc64).
+    (patch: FindJNI_amd64_ppc_biarch.diff) (Closes: #718290)
+  * Bump Standards-Version to 3.9.5: no further changes needed.
+  * Fix spelling mistakes in manpages (patch: fixup_manpages.diff).
+
+ -- Modestas Vainius <modax@debian.org>  Sun, 03 Nov 2013 20:42:54 +0200
+
+cmake (2.8.11.2-1) unstable; urgency=low
+
+  * New upstream release.
+  * Use canonical URL in the Vcs-Git control field.
+
+ -- Modestas Vainius <modax@debian.org>  Thu, 04 Jul 2013 23:27:07 +0300
 
 cmake (2.8.11.1-1) unstable; urgency=low
 

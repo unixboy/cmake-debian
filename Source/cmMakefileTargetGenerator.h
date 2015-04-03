@@ -38,7 +38,7 @@ public:
   virtual ~cmMakefileTargetGenerator();
 
   // construct using this factory call
-  static cmMakefileTargetGenerator *New(cmTarget *tgt);
+  static cmMakefileTargetGenerator *New(cmGeneratorTarget *tgt);
 
   /* the main entry point for this class. Writes the Makefiles associated
      with this target */
@@ -124,7 +124,7 @@ protected:
   void DriveCustomCommands(std::vector<std::string>& depends);
 
   // Return the a string with -F flags on apple
-  std::string GetFrameworkFlags();
+  std::string GetFrameworkFlags(std::string const& l);
 
   void AppendFortranFormatFlags(std::string& flags, cmSourceFile& source);
 
@@ -233,7 +233,6 @@ protected:
   std::string TargetNamePDB;
 
   // Mac OS X content info.
-  std::string MacContentDirectory;
   std::set<cmStdString> MacContentFolders;
   cmOSXBundleGenerator* OSXBundleGenerator;
   MacOSXContentGeneratorType* MacOSXContentGenerator;
