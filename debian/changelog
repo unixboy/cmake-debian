@@ -1,6 +1,7 @@
 cmake (3.0.2-1~bpo70+1) UNRELEASED; urgency=medium
 
   * Rebuild for wheezy-backports.
+  * Revert build dependency to debhelper (>= 9).
 
  -- Daniele E. Domenichelli <daniele.domenichelli@gmail.com>  Fri, 03 Apr 2015 15:41:40 +0200
 
