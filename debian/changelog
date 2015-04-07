@@ -1,10 +1,10 @@
-cmake (3.0.2-1~bpo70+1) UNRELEASED; urgency=medium
+cmake (3.0.2-1~bpo70+1) wheezy-backports; urgency=medium
 
   * Rebuild for wheezy-backports.
   * Revert build dependency to debhelper (>= 9).
   * Revert "Don't create docs symlinks from arch-dep to arch-indep packages."
 
- -- Daniele E. Domenichelli <daniele.domenichelli@gmail.com>  Fri, 03 Apr 2015 15:41:40 +0200
+ -- Daniele E. Domenichelli <daniele.domenichelli@gmail.com>  Tue, 07 Apr 2015 12:04:05 +0200
 
 cmake (3.0.2-1) unstable; urgency=medium
 
